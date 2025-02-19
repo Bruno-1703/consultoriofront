@@ -1,1 +1,0 @@
-export { auth as middleware } from "./pages/api/auth/[...nextauth]"
