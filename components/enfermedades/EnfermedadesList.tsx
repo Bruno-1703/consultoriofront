@@ -81,9 +81,7 @@ const EnfermedadesList: React.FC = () => {
         <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           Gestión de Enfermedades
         </Typography>
-        <Badge badgeContent={data?.getEnfermedades.aggregate.count || 0} color="primary">
-          <LocalHospitalIcon sx={{ color: '#1976d2' }} />
-        </Badge>
+        
       </Stack>
 
       <Stack direction="row" spacing={2} sx={{ marginBottom: 2, alignItems: 'center' }}>
@@ -125,6 +123,9 @@ const EnfermedadesList: React.FC = () => {
             <RefreshIcon />
           </IconButton>
         </Tooltip>
+        <Badge badgeContent={data?.getEnfermedades.aggregate.count || 0} color="primary">
+          <LocalHospitalIcon sx={{ color: '#1976d2' }} />
+        </Badge>
       </Stack>
 
       {showForm && (

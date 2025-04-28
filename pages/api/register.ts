@@ -1,35 +1,51 @@
+// Importamos los tipos para las solicitudes y respuestas en una API de Next.js
 import type { NextApiRequest, NextApiResponse } from "next";
+
+// Importamos la conexión al cliente de MongoDB
 import clientPromise from "../../lib/mongodb";
+
+// Importamos la librería bcrypt para hashear contraseñas
 import bcrypt from "bcryptjs";
 
+// Función principal que maneja la petición HTTP
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Verificamos que el método de la solicitud sea POST
   if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
+    // Si no es POST, devolvemos un error 405 (Método no permitido)
+    return res.status(405).json({ message: "Método no permitido" });
   }
 
+  // Extraemos los datos enviados desde el cuerpo de la solicitud
   const { email, password, name } = req.body;
 
+  // Validamos que se haya enviado el email y la contraseña
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+    return res.status(400).json({ message: "Se requieren email y contraseña" });
   }
 
   try {
+    // Conectamos con la base de datos usando el cliente de MongoDB
     const client = await clientPromise;
-    const db = client.db("consultorio");
-    const usersCollection = db.collection("Usuario");
+    const db = client.db("consultorio"); // Nombre de la base de datos
+    const usersCollection = db.collection("Usuario"); // Colección de usuarios
 
+    // Verificamos si ya existe un usuario con el mismo email
     const existingUser = await usersCollection.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      // Si ya existe, devolvemos un error 400
+      return res.status(400).json({ message: "El usuario ya existe" });
     }
 
-    // Hashear la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hasheamos la contraseña antes de guardarla en la base de datos
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 es el número de "salt rounds"
 
+    // Insertamos el nuevo usuario en la colección
     await usersCollection.insertOne({ email, password: hashedPassword, name });
 
-    res.status(201).json({ message: "User created successfully" });
+    // Respondemos con éxito
+    res.status(201).json({ message: "Usuario creado exitosamente" });
   } catch (error) {
-    res.status(500).json({ message: "Error creating user" });
+    // En caso de error interno, respondemos con un estado 500
+    res.status(500).json({ message: "Error al crear el usuario" });
   }
 }

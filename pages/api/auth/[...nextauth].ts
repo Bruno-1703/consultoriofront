@@ -19,7 +19,7 @@ export default NextAuth({
       },
       async authorize(credentials: Credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required!");
+          throw new Error("¡Se requiere email y contraseña!");
         }
 
         try {
@@ -32,13 +32,13 @@ export default NextAuth({
           });
           
           if (!user) {
-            throw new Error("No user found!");
+            throw new Error("¡Usuario no encontrado!");
           }
 
           const isValid = await compare(credentials.password, user.password);
           
           if (!isValid) {
-            throw new Error("Password doesn't match!");
+            throw new Error("¡La contraseña no coincide!");
           }
 
           return {
@@ -47,7 +47,7 @@ export default NextAuth({
             name: user.name
           };
         } catch (error) {
-          throw new Error(error instanceof Error ? error.message : "An error occurred");
+          throw new Error(error instanceof Error ? error.message : "Ocurrió un error");
         }
       }
     })

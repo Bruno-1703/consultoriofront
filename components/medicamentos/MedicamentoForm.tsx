@@ -26,16 +26,7 @@ export const EstudioForm = () => {
       </Typography>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={2}>
-{/* 
-          <Grid item xs={12}>
-            <DatePicker
-              label="Fecha de Realización"
-              value={fechaRealizacion}
-              onChange={(newValue) => setFechaRealizacion(newValue)}
-              renderInput={(params) => <TextField {...params} fullWidth variant="outlined" margin="normal" />}
-            />
-          </Grid>
-*/}  
+ 
           <Grid item xs={12}>
             <TextField
               label="Tipo de Estudio"

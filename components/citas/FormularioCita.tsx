@@ -5,13 +5,10 @@ import {
   Collapse,
   TextField,
   Typography,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Snackbar,
   Alert,
   CircularProgress,
+  Autocomplete,
 } from "@mui/material";
 import {
   CitaInput,
@@ -19,55 +16,68 @@ import {
   useCreateCitaMutation,
   useGetPacientesQuery,
 } from "../../graphql/types";
+import { useSession } from "next-auth/react";
+
 interface FormularioCitaProps {
-  onClose: () => void; // Define la propiedad onClose
+  onClose: () => void;
 }
-export const FormularioCita = ({ onClose }) => {
+
+export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
+  const { data: session } = useSession();
+  const userId = session?.user?.email;
+
   const [isFormOpen, setIsFormOpen] = useState(true);
   const [motivoConsulta, setMotivoConsulta] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [fechaSolicitud, setFechaSolicitud] = useState("");
-  const [selectedPaciente, setSelectedPaciente] =
-    useState<PacienteCitaInput | null>(null);
+  const [fechaSolicitud, setFechaSolicitud] = useState<string>("");
+  const [selectedPaciente, setSelectedPaciente] = useState<PacienteCitaInput | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [limit, setLimit] = useState(50);
   const [skip, setSkip] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const { data: pacientesData, loading: pacientesLoading, error: pacientesError, fetchMore } = useGetPacientesQuery({
-    variables: { limit, skip, where: {} },
+    variables: {
+      limit,
+      skip,
+      where: {},
+    },
   });
 
-  const [createCitaMutation, { loading, error }] = useCreateCitaMutation();
-
-  const toggleForm = () => {
-    setIsFormOpen(!isFormOpen);
-  };
+  const [createCitaMutation] = useCreateCitaMutation();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!motivoConsulta || !fechaSolicitud || !selectedPaciente) {
+      setShowErrorAlert(true);
+      return;
+    }
+    setLoading(true);
     try {
       const citaForm: CitaInput = {
         motivoConsulta,
         observaciones,
-        fechaSolicitud,
+        fechaSolicitud: fechaSolicitud,
       };
       const pacienteForm: PacienteCitaInput = {
         id_paciente: selectedPaciente?.id_paciente || "",
         dni: selectedPaciente?.dni || "",
         nombre_paciente: selectedPaciente?.nombre_paciente || "",
+        apellido_paciente: selectedPaciente?.apellido_paciente || "",
       };
 
       await createCitaMutation({
         variables: { data: citaForm, paciente: pacienteForm },
       });
 
-      // Mostrar mensaje de éxito y resetear el formulario
       setShowSuccessAlert(true);
       resetForm();
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
       setShowErrorAlert(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -121,6 +131,8 @@ export const FormularioCita = ({ onClose }) => {
             margin="normal"
             value={motivoConsulta}
             onChange={(e) => setMotivoConsulta(e.target.value)}
+            error={!motivoConsulta}
+            helperText={!motivoConsulta && "Este campo es obligatorio"}
           />
 
           <TextField
@@ -131,6 +143,8 @@ export const FormularioCita = ({ onClose }) => {
             value={fechaSolicitud}
             onChange={(e) => setFechaSolicitud(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            error={!fechaSolicitud}
+            helperText={!fechaSolicitud && "Este campo es obligatorio"}
           />
 
           <TextField
@@ -143,32 +157,28 @@ export const FormularioCita = ({ onClose }) => {
             onChange={(e) => setObservaciones(e.target.value)}
           />
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="paciente-label">Seleccionar Paciente</InputLabel>
-            <Select
-              labelId="paciente-label"
-              id="paciente"
-              value={selectedPaciente ? selectedPaciente.id_paciente : ""}
-              onChange={(e) => {
-                const paciente = pacientesData?.getPacientes.edges.find(
-                  ({ node }: any) => node.id_paciente === e.target.value
-                )?.node;
-
-                if (paciente && paciente.id_paciente) {
-                  setSelectedPaciente(paciente as PacienteCitaInput);
-                }
-              }}
-              label="Seleccionar Paciente"
-              disabled={pacientesLoading || !!pacientesError}
-              onScroll={handleScroll}
-            >
-              {pacientesData?.getPacientes.edges.map(({ node }: any) => (
-                <MenuItem key={node.id_paciente} value={node.id_paciente}>
-                  {node.nombre_paciente} {node.apellido_paciente}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          {/* Autocomplete para seleccionar paciente */}
+          <Autocomplete
+            id="paciente-autocomplete"
+            options={pacientesData?.getPacientes.edges.map(({ node }: any) => node) || []}
+            getOptionLabel={(option: PacienteCitaInput) => `${option.nombre_paciente} ${option.apellido_paciente}`}
+            onChange={(event, value) => setSelectedPaciente(value)}
+            value={selectedPaciente}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Seleccionar Paciente"
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                error={!selectedPaciente}
+                helperText={!selectedPaciente && "Este campo es obligatorio"}
+              />
+            )}
+            loading={pacientesLoading}
+            onScroll={handleScroll}
+            noOptionsText="No hay pacientes disponibles"
+          />
 
           {pacientesLoading && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
@@ -214,7 +224,7 @@ export const FormularioCita = ({ onClose }) => {
           severity="error"
           sx={{ width: "100%" }}
         >
-          Error al crear la cita.
+          Error al crear la cita. Por favor, intente de nuevo.
         </Alert>
       </Snackbar>
     </Box>

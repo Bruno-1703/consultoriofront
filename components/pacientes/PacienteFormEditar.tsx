@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useUpdatePacienteMutation, PacienteInput, useGetPacienteQuery } from "../../graphql/types"; // Asegúrate de importar el tipo correcto
+import {
+  useUpdatePacienteMutation,
+  PacienteInput,
+  useGetPacienteQuery,
+} from "../../graphql/types"; // Asegúrate de importar el tipo correcto
 import { Box, Button, TextField } from "@mui/material";
 
 interface PacienteFormProps {
@@ -7,8 +11,11 @@ interface PacienteFormProps {
   onClose: () => void;
 }
 
-const PacienteFormEdit: React.FC<PacienteFormProps> = ({ pacienteId, onClose }) => {
-    console.log(pacienteId)
+const PacienteFormEdit: React.FC<PacienteFormProps> = ({
+  pacienteId,
+  onClose,
+}) => {
+  console.log(pacienteId);
   const [formData, setFormData] = useState<PacienteInput>({
     dni: "",
     nombre_paciente: "",
@@ -72,13 +79,17 @@ const PacienteFormEdit: React.FC<PacienteFormProps> = ({ pacienteId, onClose }) 
       <TextField
         label="Nombre"
         value={formData.nombre_paciente}
-        onChange={(e) => setFormData({ ...formData, nombre_paciente: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, nombre_paciente: e.target.value })
+        }
         fullWidth
       />
       <TextField
         label="Apellido"
         value={formData.apellido_paciente}
-        onChange={(e) => setFormData({ ...formData, apellido_paciente: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, apellido_paciente: e.target.value })
+        }
         fullWidth
       />
       <TextField
@@ -91,7 +102,9 @@ const PacienteFormEdit: React.FC<PacienteFormProps> = ({ pacienteId, onClose }) 
         label="Edad"
         value={formData.edad}
         type="number"
-        onChange={(e) => setFormData({ ...formData, edad: parseInt(e.target.value) })}
+        onChange={(e) =>
+          setFormData({ ...formData, edad: parseInt(e.target.value) })
+        }
         fullWidth
       />
       {/* Otros campos del formulario, como sexo y grupo sanguíneo */}
@@ -104,7 +117,9 @@ const PacienteFormEdit: React.FC<PacienteFormProps> = ({ pacienteId, onClose }) 
       <TextField
         label="Grupo Sanguíneo"
         value={formData.grupo_sanguineo}
-        onChange={(e) => setFormData({ ...formData, grupo_sanguineo: e.target.value })}
+        onChange={(e) =>
+          setFormData({ ...formData, grupo_sanguineo: e.target.value })
+        }
         fullWidth
       />
       <Button type="submit" variant="contained" color="primary">

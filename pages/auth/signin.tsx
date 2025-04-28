@@ -1,7 +1,10 @@
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useState, FormEvent } from "react";
-import { Container, Card, CardContent, Typography, TextField, Button, Box, Alert, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Container, Card, CardContent, Typography, TextField,
+  Button, Box, Alert, Dialog, DialogTitle, DialogContent, DialogActions
+} from "@mui/material";
 
 import backgroundImage from './background.jpg';
 
@@ -29,7 +32,7 @@ export default function SignIn() {
         await router.push(callbackUrl);
       }
     } catch {
-      setError("An error occurred during sign in");
+      setError("Ocurrió un error durante el inicio de sesión");
     } finally {
       setLoading(false);
     }
@@ -63,63 +66,114 @@ export default function SignIn() {
       setOpen(false);
       alert("¡El usuario se ha registrado correctamente! Ya puedes iniciar sesión.");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "Ocurrió un error");
     }
   }
 
   return (
-    <Container
-      maxWidth="md"
+    <Box
       sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        backgroundImage: `url(${backgroundImage.src})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        position: "relative",
+        width: "100%",
+        height: "100vh",
+        overflow: "hidden"
       }}
     >
-      <Card
+      {/* Imagen de fondo */}
+      <Box
         sx={{
-          width: "80%",
-          p: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.8)'
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+          backgroundImage: `url(${backgroundImage.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "blur(2px)",
+          zIndex: 0,
+        }}
+      />
+
+      {/* Capa semitransparente para oscurecer un poco la imagen */}
+      <Box
+        sx={{
+          position: "absolute",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* Contenido principal */}
+      <Container
+        maxWidth="sm"
+        sx={{
+          position: "relative",
+          zIndex: 2,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
         }}
       >
-        <CardContent>
-        <Typography variant="h5" align="center" gutterBottom>
-            Consultorio médico 👩‍⚕️👨‍⚕️
-          </Typography>
-          <Typography variant="h5" align="center" gutterBottom>
-            Ingrese sus credenciales
-          </Typography>
-          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-          <Box component="form" onSubmit={handleSignIn} sx={{ mt: 2 }}>
-            <TextField fullWidth label="Email" name="email" type="email" margin="normal" required />
-            <TextField fullWidth label="Clave" name="password" type="password" margin="normal" required />
-            <Button fullWidth type="submit" variant="contained" color="primary" disabled={loading} sx={{ mt: 2 }}>
-              {loading ? "Cargando..." : "Sign In"}
+        <Card
+          sx={{
+            width: "100%",
+            p: 3,
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            boxShadow: 5,
+          }}
+        >
+          <CardContent>
+            <Typography variant="h5" align="center" gutterBottom>
+              Consultorio médico 👩‍⚕️👨‍⚕️
+            </Typography>
+            <Typography variant="h6" align="center" gutterBottom>
+              Ingrese sus credenciales
+            </Typography>
+
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+
+            <Box component="form" onSubmit={handleSignIn} sx={{ mt: 2 }}>
+              <TextField fullWidth label="Email" name="email" type="email" margin="normal" required />
+              <TextField fullWidth label="Clave" name="password" type="password" margin="normal" required />
+              <Button
+                fullWidth
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+                sx={{ mt: 2 }}
+              >
+                {loading ? "Cargando..." : "Iniciar Sesión"}
+              </Button>
+            </Box>
+
+            <Button fullWidth onClick={() => setOpen(true)} sx={{ mt: 2 }}>
+              Registrarse
             </Button>
-          </Box>
-          <Button fullWidth onClick={() => setOpen(true)} sx={{ mt: 2 }}>Registrarse</Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Container>
+
+      {/* Diálogo de registro */}
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Complete el siguiente formulario para su registración</DialogTitle>
         <DialogContent>
           <Box component="form" id="register-form" onSubmit={handleRegister} sx={{ mt: 2 }}>
             <TextField fullWidth label="Email" name="email" type="email" margin="normal" required />
-            <TextField fullWidth label="Nombre" name="name" type="name" margin="normal" required />
+            <TextField fullWidth label="Nombre" name="name" type="text" margin="normal" required />
             <TextField fullWidth label="Clave" name="password" type="password" margin="normal" required />
             <TextField fullWidth label="Confirme su Clave" name="confirmPassword" type="password" margin="normal" required />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button color="error" onClick={() => setOpen(false)}>Cancelar</Button>
-          <Button type="submit" variant="contained" color="primary" form="register-form">Registrarse</Button>
+          <Button type="submit" variant="contained" color="primary" form="register-form">
+            Registrarse
+          </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 }

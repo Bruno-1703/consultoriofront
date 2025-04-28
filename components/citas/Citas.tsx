@@ -13,16 +13,182 @@ import {
   Paper,
   TextField,
   TablePagination,
-  Button,
   Badge,
+  Tooltip,
+  Chip,
+  Button,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ListIcon from "@mui/icons-material/List";
 import SearchIcon from "@mui/icons-material/Search";
-import { Cita, useGetCitasQuery } from "../../graphql/types";
-import TableSkeleton from "../../utils/TableSkeleton";
-import { CitaRow } from "./CitaRow";
 import dayjs from "dayjs";
+import {
+  useGetCitasQuery,
+  Cita,
+  useCancelarCitaMutation,
+} from "../../graphql/types";
+import TableSkeleton from "../../utils/TableSkeleton";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+
+const CitaRow = ({ row }: { row: Cita }) => {
+  const [open, setOpen] = React.useState(false);
+  const [cancelarCita] = useCancelarCitaMutation();
+  const [openSnackbar, setOpenSnackbar] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [openDialog, setOpenDialog] = React.useState(false);
+
+  const handleCancelar = async () => {
+    if (!row.id_cita) {
+      setSnackbarMessage("El ID de la cita no está disponible.");
+      setOpenSnackbar(true);
+      return;
+    }
+
+    try {
+      await cancelarCita({
+        variables: { id: row.id_cita },
+      });
+      setSnackbarMessage("Cita cancelada correctamente.");
+    } catch (err) {
+      console.error("Error cancelando cita", err);
+      setSnackbarMessage("No se pudo cancelar la cita.");
+    } finally {
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleConfirmarCancelar = () => {
+    setOpenDialog(false);
+    handleCancelar();
+  };
+
+  return (
+    <>
+      <TableRow
+        sx={{
+          "& > *": { borderBottom: "unset" },
+          backgroundColor: "#fafafa",
+          "&:hover": { backgroundColor: "#e3f2fd" },
+        }}
+      >
+        <TableCell>
+          <IconButton size="small" onClick={() => setOpen(!open)}>
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell>{row.motivoConsulta}</TableCell>
+        <TableCell align="right">
+          {dayjs(row.fechaSolicitud).format("DD/MM/YYYY")}
+        </TableCell>
+        <TableCell align="right">
+          <Chip
+            label={row.cancelada ? "Cancelada" : "Pendiente"}
+            color={row.cancelada ? "error" : "warning"}
+            variant="outlined"
+            sx={{
+              fontWeight: "bold",
+              textTransform: "uppercase",
+              fontSize: "0.75rem",
+            }}
+          />
+        </TableCell>
+        <TableCell align="right">
+          {!row.cancelada && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setOpenDialog(true)}
+              sx={{
+                marginTop: 1,
+                fontSize: "0.75rem",
+                borderRadius: 2,
+              }}
+            >
+              Cancelar Cita
+            </Button>
+          )}
+        </TableCell>
+      </TableRow>
+
+      <TableRow>
+        <TableCell colSpan={5} sx={{ paddingBottom: 0, paddingTop: 0 }}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box
+              sx={{
+                margin: 2,
+                padding: 2,
+                backgroundColor: "#f1f8ff",
+                borderRadius: 2,
+                boxShadow: 1,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: "bold", color: "#1976d2" }}
+              >
+                Detalles de la Cita
+              </Typography>
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: "bold" }}>
+                      Observaciones
+                    </TableCell>
+                    <TableCell>{row.observaciones || "N/A"}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: "bold" }}>Paciente</TableCell>
+                    <TableCell>
+                      {row.paciente?.nombre_paciente || "N/A"}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Confirmación</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ¿Estás seguro de que deseas cancelar esta cita?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} variant="contained">
+            No
+          </Button>
+          <Button
+            onClick={handleConfirmarCancelar}
+            color="error"
+            variant="contained"
+          >
+            Sí, Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+};
 
 interface CollapsibleTableProps {
   fecha: dayjs.Dayjs;
@@ -43,9 +209,6 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
       },
     },
   });
-
-  if (loading) return <TableSkeleton rows={3} columns={5} />;
-  if (error) return <p>Error: {error.message}</p>;
 
   const citas = data?.getCitas.edges || [];
   const totalCount = data?.getCitas.aggregate.count || 0;
@@ -69,96 +232,67 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
     setPage(0);
   };
 
-  const handleRefresh = () => {
-    refetch();
-  };
+  if (loading) return <TableSkeleton rows={3} columns={4} />;
+  if (error)
+    return <Typography color="error">Error: {error.message}</Typography>;
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        padding: 2,
-      }}
-    >
-      {/* Barra de búsqueda y contador */}
+    <Box sx={{ width: "100%" }}>
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-start", // Alineamos todo hacia la izquierda
           mb: 2,
+          gap: 1, // Reducimos el gap entre los elementos
         }}
       >
-        {/* Búsqueda */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <TextField
-            label="Buscar por Motivo de Consulta"
-            variant="outlined"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            sx={{ marginRight: 2, width: "300px" }}
-            InputProps={{
-              endAdornment: (
-                <IconButton>
-                  <SearchIcon />
-                </IconButton>
-              ),
-            }}
-          />
-          <IconButton onClick={handleRefresh} sx={{ marginLeft: 1 }}>
+        <TextField
+          label="Buscar por Motivo"
+          variant="outlined"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          sx={{ width: 300 }}
+          InputProps={{
+            endAdornment: (
+              <IconButton>
+                <SearchIcon />
+              </IconButton>
+            ),
+          }}
+        />
+        <Tooltip title="Refrescar">
+          <IconButton onClick={() => refetch()} sx={{ marginLeft: 1 }}>
             <RefreshIcon />
           </IconButton>
-        </Box>
-
-        {/* Contador */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography variant="body1" sx={{ marginRight: 1 }}>
-            Total de Citas:
-          </Typography>
-          <Badge badgeContent={totalCount} color="primary">
-            <ListIcon />
-          </Badge>
-        </Box>
+        </Tooltip>
+        <Typography variant="body1" sx={{ marginLeft: 2 }}>
+          Total de Citas:
+        </Typography>
+        <Badge badgeContent={totalCount} color="primary" sx={{ marginLeft: 1 }}>
+          <ListIcon color="action" />
+        </Badge>
       </Box>
 
-      {/* Tabla de citas */}
-      <TableContainer
-        component={Paper}
-        sx={{ width: "100%", flexGrow: 1, overflow: "auto" }}
-      >
-        <Table stickyHeader aria-label="collapsible table">
+      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <TableCell />
               <TableCell>Motivo Consulta</TableCell>
-              <TableCell>Fecha Solicitud</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell align="right">Fecha Solicitud</TableCell>
+              <TableCell align="right">Estado</TableCell>
+              <TableCell align="right">Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {citas.map((items, index) => (
-              <CitaRow
-                key={index}
-                row={{
-                  id_cita: items.node.id_cita,
-                  motivoConsulta: items.node.motivoConsulta || "N/A",
-                  fechaSolicitud: items.node.fechaSolicitud || "N/A",
-                  observaciones: items.node.observaciones || "N/A",
-                  cancelada: items.node.cancelada,
-                  enfermedades: items.node.enfermedades,
-                  medicamentos: items.node.medicamentos,
-                  paciente: items.node.paciente,
-                }}
-              />
+            {citas.map((items) => (
+              <CitaRow key={items.node.id_cita} row={items.node as Cita} />
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Paginación */}
       <TablePagination
         component="div"
         count={totalCount}
@@ -166,6 +300,7 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        sx={{ mt: 2 }}
       />
     </Box>
   );

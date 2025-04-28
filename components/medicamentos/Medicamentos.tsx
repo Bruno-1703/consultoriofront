@@ -1,15 +1,5 @@
-import * as React from "react";
+import React, { useState } from "react";
 import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  TextField,
-  Tooltip,
-  IconButton,
-  Badge,
-  CircularProgress,
-  Alert,
   Table,
   TableBody,
   TableCell,
@@ -17,41 +7,60 @@ import {
   TableHead,
   TableRow,
   Paper,
+  CircularProgress,
+  Alert,
+  Typography,
+  Box,
+  Button,
+  TextField,
   TablePagination,
-  Drawer,
-  Divider,
+  IconButton,
+  Stack,
+  Badge,
+  Tooltip,
+  Snackbar,
 } from "@mui/material";
+import MedicationIcon from "@mui/icons-material/Medication";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PersonIcon from "@mui/icons-material/Person";
-import { useGetMedicamentosQuery } from "../../graphql/types";
+import MedicamentoForm from "./MedicamentoForm"; // Asegúrate de tener este componente
+import {
+  useGetMedicamentosQuery,
+} from "../../graphql/types";
+import TableSkeleton from "../../utils/TableSkeleton";
+import ConfirmarEliminacion from "../../utils/ConfirmarEliminacion";
 
 const Medicamentos: React.FC = () => {
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [showForm, setShowForm] = React.useState(false);
-  const [selectedMedicamento, setSelectedMedicamento] =
-    React.useState<any>(null);
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [searchTerm, setSearchTerm] = useState<string | null>(""); 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [showForm, setShowForm] = useState(false);
+  const [errorSnackbar, setErrorSnackbar] = useState<string | null>(null);
+  const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMedicamento, setSelectedMedicamento] = useState<any>(null);
+  const [eliminarMedicamento, setEliminarMedicamento] = useState<string | null>(null);
+  const [medicamentoIdEditar, setMedicamentoIdEditar] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [debugMessage, setDebugMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useGetMedicamentosQuery({
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
       where: {
-        // nombre_med: searchTerm,
-        // Otros filtros opcionales para buscar medicamentos
+        nombre_med: searchTerm,
+        marca: searchTerm,
       },
     },
   });
 
-  console.log(data);
+  // const [eliminarMedicamentoLogMutation] = useEliminarMedicamentoLogMutation();
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0); // Reset page when search term changes
+    setSearchTerm(event.target.value!);
   };
 
   const handleChangePage = (
@@ -68,15 +77,54 @@ const Medicamentos: React.FC = () => {
     setPage(0);
   };
 
-  const handleViewDetails = (medicamento: any) => {
-    setSelectedMedicamento(medicamento);
-    setDrawerOpen(true);
+  const handleEditMedicamento = (medicamentoId: string | null | undefined) => {
+    setDebugMessage(`Editing medicamento ID: ${medicamentoId}`);
+    if (medicamentoId != null) {
+      setMedicamentoIdEditar(medicamentoId);
+      setIsEditing(true);
+    }
   };
 
-  const handleCloseDrawer = () => {
-    setDrawerOpen(false);
+  const handleCloseEdit = () => {
+    setIsEditing(false);
+    setMedicamentoIdEditar(null);
+    setShowForm(false);
+  };
+
+  // const handleEliminarMedicamento = async (medicamentoId: string) => {
+  //   try {
+  //     await eliminarMedicamentoLogMutation({ variables: { medicamentoId } });
+  //     refetch();
+  //     setSuccessSnackbar("Medicamento eliminado con éxito.");
+  //   } catch (error) {
+  //     console.error("Error al eliminar el medicamento:", error);
+  //     setErrorSnackbar("Error al eliminar el medicamento.");
+  //   }
+  // };
+
+  const handleOpenModal = (medicamento: any) => {
+    setSelectedMedicamento(medicamento);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
     setSelectedMedicamento(null);
   };
+
+  const handleSnackbarClose = () => {
+    setErrorSnackbar(null);
+  };
+
+  const handleSuccessSnackbarClose = () => {
+    setSuccessSnackbar(null);
+  };
+
+  if (loading) return <TableSkeleton rows={3} columns={5} />;
+  if (error) {
+    setErrorSnackbar(error.message);
+    return null;
+  }
 
   return (
     <Box
@@ -96,12 +144,6 @@ const Medicamentos: React.FC = () => {
         <Typography variant="h4" sx={{ fontWeight: "bold" }}>
           Gestión de Medicamentos
         </Typography>
-        <Badge
-          badgeContent={data?.getMedicamentos.aggregate.count || 0}
-          color="primary"
-        >
-          <PersonIcon sx={{ color: "#1976d2" }} />
-        </Badge>
       </Stack>
 
       <Stack
@@ -112,12 +154,10 @@ const Medicamentos: React.FC = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setShowForm((prev) => !prev)} 
           sx={{
             backgroundColor: "#1976d2",
-            "&:hover": {
-              backgroundColor: "#115293",
-            },
+            "&:hover": { backgroundColor: "#115293" },
             fontWeight: "bold",
             paddingX: 2,
           }}
@@ -125,7 +165,7 @@ const Medicamentos: React.FC = () => {
           {showForm ? "Ocultar Formulario" : "Registrar Medicamento"}
         </Button>
         <TextField
-          label="Buscar por Nombre"
+          label="Buscar por nombre o marca"
           variant="outlined"
           value={searchTerm}
           onChange={handleSearchChange}
@@ -138,13 +178,19 @@ const Medicamentos: React.FC = () => {
             sx={{
               borderRadius: 1,
               backgroundColor: "#f0f0f0",
-              "&:hover": {
-                backgroundColor: "#e0e0e0",
-              },
+              "&:hover": { backgroundColor: "#e0e0e0" },
             }}
           >
             <RefreshIcon />
           </IconButton>
+        </Tooltip>
+        <Tooltip title="Medicamentos">
+          <Badge
+            badgeContent={data?.getMedicamentos.aggregate.count || 0}
+            color="primary"
+          >
+            <MedicationIcon sx={{ color: "#1976d2" }} />
+          </Badge>
         </Tooltip>
       </Stack>
 
@@ -157,61 +203,48 @@ const Medicamentos: React.FC = () => {
             borderRadius: 2,
           }}
         >
-          {/* Aquí iría el componente de formulario para medicamentos */}
+          <MedicamentoForm /> 
         </Box>
       )}
 
-      {loading && (
+      {isEditing && medicamentoIdEditar ? (
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ marginY: 3 }}
+          sx={{
+            marginTop: 2,
+            padding: 2,
+            backgroundColor: "#e3f2fd",
+            borderRadius: 2,
+          }}
         >
-          <CircularProgress />
+          {/* <MedicamentoFormEdit
+            medicamentoId={medicamentoIdEditar}
+            onClose={handleCloseEdit}
+          /> */}
         </Box>
-      )}
-
-      {error && (
-        <Alert severity="error" sx={{ marginY: 3 }}>
-          Error al cargar los medicamentos: {error.message}
-        </Alert>
-      )}
+      ) : null}
 
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-        <Table sx={{ minWidth: 650 }}>
+        <Table sx={{ minWidth: 1110 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#1976d2" }}>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-              >
-                Nombre
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-              >
-                Marca
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-              >
-                Fecha de Vencimiento
-              </TableCell>
-              <TableCell
-                sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-              >
-                Dosis
-              </TableCell>
-              <TableCell
-                align="center"
-                sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-              >
-                Acciones
-              </TableCell>
+              {["Nombre", "Marca", "Fecha Vencimiento", "Dosis", "Acciones"].map(
+                (header) => (
+                  <TableCell
+                    key={header}
+                    sx={{
+                      color: "white",
+                      fontWeight: "bold",
+                      padding: "6px 16px",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                )
+              )}
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.getMedicamentos.edges.map((medicamento, index) => (
+            {data?.getMedicamentos.edges.map((medicamento, index) => (
               <TableRow
                 key={medicamento.node.id_medicamento}
                 sx={{
@@ -222,29 +255,41 @@ const Medicamentos: React.FC = () => {
               >
                 <TableCell>{medicamento.node.nombre_med}</TableCell>
                 <TableCell>{medicamento.node.marca}</TableCell>
-                <TableCell>
-                  {new Date(
-                    medicamento.node.fecha_vencimiento
-                  ).toLocaleDateString()}
-                </TableCell>
+                <TableCell>{new Date(medicamento.node.fecha_vencimiento).toLocaleDateString()}</TableCell>
                 <TableCell>{medicamento.node.dosis_hs}</TableCell>
                 <TableCell align="center">
                   <Tooltip title="Visualizar">
                     <IconButton
                       aria-label="visualizar"
                       color="primary"
-                      onClick={() => handleViewDetails(medicamento.node)}
+                      onClick={() => handleOpenModal(medicamento.node)}
                     >
                       <VisibilityIcon />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Editar">
-                    <IconButton aria-label="editar" color="secondary">
+                    <IconButton
+                      aria-label="editar"
+                      color="secondary"
+                      onClick={() =>
+                        handleEditMedicamento(medicamento.node.id_medicamento)
+                      }
+                    >
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Eliminar">
-                    <IconButton aria-label="eliminar" color="error">
+                    <IconButton
+                      aria-label="eliminar"
+                      color="error"
+                      onClick={() => {
+                        if (medicamento.node.id_medicamento) {
+                          setEliminarMedicamento(medicamento.node.id_medicamento);
+                        } else {
+                          setEliminarMedicamento(null);
+                        }
+                      }}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </Tooltip>
@@ -256,142 +301,64 @@ const Medicamentos: React.FC = () => {
       </TableContainer>
 
       <TablePagination
+        rowsPerPageOptions={[5, 10, 15]}
         component="div"
-        count={data?.getMedicamentos.aggregate.count || 0}
+        count={data?.getMedicamentos?.aggregate.count || 0}
+        rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{
-          marginTop: 2,
-          backgroundColor: "#f5f5f5",
-          borderRadius: 1,
-          boxShadow: 1,
-        }}
       />
 
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={handleCloseDrawer}
-        sx={{
-          width: 400,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 400,
-            boxSizing: "border-box",
-            padding: 3,
-            backgroundColor: "#fff",
-            borderRadius: 2,
-          },
-        }}
+      {/* Error Snackbar */}
+      <Snackbar
+        open={Boolean(errorSnackbar)}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
       >
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ marginBottom: 2 }}
+        <Alert
+          onClose={handleSnackbarClose}
+          severity="error"
+          sx={{ width: "100%" }}
         >
-          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-            Detalles del Medicamento
-          </Typography>
-          <IconButton onClick={handleCloseDrawer} color="inherit">
-            {/* <CloseIcon /> */}
-          </IconButton>
-        </Stack>
-        <Divider sx={{ marginY: 2 }} />
-        {selectedMedicamento && (
-          <Box>
-            <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-              Nombre:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.nombre_med}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Marca:
-            </Typography>
-            <Typography variant="body2">{selectedMedicamento.marca}</Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Fecha de Vencimiento:
-            </Typography>
-            <Typography variant="body2">
-              {new Date(
-                selectedMedicamento.fecha_vencimiento
-              ).toLocaleDateString()}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Dosis:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.dosis_hs}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Agente Principal:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.agente_principal}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Efectos Secundarios:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.efectos_secundarios}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Lista Negra:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.lista_negra ? "Sí" : "No"}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Categoría:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.categoria}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Contraindicaciones:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.contraindicaciones}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ fontWeight: "bold", marginTop: 1 }}
-            >
-              Prescripción Requerida:
-            </Typography>
-            <Typography variant="body2">
-              {selectedMedicamento.prescripcion_requerida ? "Sí" : "No"}
-            </Typography>
-          </Box>
-        )}
-      </Drawer>
+          {errorSnackbar}
+        </Alert>
+      </Snackbar>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={Boolean(successSnackbar)}
+        autoHideDuration={6000}
+        onClose={handleSuccessSnackbarClose}
+      >
+        <Alert
+          onClose={handleSuccessSnackbarClose}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {successSnackbar}
+        </Alert>
+      </Snackbar>
+{/* 
+      <MedicamentosModal
+        modalOpen={modalOpen}
+        handleCloseModal={handleCloseModal}
+        selectedMedicamento={selectedMedicamento}
+      /> */}
+
+      {/* <ConfirmarEliminacion
+        open={Boolean(eliminarMedicamento)}
+        onClose={() => setEliminarMedicamento(null)}
+        onConfirmar={() => {
+          if (eliminarMedicamento) {
+            handleEliminarMedicamento(eliminarMedicamento);
+          }
+          setEliminarMedicamento(null);
+        }}
+        mensaje="¿Estás seguro de que deseas eliminar este medicamento?"
+        titulo="Confirmar Eliminación"
+        disable={false}
+      /> */}
     </Box>
   );
 };
