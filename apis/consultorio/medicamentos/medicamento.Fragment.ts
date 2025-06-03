@@ -13,5 +13,6 @@ export default gql`
     categoria
     contraindicaciones
     prescripcion_requerida 
+    stock
   }
 `;

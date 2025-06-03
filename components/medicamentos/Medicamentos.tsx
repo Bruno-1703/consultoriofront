@@ -19,21 +19,28 @@ import {
   Badge,
   Tooltip,
   Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import MedicationIcon from "@mui/icons-material/Medication";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import MedicamentoForm from "./MedicamentoForm"; // Asegúrate de tener este componente
-import {
-  useGetMedicamentosQuery,
-} from "../../graphql/types";
+import StockIcon from "@mui/icons-material/LocalMall";
+
+import { useGetMedicamentosQuery } from "../../graphql/types";
 import TableSkeleton from "../../utils/TableSkeleton";
 import ConfirmarEliminacion from "../../utils/ConfirmarEliminacion";
+import MedicamentoFormulario from "./MedicamentoEditarFormulario";
+import CrearMedicamentoFormulario from "./CrearMedicamentoFormulario";
+import MedicamentoDetalleModal from "./MedicamentoDetalleModalProps";
 
 const Medicamentos: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState<string | null>(""); 
+  const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showForm, setShowForm] = useState(false);
@@ -41,10 +48,13 @@ const Medicamentos: React.FC = () => {
   const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMedicamento, setSelectedMedicamento] = useState<any>(null);
-  const [eliminarMedicamento, setEliminarMedicamento] = useState<string | null>(null);
-  const [medicamentoIdEditar, setMedicamentoIdEditar] = useState<string | null>(null);
+  const [eliminarMedicamento, setEliminarMedicamento] = useState<string | null>(
+    null
+  );
+  const [medicamentoIdEditar, setMedicamentoIdEditar] = useState<string | null>(
+    null
+  );
   const [isEditing, setIsEditing] = useState(false);
-  const [debugMessage, setDebugMessage] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useGetMedicamentosQuery({
     variables: {
@@ -57,10 +67,8 @@ const Medicamentos: React.FC = () => {
     },
   });
 
-  // const [eliminarMedicamentoLogMutation] = useEliminarMedicamentoLogMutation();
-
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value!);
+    setSearchTerm(event.target.value);
   };
 
   const handleChangePage = (
@@ -78,10 +86,10 @@ const Medicamentos: React.FC = () => {
   };
 
   const handleEditMedicamento = (medicamentoId: string | null | undefined) => {
-    setDebugMessage(`Editing medicamento ID: ${medicamentoId}`);
     if (medicamentoId != null) {
       setMedicamentoIdEditar(medicamentoId);
       setIsEditing(true);
+      setShowForm(true);
     }
   };
 
@@ -90,17 +98,6 @@ const Medicamentos: React.FC = () => {
     setMedicamentoIdEditar(null);
     setShowForm(false);
   };
-
-  // const handleEliminarMedicamento = async (medicamentoId: string) => {
-  //   try {
-  //     await eliminarMedicamentoLogMutation({ variables: { medicamentoId } });
-  //     refetch();
-  //     setSuccessSnackbar("Medicamento eliminado con éxito.");
-  //   } catch (error) {
-  //     console.error("Error al eliminar el medicamento:", error);
-  //     setErrorSnackbar("Error al eliminar el medicamento.");
-  //   }
-  // };
 
   const handleOpenModal = (medicamento: any) => {
     setSelectedMedicamento(medicamento);
@@ -135,31 +132,24 @@ const Medicamentos: React.FC = () => {
         boxShadow: 3,
       }}
     >
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ marginBottom: 2 }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-          Gestión de Medicamentos
-        </Typography>
-      </Stack>
+     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+  <Typography variant="h4" sx={{ fontWeight: "bold", color: "#1976d2" }}>
+    Gestión de Medicamentos
+  </Typography>
 
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ marginBottom: 2, alignItems: "center" }}
-      >
+</Stack>
+
+
+      <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: "center" }}>
         <Button
           variant="contained"
           color="primary"
-          onClick={() => setShowForm((prev) => !prev)} 
+          onClick={() => setShowForm((prev) => !prev)}
           sx={{
             backgroundColor: "#1976d2",
             "&:hover": { backgroundColor: "#115293" },
             fontWeight: "bold",
-            paddingX: 2,
+            px: 2,
           }}
         >
           {showForm ? "Ocultar Formulario" : "Registrar Medicamento"}
@@ -175,11 +165,7 @@ const Medicamentos: React.FC = () => {
           <IconButton
             onClick={() => refetch()}
             color="secondary"
-            sx={{
-              borderRadius: 1,
-              backgroundColor: "#f0f0f0",
-              "&:hover": { backgroundColor: "#e0e0e0" },
-            }}
+            sx={{ borderRadius: 1 }}
           >
             <RefreshIcon />
           </IconButton>
@@ -195,52 +181,31 @@ const Medicamentos: React.FC = () => {
       </Stack>
 
       {showForm && (
-        <Box
-          sx={{
-            marginBottom: 2,
-            padding: 2,
-            backgroundColor: "#e3f2fd",
-            borderRadius: 2,
-          }}
-        >
-          <MedicamentoForm /> 
-        </Box>
-      )}
+  <Box sx={{ mb: 2, p: 2, backgroundColor: 'whit', borderRadius: 2 }}>
+  <CrearMedicamentoFormulario onClose={() => setShowForm(false)} />
 
-      {isEditing && medicamentoIdEditar ? (
-        <Box
-          sx={{
-            marginTop: 2,
-            padding: 2,
-            backgroundColor: "#e3f2fd",
-            borderRadius: 2,
-          }}
-        >
-          {/* <MedicamentoFormEdit
-            medicamentoId={medicamentoIdEditar}
-            onClose={handleCloseEdit}
-          /> */}
-        </Box>
-      ) : null}
+  </Box>
+)}
 
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
         <Table sx={{ minWidth: 1110 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#1976d2" }}>
-              {["Nombre", "Marca", "Fecha Vencimiento", "Dosis", "Acciones"].map(
-                (header) => (
-                  <TableCell
-                    key={header}
-                    sx={{
-                      color: "white",
-                      fontWeight: "bold",
-                      padding: "6px 16px",
-                    }}
-                  >
-                    {header}
-                  </TableCell>
-                )
-              )}
+              {[
+                "Nombre",
+                "Marca",
+                "Fecha Vencimiento",
+                "Dosis",
+                "Stock",
+                "Acciones",
+              ].map((header) => (
+                <TableCell
+                  key={header}
+                  sx={{ color: "white", fontWeight: "bold", px: 2 }}
+                >
+                  {header}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -255,40 +220,56 @@ const Medicamentos: React.FC = () => {
               >
                 <TableCell>{medicamento.node.nombre_med}</TableCell>
                 <TableCell>{medicamento.node.marca}</TableCell>
-                <TableCell>{new Date(medicamento.node.fecha_vencimiento).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {new Date(
+                    medicamento.node.fecha_vencimiento
+                  ).toLocaleDateString()}
+                </TableCell>
                 <TableCell>{medicamento.node.dosis_hs}</TableCell>
+                <TableCell>
+                  <Typography variant="body2" color="textSecondary">
+                    {medicamento.node.stock} unidades
+                  </Typography>
+                </TableCell>
                 <TableCell align="center">
                   <Tooltip title="Visualizar">
                     <IconButton
-                      aria-label="visualizar"
-                      color="primary"
                       onClick={() => handleOpenModal(medicamento.node)}
+                      color="primary"
                     >
                       <VisibilityIcon />
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Editar">
                     <IconButton
-                      aria-label="editar"
-                      color="secondary"
                       onClick={() =>
                         handleEditMedicamento(medicamento.node.id_medicamento)
                       }
+                      color="secondary"
                     >
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
+                  <Tooltip title="Controlar Stock">
+                    <IconButton
+                      color="success"
+                      onClick={() =>
+                        alert(
+                          `Controlar stock para: ${medicamento.node.nombre_med}`
+                        )
+                      }
+                    >
+                      <StockIcon />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Eliminar">
                     <IconButton
-                      aria-label="eliminar"
                       color="error"
-                      onClick={() => {
-                        if (medicamento.node.id_medicamento) {
-                          setEliminarMedicamento(medicamento.node.id_medicamento);
-                        } else {
-                          setEliminarMedicamento(null);
-                        }
-                      }}
+                      onClick={() =>
+                        setEliminarMedicamento(
+                          medicamento.node.id_medicamento ?? null
+                        )
+                      }
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -310,7 +291,7 @@ const Medicamentos: React.FC = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
 
-      {/* Error Snackbar */}
+      {/* Snackbar de error */}
       <Snackbar
         open={Boolean(errorSnackbar)}
         autoHideDuration={6000}
@@ -325,7 +306,7 @@ const Medicamentos: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      {/* Success Snackbar */}
+      {/* Snackbar de éxito */}
       <Snackbar
         open={Boolean(successSnackbar)}
         autoHideDuration={6000}
@@ -339,26 +320,28 @@ const Medicamentos: React.FC = () => {
           {successSnackbar}
         </Alert>
       </Snackbar>
-{/* 
-      <MedicamentosModal
-        modalOpen={modalOpen}
-        handleCloseModal={handleCloseModal}
-        selectedMedicamento={selectedMedicamento}
-      /> */}
 
-      {/* <ConfirmarEliminacion
-        open={Boolean(eliminarMedicamento)}
-        onClose={() => setEliminarMedicamento(null)}
-        onConfirmar={() => {
-          if (eliminarMedicamento) {
-            handleEliminarMedicamento(eliminarMedicamento);
-          }
-          setEliminarMedicamento(null);
-        }}
-        mensaje="¿Estás seguro de que deseas eliminar este medicamento?"
-        titulo="Confirmar Eliminación"
-        disable={false}
-      /> */}
+      {/* Modal de visualización */}
+      <MedicamentoDetalleModal
+  open={modalOpen}
+  onClose={handleCloseModal}
+  medicamento={selectedMedicamento}
+/>
+
+      {eliminarMedicamento && (
+        <ConfirmarEliminacion
+          open={Boolean(eliminarMedicamento)}
+          onClose={() => setEliminarMedicamento(null)}
+          onConfirmar={() => {
+            // Aquí debería ir la lógica para eliminar el medicamento
+            setSuccessSnackbar("Medicamento eliminado.");
+            setEliminarMedicamento(null);
+            refetch();
+          }}
+          mensaje="¿Deseas eliminar este medicamento?"
+          disable={false}
+        />
+      )}
     </Box>
   );
 };

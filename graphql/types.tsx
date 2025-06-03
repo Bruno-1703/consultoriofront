@@ -163,6 +163,7 @@ export type Medicamento = {
   marca?: Maybe<Scalars['String']['output']>;
   nombre_med?: Maybe<Scalars['String']['output']>;
   prescripcion_requerida?: Maybe<Scalars['Boolean']['output']>;
+  stock?: Maybe<Scalars['Int']['output']>;
 };
 
 export type MedicamentoEdge = {
@@ -183,6 +184,7 @@ export type MedicamentoInput = {
   marca?: InputMaybe<Scalars['String']['input']>;
   nombre_med?: InputMaybe<Scalars['String']['input']>;
   prescripcion_requerida?: InputMaybe<Scalars['Boolean']['input']>;
+  stock?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type MedicamentoResultadoBusqueda = {
@@ -204,12 +206,14 @@ export type MedicamentoWhereInput = {
   marca?: InputMaybe<Scalars['String']['input']>;
   nombre_med?: InputMaybe<Scalars['String']['input']>;
   prescripcion_requerida?: InputMaybe<Scalars['Boolean']['input']>;
+  stock?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
   ElimiarPacienteLog: Scalars['String']['output'];
   EliminarPaciente: Scalars['String']['output'];
+  aumentarStock: Scalars['String']['output'];
   cancelarCita: Scalars['String']['output'];
   createCita: Scalars['String']['output'];
   createCitaEnfermedad: Scalars['String']['output'];
@@ -223,6 +227,7 @@ export type Mutation = {
   deleteMedicamento: Scalars['String']['output'];
   deleteMedicamentoLog: Scalars['String']['output'];
   deleteUsuario: Scalars['String']['output'];
+  reducirStock: Scalars['String']['output'];
   updateCita: Scalars['String']['output'];
   updateEnfermedad: Scalars['String']['output'];
   updateEstudio: Scalars['String']['output'];
@@ -239,6 +244,12 @@ export type MutationElimiarPacienteLogArgs = {
 
 export type MutationEliminarPacienteArgs = {
   pacienteId: Scalars['String']['input'];
+};
+
+
+export type MutationAumentarStockArgs = {
+  cantidad: Scalars['Int']['input'];
+  medicamentoId: Scalars['String']['input'];
 };
 
 
@@ -309,6 +320,12 @@ export type MutationDeleteMedicamentoLogArgs = {
 
 export type MutationDeleteUsuarioArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationReducirStockArgs = {
+  cantidad: Scalars['Int']['input'];
+  medicamentoId: Scalars['String']['input'];
 };
 
 
@@ -422,6 +439,7 @@ export type Query = {
   getMedicamentos: MedicamentoResultadoBusqueda;
   getPaciente?: Maybe<Paciente>;
   getPacientes: PacientesResultadoBusqueda;
+  getStock: Scalars['Float']['output'];
   getUsuario?: Maybe<Usuario>;
 };
 
@@ -483,6 +501,11 @@ export type QueryGetPacientesArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   skip?: InputMaybe<Scalars['Int']['input']>;
   where?: InputMaybe<PacienteWhereInput>;
+};
+
+
+export type QueryGetStockArgs = {
+  medicamentoId: Scalars['String']['input'];
 };
 
 
@@ -568,6 +591,7 @@ export const MedicamentoFragmentDoc = gql`
   categoria
   contraindicaciones
   prescripcion_requerida
+  stock
 }
     `;
 export const PacienteFragmentDoc = gql`
@@ -1051,6 +1075,38 @@ export function useUpdateEstudioMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateEstudioMutationHookResult = ReturnType<typeof useUpdateEstudioMutation>;
 export type UpdateEstudioMutationResult = Apollo.MutationResult<UpdateEstudioMutation>;
 export type UpdateEstudioMutationOptions = Apollo.BaseMutationOptions<UpdateEstudioMutation, UpdateEstudioMutationVariables>;
+export const AumentarStockDocument = gql`
+    mutation AumentarStock($medicamentoId: String!, $cantidad: Int!) {
+  aumentarStock(medicamentoId: $medicamentoId, cantidad: $cantidad)
+}
+    `;
+export type AumentarStockMutationFn = Apollo.MutationFunction<AumentarStockMutation, AumentarStockMutationVariables>;
+
+/**
+ * __useAumentarStockMutation__
+ *
+ * To run a mutation, you first call `useAumentarStockMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAumentarStockMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [aumentarStockMutation, { data, loading, error }] = useAumentarStockMutation({
+ *   variables: {
+ *      medicamentoId: // value for 'medicamentoId'
+ *      cantidad: // value for 'cantidad'
+ *   },
+ * });
+ */
+export function useAumentarStockMutation(baseOptions?: Apollo.MutationHookOptions<AumentarStockMutation, AumentarStockMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AumentarStockMutation, AumentarStockMutationVariables>(AumentarStockDocument, options);
+      }
+export type AumentarStockMutationHookResult = ReturnType<typeof useAumentarStockMutation>;
+export type AumentarStockMutationResult = Apollo.MutationResult<AumentarStockMutation>;
+export type AumentarStockMutationOptions = Apollo.BaseMutationOptions<AumentarStockMutation, AumentarStockMutationVariables>;
 export const CreateMedicamentoDocument = gql`
     mutation CreateMedicamento($data: MedicamentoInput!) {
   createMedicamento(data: $data)
@@ -1082,6 +1138,68 @@ export function useCreateMedicamentoMutation(baseOptions?: Apollo.MutationHookOp
 export type CreateMedicamentoMutationHookResult = ReturnType<typeof useCreateMedicamentoMutation>;
 export type CreateMedicamentoMutationResult = Apollo.MutationResult<CreateMedicamentoMutation>;
 export type CreateMedicamentoMutationOptions = Apollo.BaseMutationOptions<CreateMedicamentoMutation, CreateMedicamentoMutationVariables>;
+export const DeleteMedicamentoDocument = gql`
+    mutation DeleteMedicamento($id: String!) {
+  deleteMedicamento(id: $id)
+}
+    `;
+export type DeleteMedicamentoMutationFn = Apollo.MutationFunction<DeleteMedicamentoMutation, DeleteMedicamentoMutationVariables>;
+
+/**
+ * __useDeleteMedicamentoMutation__
+ *
+ * To run a mutation, you first call `useDeleteMedicamentoMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMedicamentoMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMedicamentoMutation, { data, loading, error }] = useDeleteMedicamentoMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMedicamentoMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMedicamentoMutation, DeleteMedicamentoMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMedicamentoMutation, DeleteMedicamentoMutationVariables>(DeleteMedicamentoDocument, options);
+      }
+export type DeleteMedicamentoMutationHookResult = ReturnType<typeof useDeleteMedicamentoMutation>;
+export type DeleteMedicamentoMutationResult = Apollo.MutationResult<DeleteMedicamentoMutation>;
+export type DeleteMedicamentoMutationOptions = Apollo.BaseMutationOptions<DeleteMedicamentoMutation, DeleteMedicamentoMutationVariables>;
+export const DeleteMedicamentoLogDocument = gql`
+    mutation DeleteMedicamentoLog($id: String!) {
+  deleteMedicamentoLog(id: $id)
+}
+    `;
+export type DeleteMedicamentoLogMutationFn = Apollo.MutationFunction<DeleteMedicamentoLogMutation, DeleteMedicamentoLogMutationVariables>;
+
+/**
+ * __useDeleteMedicamentoLogMutation__
+ *
+ * To run a mutation, you first call `useDeleteMedicamentoLogMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteMedicamentoLogMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteMedicamentoLogMutation, { data, loading, error }] = useDeleteMedicamentoLogMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteMedicamentoLogMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMedicamentoLogMutation, DeleteMedicamentoLogMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteMedicamentoLogMutation, DeleteMedicamentoLogMutationVariables>(DeleteMedicamentoLogDocument, options);
+      }
+export type DeleteMedicamentoLogMutationHookResult = ReturnType<typeof useDeleteMedicamentoLogMutation>;
+export type DeleteMedicamentoLogMutationResult = Apollo.MutationResult<DeleteMedicamentoLogMutation>;
+export type DeleteMedicamentoLogMutationOptions = Apollo.BaseMutationOptions<DeleteMedicamentoLogMutation, DeleteMedicamentoLogMutationVariables>;
 export const GetMedicamentoDocument = gql`
     query getMedicamento($id: String!) {
   getMedicamento(id: $id) {
@@ -1171,6 +1289,70 @@ export type GetMedicamentosQueryHookResult = ReturnType<typeof useGetMedicamento
 export type GetMedicamentosLazyQueryHookResult = ReturnType<typeof useGetMedicamentosLazyQuery>;
 export type GetMedicamentosSuspenseQueryHookResult = ReturnType<typeof useGetMedicamentosSuspenseQuery>;
 export type GetMedicamentosQueryResult = Apollo.QueryResult<GetMedicamentosQuery, GetMedicamentosQueryVariables>;
+export const ReducirStockDocument = gql`
+    mutation ReducirStock($medicamentoId: String!, $cantidad: Int!) {
+  reducirStock(medicamentoId: $medicamentoId, cantidad: $cantidad)
+}
+    `;
+export type ReducirStockMutationFn = Apollo.MutationFunction<ReducirStockMutation, ReducirStockMutationVariables>;
+
+/**
+ * __useReducirStockMutation__
+ *
+ * To run a mutation, you first call `useReducirStockMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReducirStockMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reducirStockMutation, { data, loading, error }] = useReducirStockMutation({
+ *   variables: {
+ *      medicamentoId: // value for 'medicamentoId'
+ *      cantidad: // value for 'cantidad'
+ *   },
+ * });
+ */
+export function useReducirStockMutation(baseOptions?: Apollo.MutationHookOptions<ReducirStockMutation, ReducirStockMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReducirStockMutation, ReducirStockMutationVariables>(ReducirStockDocument, options);
+      }
+export type ReducirStockMutationHookResult = ReturnType<typeof useReducirStockMutation>;
+export type ReducirStockMutationResult = Apollo.MutationResult<ReducirStockMutation>;
+export type ReducirStockMutationOptions = Apollo.BaseMutationOptions<ReducirStockMutation, ReducirStockMutationVariables>;
+export const UpdateMedicamentoDocument = gql`
+    mutation UpdateMedicamento($medicamentoId: String!, $data: MedicamentoInput!) {
+  updateMedicamento(medicamentoId: $medicamentoId, data: $data)
+}
+    `;
+export type UpdateMedicamentoMutationFn = Apollo.MutationFunction<UpdateMedicamentoMutation, UpdateMedicamentoMutationVariables>;
+
+/**
+ * __useUpdateMedicamentoMutation__
+ *
+ * To run a mutation, you first call `useUpdateMedicamentoMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateMedicamentoMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateMedicamentoMutation, { data, loading, error }] = useUpdateMedicamentoMutation({
+ *   variables: {
+ *      medicamentoId: // value for 'medicamentoId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateMedicamentoMutation(baseOptions?: Apollo.MutationHookOptions<UpdateMedicamentoMutation, UpdateMedicamentoMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateMedicamentoMutation, UpdateMedicamentoMutationVariables>(UpdateMedicamentoDocument, options);
+      }
+export type UpdateMedicamentoMutationHookResult = ReturnType<typeof useUpdateMedicamentoMutation>;
+export type UpdateMedicamentoMutationResult = Apollo.MutationResult<UpdateMedicamentoMutation>;
+export type UpdateMedicamentoMutationOptions = Apollo.BaseMutationOptions<UpdateMedicamentoMutation, UpdateMedicamentoMutationVariables>;
 export const CreatePacienteDocument = gql`
     mutation CreatePaciente($data: PacienteInput!) {
   createPaciente(data: $data)
@@ -1487,6 +1669,14 @@ export type UpdateEstudioMutationVariables = Exact<{
 
 export type UpdateEstudioMutation = { __typename?: 'Mutation', updateEstudio: string };
 
+export type AumentarStockMutationVariables = Exact<{
+  medicamentoId: Scalars['String']['input'];
+  cantidad: Scalars['Int']['input'];
+}>;
+
+
+export type AumentarStockMutation = { __typename?: 'Mutation', aumentarStock: string };
+
 export type CreateMedicamentoMutationVariables = Exact<{
   data: MedicamentoInput;
 }>;
@@ -1494,14 +1684,28 @@ export type CreateMedicamentoMutationVariables = Exact<{
 
 export type CreateMedicamentoMutation = { __typename?: 'Mutation', createMedicamento: string };
 
-export type MedicamentoFragment = { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null };
+export type DeleteMedicamentoMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteMedicamentoMutation = { __typename?: 'Mutation', deleteMedicamento: string };
+
+export type DeleteMedicamentoLogMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteMedicamentoLogMutation = { __typename?: 'Mutation', deleteMedicamentoLog: string };
+
+export type MedicamentoFragment = { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null };
 
 export type GetMedicamentoQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetMedicamentoQuery = { __typename?: 'Query', getMedicamento?: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null } | null };
+export type GetMedicamentoQuery = { __typename?: 'Query', getMedicamento?: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null } | null };
 
 export type GetMedicamentosQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1510,7 +1714,23 @@ export type GetMedicamentosQueryVariables = Exact<{
 }>;
 
 
-export type GetMedicamentosQuery = { __typename?: 'Query', getMedicamentos: { __typename?: 'MedicamentoResultadoBusqueda', edges: Array<{ __typename?: 'MedicamentoEdge', node: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetMedicamentosQuery = { __typename?: 'Query', getMedicamentos: { __typename?: 'MedicamentoResultadoBusqueda', edges: Array<{ __typename?: 'MedicamentoEdge', node: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+
+export type ReducirStockMutationVariables = Exact<{
+  medicamentoId: Scalars['String']['input'];
+  cantidad: Scalars['Int']['input'];
+}>;
+
+
+export type ReducirStockMutation = { __typename?: 'Mutation', reducirStock: string };
+
+export type UpdateMedicamentoMutationVariables = Exact<{
+  medicamentoId: Scalars['String']['input'];
+  data: MedicamentoInput;
+}>;
+
+
+export type UpdateMedicamentoMutation = { __typename?: 'Mutation', updateMedicamento: string };
 
 export type CreatePacienteMutationVariables = Exact<{
   data: PacienteInput;

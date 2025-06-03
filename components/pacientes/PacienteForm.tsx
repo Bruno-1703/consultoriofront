@@ -101,11 +101,36 @@ const PacienteForm = () => {
     setAlergias("");
   };
 
+  const isFormValid = () => {
+    // El formulario es válido si no hay errores
+    return !Object.values(errors).includes(true) && dni && nombre_paciente && apellido_paciente && fechaNacimiento;
+  };
+
   return (
-    <Box sx={{ padding: 2, maxWidth: 700, margin: "auto" }}>
-      <Typography variant="h6" gutterBottom>
-        Registrar Paciente
-      </Typography>
+<Box
+  sx={{
+    padding: 3,
+    margin: "auto",  // Centramos el Box
+    backgroundColor: "#ffffff",  // Fondo blanco para mejor contraste
+    borderRadius: 2,  // Bordes redondeados
+    boxShadow: 3,  // Agregamos sombra para darle profundidad
+    transition: "all 0.3s ease",  // Transición suave para interacciones
+    "&:hover": {
+      boxShadow: 6,  // Aumentamos la sombra al pasar el mouse
+    },
+  }}
+>
+  <Typography
+    variant="h6"
+    gutterBottom
+    sx={{
+      fontWeight: "bold",  // Resaltamos el título con mayor grosor
+      color: "#1976d2",  // Un color de texto atractivo
+      fontSize: "1.2rem",  // Ajustamos el tamaño del título para que se vea más grande
+    }}
+  >
+    Registrar Paciente
+  </Typography>
 
       <Box
         component="form"
@@ -230,7 +255,12 @@ const PacienteForm = () => {
           sx={{ backgroundColor: "white", borderRadius: 1 }}
         />
 
-        <Button type="submit" variant="contained" color="primary">
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          disabled={!isFormValid()}
+        >
           Registrar
         </Button>
       </Box>
