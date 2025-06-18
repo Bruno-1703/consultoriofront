@@ -15,20 +15,27 @@ import {
   TableRow,
   Paper,
   TablePagination,
-  } from "@mui/material";
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import CoronavirusIcon from '@mui/icons-material/Coronavirus';
-import MedicationIcon from "@mui/icons-material/Medication";
-import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import CoronavirusIcon from "@mui/icons-material/Coronavirus";
+import MedicationIcon from "@mui/icons-material/MedicalServices";
+import AddchartIcon from "@mui/icons-material/Addchart";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-import { useGetCitasQuery } from "../graphql/types";
+import { useFinalizarCitaMutation, useGetCitasQuery } from "../graphql/types";
 import PersonaSelector from "../utils/SelectorUsuarios";
 import CitaModal from "../components/citas/citaModal";
 import AgregarEstudio from "../components/selectores/AgregarEstudios";
 import AgregarEnfermedad from "../components/selectores/AgregarEnfermedad";
 import AgregarMedicamento from "../components/selectores/AgregarMedicamento";
-import AddchartIcon from '@mui/icons-material/Addchart';
+
 const HistoriasPaciente: React.FC = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
@@ -39,11 +46,18 @@ const HistoriasPaciente: React.FC = () => {
 
   const [openModal, setOpenModal] = React.useState(false);
   const [selectedCita, setSelectedCita] = React.useState<any | null>(null);
+  const [finalizarCita, { loading: loadingFinalizar }] =
+    useFinalizarCitaMutation();
 
-  // Estados para modales
   const [openEstudioModal, setOpenEstudioModal] = React.useState(false);
   const [openEnfermedadModal, setOpenEnfermedadModal] = React.useState(false);
   const [openMedicamentoModal, setOpenMedicamentoModal] = React.useState(false);
+
+  // ESTADO CORREGIDO: Aseguramos que `citaToFinalizeId` solo sea string o null
+  const [openConfirmDialog, setOpenConfirmDialog] = React.useState(false);
+  const [citaToFinalizeId, setCitaToFinalizeId] = React.useState<string | null>(
+    null
+  );
 
   const handleOpenEstudioModal = (cita: any) => {
     setSelectedCita(cita);
@@ -65,6 +79,30 @@ const HistoriasPaciente: React.FC = () => {
     setSelectedCita(null);
   };
 
+  // Handler para abrir el diálogo de confirmación (asegurándose que el ID es string)
+  const handleOpenConfirmDialog = (citaId: string) => {
+    setCitaToFinalizeId(citaId);
+    setOpenConfirmDialog(true);
+  };
+
+  const handleCloseConfirmDialog = () => {
+    setOpenConfirmDialog(false);
+    setCitaToFinalizeId(null);
+  };
+
+  const handleConfirmFinalize = async () => {
+    if (citaToFinalizeId) {
+      try {
+        await finalizarCita({ variables: { id: citaToFinalizeId } });
+        refetch();
+        handleCloseConfirmDialog();
+      } catch (e) {
+        console.error("Error al finalizar cita:", e);
+        handleCloseConfirmDialog();
+      }
+    }
+  };
+
   const { data, loading, error, refetch } = useGetCitasQuery({
     variables: {
       limit: rowsPerPage,
@@ -77,7 +115,6 @@ const HistoriasPaciente: React.FC = () => {
       },
     },
   });
-
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number
@@ -197,31 +234,56 @@ const HistoriasPaciente: React.FC = () => {
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
+
                     <Tooltip title="Agregar Estudio">
                       <IconButton
                         color="info"
                         onClick={() => handleOpenEstudioModal(historia.node)}
+                        disabled={!!historia.node.finalizada}
                       >
                         <AddchartIcon />
                       </IconButton>
                     </Tooltip>
+
                     <Tooltip title="Agregar Enfermedad">
                       <IconButton
                         color="secondary"
                         onClick={() => handleOpenEnfermedadModal(historia.node)}
+                        disabled={!!historia.node.finalizada}
                       >
                         <CoronavirusIcon />
                       </IconButton>
                     </Tooltip>
+
                     <Tooltip title="Agregar Medicamento">
                       <IconButton
                         color="success"
                         onClick={() =>
                           handleOpenMedicamentoModal(historia.node)
                         }
+                        disabled={!!historia.node.finalizada}
                       >
                         <MedicationIcon />
                       </IconButton>
+                    </Tooltip>
+
+                    <Tooltip
+                      title={
+                        historia.node.finalizada
+                          ? "Cita Finalizada"
+                          : "Finalizar Cita"
+                      }
+                    >
+                      <span>
+                        <IconButton
+                          color="error"
+                          // CORRECCIÓN AQUÍ: Solo llama a handleOpenConfirmDialog si id_cita no es null/undefined
+                          onClick={() => historia.node?.id_cita && handleOpenConfirmDialog(historia.node.id_cita)}
+                          disabled={loadingFinalizar || !!historia.node.finalizada}
+                        >
+                          <CheckCircleIcon />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </Stack>
                 </TableCell>
@@ -241,7 +303,7 @@ const HistoriasPaciente: React.FC = () => {
         sx={{ marginTop: 2 }}
       />
 
-      {/* Modal de cita */}
+      {/* Modales existentes */}
       <CitaModal
         open={openModal}
         onClose={handleCloseModal}
@@ -262,6 +324,36 @@ const HistoriasPaciente: React.FC = () => {
         onClose={handleCloseAllModals}
         cita={selectedCita}
       />
+
+      {/* Diálogo de Confirmación */}
+      <Dialog
+        open={openConfirmDialog}
+        onClose={handleCloseConfirmDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Confirmar Finalización de Cita"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            ¿Estás seguro de que deseas finalizar esta cita? Una vez finalizada, no se podrán agregar más datos (estudios, enfermedades, medicamentos).
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseConfirmDialog} color="primary">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmFinalize}
+            color="error"
+            autoFocus
+            disabled={loadingFinalizar}
+          >
+            {loadingFinalizar ? <CircularProgress size={24} /> : "Finalizar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

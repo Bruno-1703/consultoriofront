@@ -1,4 +1,5 @@
 import React from 'react';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   TextField,
   Button,
@@ -11,8 +12,22 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
+  Paper,
+  Stack,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
+import MuiAlert, { AlertProps } from '@mui/material/Alert';
+
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
 import { useCreateMedicamentoMutation } from '../../graphql/types';
+
+const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function SnackbarAlert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 const dosisOptions = [
   'Una vez al día',
@@ -34,12 +49,18 @@ const categoriaOptions = [
 
 interface CrearMedicamentoFormularioProps {
   onClose: () => void;
+  onSuccess: () => void;
+  onError: (msg: string) => void;
 }
 
-const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({ onClose }) => {
+const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
+  onClose,
+  onSuccess,
+  onError,
+}) => {
   const [nombreMed, setNombreMed] = React.useState('');
   const [marca, setMarca] = React.useState('');
-  const [fechaVencimiento, setFechaVencimiento] = React.useState('');
+  const [fechaVencimiento, setFechaVencimiento] = React.useState<Dayjs | null>(null);
   const [dosisHs, setDosisHs] = React.useState('');
   const [agentePrincipal, setAgentePrincipal] = React.useState('');
   const [efectosSecundarios, setEfectosSecundarios] = React.useState('');
@@ -47,14 +68,18 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
   const [categoria, setCategoria] = React.useState('');
   const [contraindicaciones, setContraindicaciones] = React.useState('');
   const [prescripcionRequerida, setPrescripcionRequerida] = React.useState(false);
-  const [stock, setStock] = React.useState(0);
+  const [stock, setStock] = React.useState<number | ''>('');
 
-  const [createMedicamentoMutation, { data, loading, error }] = useCreateMedicamentoMutation();
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState<'success' | 'error' | 'warning' | 'info'>('info');
+
+  const [createMedicamentoMutation, { loading }] = useCreateMedicamentoMutation();
 
   const resetForm = () => {
     setNombreMed('');
     setMarca('');
-    setFechaVencimiento('');
+    setFechaVencimiento(null);
     setDosisHs('');
     setAgentePrincipal('');
     setEfectosSecundarios('');
@@ -62,7 +87,7 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
     setCategoria('');
     setContraindicaciones('');
     setPrescripcionRequerida(false);
-    setStock(0);
+    setStock('');
   };
 
   const handleCancel = () => {
@@ -70,50 +95,78 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
     onClose();
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    // Validación simple:
+    if (!nombreMed.trim() || !marca.trim() || !fechaVencimiento || !dosisHs.trim()) {
+      setSnackbarMessage('Por favor completa todos los campos requeridos.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+
     const medicamentoData = {
-      nombre_med: nombreMed,
-      marca: marca,
-      fecha_vencimiento: new Date(fechaVencimiento).toISOString(),
+      nombre_med: nombreMed.trim(),
+      marca: marca.trim(),
+      fecha_vencimiento: fechaVencimiento.toISOString(),
       dosis_hs: dosisHs,
-      agente_principal: agentePrincipal,
-      efectos_secundarios: efectosSecundarios,
+      agente_principal: agentePrincipal.trim() || null,
+      efectos_secundarios: efectosSecundarios.trim() || null,
       lista_negra: listaNegra,
-      categoria: categoria,
-      contraindicaciones: contraindicaciones,
+      categoria: categoria || null,
+      contraindicaciones: contraindicaciones.trim() || null,
       prescripcion_requerida: prescripcionRequerida,
-      stock: stock,
+      stock: stock === '' ? 0 : Number(stock),
     };
 
     try {
-      await createMedicamentoMutation({
-        variables: { data: medicamentoData },
-      });
-      console.log('Medicamento creado con éxito');
+      await createMedicamentoMutation({ variables: { data: medicamentoData } });
+      setSnackbarMessage('Medicamento creado con éxito.');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
       resetForm();
-      onClose();
-    } catch (err) {
-      console.error('Error al crear medicamento:', err);
+      onSuccess();
+    } catch (err: any) {
+      setSnackbarMessage(err.message || 'Error al crear el medicamento.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      onError(err.message);
     }
   };
 
   return (
-    <Box sx={{ p: 3, backgroundColor: '#e3f2fd', borderRadius: 2 }}>
-      <Typography variant="h4" gutterBottom color="primary">
+    <Box
+      sx={{
+        p: 3,
+        backgroundColor: '#fff',
+        borderRadius: 2,
+        boxShadow: 3,
+        maxWidth: 700,
+        margin: 'auto',
+        mt: 4,
+        transition: 'all 0.3s ease',
+        '&:hover': { boxShadow: 6 },
+      }}
+    >
+      <Typography variant="h5" textAlign="center" fontWeight="bold" color="primary" mb={3}>
         Registro de Medicamento
       </Typography>
-      <form onSubmit={handleSubmit}>
+
+      <Box component="form" onSubmit={handleSubmit} noValidate>
         <Grid container spacing={2}>
-          {/* Nombre y Marca */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Nombre Medicamento *"
               value={nombreMed}
               onChange={(e) => setNombreMed(e.target.value)}
-              required
               fullWidth
+              size="small"
+              required
             />
           </Grid>
 
@@ -122,31 +175,32 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
               label="Marca *"
               value={marca}
               onChange={(e) => setMarca(e.target.value)}
-              required
               fullWidth
-            />
-          </Grid>
-
-          {/* Fecha de Vencimiento y Dosis (select) */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Fecha de Vencimiento *"
-              type="date"
-              value={fechaVencimiento}
-              onChange={(e) => setFechaVencimiento(e.target.value)}
-              InputLabelProps={{ shrink: true }}
+              size="small"
               required
-              fullWidth
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth required>
-              <InputLabel id="dosis-label">Dosis (frecuencia)</InputLabel>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Fecha de Vencimiento *"
+                value={fechaVencimiento}
+                onChange={(newValue) => setFechaVencimiento(newValue)}
+                slotProps={{
+                  textField: { fullWidth: true, size: 'small', required: true },
+                }}
+              />
+            </LocalizationProvider>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <FormControl fullWidth size="small" required>
+              <InputLabel id="dosis-label">Dosis *</InputLabel>
               <Select
                 labelId="dosis-label"
                 value={dosisHs}
-                label="Dosis (frecuencia)"
+                label="Dosis *"
                 onChange={(e) => setDosisHs(e.target.value)}
               >
                 {dosisOptions.map((option) => (
@@ -158,18 +212,18 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
             </FormControl>
           </Grid>
 
-          {/* Agente Principal y Categoría (select) */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Agente Principal"
               value={agentePrincipal}
               onChange={(e) => setAgentePrincipal(e.target.value)}
               fullWidth
+              size="small"
             />
           </Grid>
 
           <Grid item xs={12} sm={6}>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel id="categoria-label">Categoría</InputLabel>
               <Select
                 labelId="categoria-label"
@@ -177,6 +231,9 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
                 label="Categoría"
                 onChange={(e) => setCategoria(e.target.value)}
               >
+                <MenuItem value="">
+                  <em>Ninguna</em>
+                </MenuItem>
                 {categoriaOptions.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
@@ -186,7 +243,6 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
             </FormControl>
           </Grid>
 
-          {/* Efectos Secundarios y Stock */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Efectos Secundarios"
@@ -195,6 +251,7 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
               multiline
               rows={2}
               fullWidth
+              size="small"
             />
           </Grid>
 
@@ -202,14 +259,14 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
             <TextField
               label="Stock"
               type="number"
-              inputProps={{ min: 0 }}
               value={stock}
-              onChange={(e) => setStock(Number(e.target.value))}
+              onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))}
               fullWidth
+              size="small"
+              inputProps={{ min: 0 }}
             />
           </Grid>
 
-          {/* Contraindicaciones */}
           <Grid item xs={12}>
             <TextField
               label="Contraindicaciones"
@@ -218,76 +275,69 @@ const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
               multiline
               rows={3}
               fullWidth
+              size="small"
             />
           </Grid>
 
-          {/* Checkboxes */}
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             <FormControlLabel
               control={
                 <Checkbox
                   checked={listaNegra}
                   onChange={(e) => setListaNegra(e.target.checked)}
+                  size="small"
                 />
               }
               label="Lista Negra"
             />
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             <FormControlLabel
               control={
                 <Checkbox
                   checked={prescripcionRequerida}
                   onChange={(e) => setPrescripcionRequerida(e.target.checked)}
+                  size="small"
                 />
               }
               label="Prescripción Requerida"
             />
           </Grid>
 
-          {/* Botones Guardar y Cancelar */}
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            <Grid item xs={12} sm={6}>
+          <Grid item xs={12}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end" mt={1}>
+              <Button variant="outlined" onClick={handleCancel} disabled={loading} size="small">
+                Cancelar
+              </Button>
               <Button
                 type="submit"
                 variant="contained"
-                color="primary"
-                fullWidth
-                sx={{ borderRadius: '8px', padding: '1rem', textTransform: 'none' }}
                 disabled={loading}
+                size="small"
+                sx={{
+                  backgroundColor: '#4caf50',
+                  '&:hover': { backgroundColor: '#388e3c' },
+                }}
+                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
               >
-                {loading ? 'Guardando...' : 'Guardar Medicamento'}
+                {loading ? 'Guardando...' : 'Guardar'}
               </Button>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                fullWidth
-                onClick={handleCancel}
-                disabled={loading}
-                sx={{ borderRadius: '8px', padding: '1rem', textTransform: 'none' }}
-              >
-                Cancelar
-              </Button>
-            </Grid>
+            </Stack>
           </Grid>
         </Grid>
-      </form>
+      </Box>
 
-      {/* Mensajes de error y éxito */}
-      {error && (
-        <Typography color="error" sx={{ mt: 1 }}>
-          Error al crear el medicamento.
-        </Typography>
-      )}
-      {data && (
-        <Typography color="success.main" sx={{ mt: 1 }}>
-          Medicamento creado correctamente.
-        </Typography>
-      )}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <SnackbarAlert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+          {snackbarMessage}
+        </SnackbarAlert>
+      </Snackbar>
     </Box>
   );
 };

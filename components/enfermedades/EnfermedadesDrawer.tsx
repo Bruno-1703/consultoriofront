@@ -1,34 +1,34 @@
 import React from "react";
 import {
-  Drawer,
-  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Typography,
   Divider,
   Stack,
   IconButton,
+  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad }) => {
   return (
-    <Drawer anchor="right" open={drawerOpen} onClose={handleCloseDrawer}>
-      <Box
-        sx={{
-          width: 400,
-          p: 3,
-          backgroundColor: "#f5f5f5",
-          height: "100%",
-        }}
-      >
+    <Dialog open={drawerOpen} onClose={handleCloseDrawer} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ m: 0, p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
             Detalles de la Enfermedad
           </Typography>
-          <IconButton onClick={handleCloseDrawer}>
+          <IconButton onClick={handleCloseDrawer} size="small">
             <CloseIcon />
           </IconButton>
         </Stack>
-        <Divider sx={{ my: 2 }} />
+      </DialogTitle>
+
+      <Divider />
+
+      <DialogContent dividers>
         {selectedEnfermedad ? (
           <Stack spacing={2}>
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
@@ -47,12 +47,18 @@ const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad 
             <Typography>{selectedEnfermedad.gravedad}</Typography>
           </Stack>
         ) : (
-          <Typography variant="body1" color="textSecondary">
+          <Typography variant="body1" color="text.secondary">
             Seleccione una enfermedad para ver los detalles.
           </Typography>
         )}
-      </Box>
-    </Drawer>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={handleCloseDrawer} color="primary">
+          Cerrar
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

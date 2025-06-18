@@ -29,7 +29,7 @@ import ListIcon from "@mui/icons-material/List";
 import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
 import {
-  useGetCitasQuery,
+  useGetCitasByFechaQuery,
   Cita,
   useCancelarCitaMutation,
 } from "../../graphql/types";
@@ -73,9 +73,12 @@ const CitaRow = ({ row }: { row: Cita }) => {
     <>
       <TableRow
         sx={{
-          "& > *": { borderBottom: "unset" },
-          backgroundColor: "#fafafa",
-          "&:hover": { backgroundColor: "#e3f2fd" },
+          borderBottom: "1px solid #ddd",
+          backgroundColor: "#fff",
+          "&:hover": {
+            backgroundColor: "#f9f9f9",
+            cursor: "pointer",
+          },
         }}
       >
         <TableCell>
@@ -83,37 +86,56 @@ const CitaRow = ({ row }: { row: Cita }) => {
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell>{row.motivoConsulta}</TableCell>
-        <TableCell align="right">
-          {dayjs(row.fechaSolicitud).format("DD/MM/YYYY")}
-        </TableCell>
-        <TableCell align="right">
-          <Chip
-            label={row.cancelada ? "Cancelada" : "Pendiente"}
-            color={row.cancelada ? "error" : "warning"}
-            variant="outlined"
+        <TableCell colSpan={4} sx={{ padding: 0 }}>
+          <Box
             sx={{
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              fontSize: "0.75rem",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "12px 8px",
+              gap: 2,
             }}
-          />
-        </TableCell>
-        <TableCell align="right">
-          {!row.cancelada && (
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setOpenDialog(true)}
-              sx={{
-                marginTop: 1,
-                fontSize: "0.75rem",
-                borderRadius: 2,
-              }}
+          >
+            <Typography sx={{ flex: "2 1 150px", fontWeight: "600" }}>
+              {row.motivoConsulta}
+            </Typography>
+            <Typography
+              sx={{ flex: "1 1 100px", textAlign: "center", color: "#555" }}
             >
-              Cancelar Cita
-            </Button>
-          )}
+              {dayjs(row.fechaSolicitud).format("DD/MM/YYYY HH:mm")}
+            </Typography>
+            <Box sx={{ flex: "1 1 110px", textAlign: "center" }}>
+              <Chip
+                label={row.cancelada ? "Cancelada" : "Pendiente"}
+                color={row.cancelada ? "error" : "warning"}
+                variant="outlined"
+                sx={{
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  fontSize: "0.75rem",
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: "1 1 120px", textAlign: "center" }}>
+              {!row.cancelada && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => setOpenDialog(true)}
+                  sx={{
+                    fontWeight: "600",
+                    textTransform: "none",
+                    fontSize: "0.75rem",
+                    borderRadius: 2,
+                    px: 2,
+                  }}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </Box>
+          </Box>
         </TableCell>
       </TableRow>
 
@@ -124,33 +146,33 @@ const CitaRow = ({ row }: { row: Cita }) => {
               sx={{
                 margin: 2,
                 padding: 2,
-                backgroundColor: "#f1f8ff",
+                backgroundColor: "#f0f4ff",
                 borderRadius: 2,
-                boxShadow: 1,
+                boxShadow: 2,
+                borderLeft: "5px solid #3949ab",
               }}
             >
               <Typography
                 variant="h6"
-                sx={{ fontWeight: "bold", color: "#1976d2" }}
+                sx={{ fontWeight: "bold", color: "#303f9f", mb: 2 }}
               >
                 Detalles de la Cita
               </Typography>
-              <Table size="small">
-                <TableBody>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: "bold" }}>
-                      Observaciones
-                    </TableCell>
-                    <TableCell>{row.observaciones || "N/A"}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: "bold" }}>Paciente</TableCell>
-                    <TableCell>
-                      {row.paciente?.nombre_paciente || "N/A"}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
+                <Box sx={{ minWidth: 150 }}>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Observaciones:
+                  </Typography>
+                  <Typography>{row.observaciones || "N/A"}</Typography>
+                </Box>
+                <Box sx={{ minWidth: 150 }}>
+                  <Typography sx={{ fontWeight: "bold" }}>Paciente:</Typography>
+                  <Typography>
+                    {row.paciente?.nombre_paciente || "N/A"}{" "}
+                    {row.paciente?.apellido_paciente || ""}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           </Collapse>
         </TableCell>
@@ -199,19 +221,16 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-  const { data, loading, error, refetch } = useGetCitasQuery({
+  const { data, loading, error, refetch } = useGetCitasByFechaQuery({
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
-      where: {
-        fechaSolicitud: fecha,
-        motivoConsulta: searchTerm || undefined,
-      },
+      where: {},
     },
   });
 
-  const citas = data?.getCitas.edges || [];
-  const totalCount = data?.getCitas.aggregate.count || 0;
+  const citas = data?.getCitasByFecha.edges || [];
+  const totalCount = data?.getCitasByFecha.aggregate.count || 0;
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -232,7 +251,7 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
     setPage(0);
   };
 
-  if (loading) return <TableSkeleton rows={3} columns={4} />;
+  if (loading) return <TableSkeleton rows={3} columns={5} />;
   if (error)
     return <Typography color="error">Error: {error.message}</Typography>;
 
@@ -242,9 +261,9 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-start", // Alineamos todo hacia la izquierda
+          justifyContent: "flex-start",
           mb: 2,
-          gap: 1, // Reducimos el gap entre los elementos
+          gap: 1,
         }}
       >
         <TextField
@@ -252,6 +271,7 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
           variant="outlined"
           value={searchTerm}
           onChange={handleSearchChange}
+          size="small"
           sx={{ width: 300 }}
           InputProps={{
             endAdornment: (
@@ -259,6 +279,7 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
                 <SearchIcon />
               </IconButton>
             ),
+            sx: { borderRadius: 3, backgroundColor: "#fff" },
           }}
         />
         <Tooltip title="Refrescar">
@@ -280,11 +301,14 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
             <TableRow>
               <TableCell />
               <TableCell>Motivo Consulta</TableCell>
-              <TableCell align="right">Fecha Solicitud</TableCell>
-              <TableCell align="right">Estado</TableCell>
-              <TableCell align="right">Acciones</TableCell>
+              <TableCell align="center">Fecha Solicitud</TableCell>
+              <TableCell align="center">Estado</TableCell>
+              <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
+
+
+
           <TableBody>
             {citas.map((items) => (
               <CitaRow key={items.node.id_cita} row={items.node as Cita} />

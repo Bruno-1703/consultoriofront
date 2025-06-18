@@ -1,20 +1,27 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
+  Container,
   Grid,
   MenuItem,
+  Paper,
   Stack,
   TextField,
   Typography,
+  Divider,
 } from "@mui/material";
-import { useForm } from "react-hook-form";
 import {
   useCreateMedicamentoMutation,
   useUpdateMedicamentoMutation,
   useGetMedicamentoQuery,
   MedicamentoInput,
 } from "../../graphql/types";
+
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
 
 interface Props {
   isEditing: boolean;
@@ -24,6 +31,19 @@ interface Props {
   idMedicamento?: string | null;
 }
 
+const initialState: MedicamentoInput = {
+  nombre_med: "",
+  marca: "",
+  fecha_vencimiento: "",
+  dosis_hs: "",
+  agente_principal: "",
+  efectos_secundarios: "",
+  categoria: "",
+  contraindicaciones: "",
+  prescripcion_requerida: false,
+  lista_negra: false,
+};
+
 const MedicamentoEditarFormulario: React.FC<Props> = ({
   isEditing,
   onClose,
@@ -31,14 +51,7 @@ const MedicamentoEditarFormulario: React.FC<Props> = ({
   onError,
   idMedicamento,
 }) => {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<MedicamentoInput>();
-
+  const [formData, setFormData] = useState<MedicamentoInput>(initialState);
   const [createMedicamento] = useCreateMedicamentoMutation();
   const [updateMedicamento] = useUpdateMedicamentoMutation();
 
@@ -47,39 +60,66 @@ const MedicamentoEditarFormulario: React.FC<Props> = ({
     variables: { id: idMedicamento! },
   });
 
+  const [fechaVencimiento, setFechaVencimiento] = useState<Dayjs | null>(null);
+
   useEffect(() => {
     if (data?.getMedicamento && isEditing) {
-      const m = data.getMedicamento;
-      setValue("nombre_med", m.nombre_med);
-      setValue("marca", m.marca);
-      setValue("fecha_vencimiento", m.fecha_vencimiento);
-      setValue("dosis_hs", m.dosis_hs);
-      setValue("agente_principal", m.agente_principal || "");
-      setValue("efectos_secundarios", m.efectos_secundarios || "");
-      setValue("lista_negra", m.lista_negra || false);
-      setValue("categoria", m.categoria || "");
-      setValue("contraindicaciones", m.contraindicaciones || "");
-      setValue("prescripcion_requerida", m.prescripcion_requerida || false);
+      setFormData({ ...initialState, ...data.getMedicamento });
     }
-  }, [data, isEditing, setValue]);
+  }, [data, isEditing]);
 
-  const onSubmit = async (input: MedicamentoInput) => {
+  // Sync fechaVencimiento state with formData.fecha_vencimiento
+  useEffect(() => {
+    if (formData.fecha_vencimiento) {
+      setFechaVencimiento(dayjs(formData.fecha_vencimiento));
+    } else {
+      setFechaVencimiento(null);
+    }
+  }, [formData.fecha_vencimiento]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value === "true",
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
+      const { __typename, id_medicamento, ...cleanData } = formData as any;
+
+      if (fechaVencimiento) {
+        cleanData.fecha_vencimiento = fechaVencimiento.toDate();
+      } else {
+        cleanData.fecha_vencimiento = null;
+      }
+
       if (isEditing && idMedicamento) {
         await updateMedicamento({
           variables: {
             medicamentoId: idMedicamento,
-            data: input,
+            data: cleanData,
           },
         });
       } else {
         await createMedicamento({
           variables: {
-            data: input,
+            data: cleanData,
           },
         });
       }
-      reset();
+      setFormData(initialState);
+      setFechaVencimiento(null);
       onSuccess();
     } catch (err: any) {
       onError(err.message);
@@ -87,102 +127,285 @@ const MedicamentoEditarFormulario: React.FC<Props> = ({
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Typography variant="h6" gutterBottom>
-        {isEditing ? "Editar Medicamento" : "Registrar Nuevo Medicamento"}
-      </Typography>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper
+        elevation={6}
+        sx={{
+          p: 4,
+          borderRadius: 3,
+          background: "linear-gradient(145deg, #f0f4f8, #cdd5df)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+          border: "1px solid #b0bec5",
+        }}
+      >
+        <Typography
+          variant="h5"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: 700, color: "#3f51b5", mb: 3 }}
+        >
+          {isEditing ? "Editar Medicamento" : "Registrar Nuevo Medicamento"}
+        </Typography>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Nombre"
-            fullWidth
-            {...register("nombre_med", { required: true })}
-            error={!!errors.nombre_med}
-            helperText={errors.nombre_med && "Este campo es obligatorio"}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Marca"
-            fullWidth
-            {...register("marca", { required: true })}
-            error={!!errors.marca}
-            helperText={errors.marca && "Este campo es obligatorio"}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Fecha de Vencimiento"
-            type="date"
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-            {...register("fecha_vencimiento", { required: true })}
-            error={!!errors.fecha_vencimiento}
-            helperText={errors.fecha_vencimiento && "Este campo es obligatorio"}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Dosis (horas)"
-            type="number"
-            fullWidth
-            {...register("dosis_hs", { required: true, min: 1 })}
-            error={!!errors.dosis_hs}
-            helperText={errors.dosis_hs && "Debe ser un número mayor a 0"}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField label="Agente Principal" fullWidth {...register("agente_principal")} />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField label="Efectos Secundarios" fullWidth {...register("efectos_secundarios")} />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField label="Categoría" fullWidth {...register("categoria")} />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField label="Contraindicaciones" fullWidth {...register("contraindicaciones")} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Prescripción Requerida"
-            fullWidth
-            select
-            defaultValue={false}
-            {...register("prescripcion_requerida", {
-              setValueAs: (v) => v === "true",
-            })}
-          >
-            <MenuItem value="true">Sí</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <TextField
-            label="Lista Negra"
-            fullWidth
-            select
-            defaultValue={false}
-            {...register("lista_negra", {
-              setValueAs: (v) => v === "true",
-            })}
-          >
-            <MenuItem value="true">Sí</MenuItem>
-            <MenuItem value="false">No</MenuItem>
-          </TextField>
-        </Grid>
-      </Grid>
+        <Divider sx={{ mb: 3, borderColor: "#9fa8da" }} />
 
-      <Stack direction="row" spacing={2} justifyContent="flex-end" mt={3}>
-        <Button variant="outlined" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button type="submit" variant="contained" color="primary">
-          {isEditing ? "Actualizar" : "Registrar"}
-        </Button>
-      </Stack>
-    </Box>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                label="Nombre"
+                name="nombre_med"
+                value={formData.nombre_med}
+                onChange={handleChange}
+                fullWidth
+                required
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Marca"
+                name="marca"
+                value={formData.marca}
+                onChange={handleChange}
+                fullWidth
+                required
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* Fecha de Vencimiento con DatePicker */}
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Fecha de Vencimiento"
+                  value={fechaVencimiento}
+                  onChange={(newValue) => {
+                    setFechaVencimiento(newValue);
+                    setFormData((prev) => ({
+                      ...prev,
+                      fecha_vencimiento: newValue
+                        ? newValue.toDate().toISOString()
+                        : "",
+                    }));
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: "medium",
+                      sx: {
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                          "& fieldset": { borderColor: "#bdbdbd" },
+                          "&:hover fieldset": { borderColor: "#7986cb" },
+                          "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                        },
+                      },
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Dosis (ej. Cada 8 horas)"
+                name="dosis_hs"
+                type="text"
+                value={formData.dosis_hs || ""}
+                onChange={handleChange}
+                fullWidth
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Agente Principal"
+                name="agente_principal"
+                value={formData.agente_principal}
+                onChange={handleChange}
+                fullWidth
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Efectos Secundarios"
+                name="efectos_secundarios"
+                value={formData.efectos_secundarios}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                size="medium"
+                rows={3}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Categoría"
+                name="categoria"
+                value={formData.categoria}
+                onChange={handleChange}
+                fullWidth
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Contraindicaciones"
+                name="contraindicaciones"
+                value={formData.contraindicaciones}
+                onChange={handleChange}
+                fullWidth
+                multiline
+                size="medium"
+                rows={3}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Prescripción requerida"
+                name="prescripcion_requerida"
+                select
+                value={formData.prescripcion_requerida ? "true" : "false"}
+                onChange={handleSelectChange}
+                fullWidth
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              >
+                <MenuItem value="true">Sí</MenuItem>
+                <MenuItem value="false">No</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Lista negra"
+                name="lista_negra"
+                select
+                value={formData.lista_negra ? "true" : "false"}
+                onChange={handleSelectChange}
+                fullWidth
+                size="medium"
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                    "& fieldset": { borderColor: "#bdbdbd" },
+                    "&:hover fieldset": { borderColor: "#7986cb" },
+                    "&.Mui-focused fieldset": { borderColor: "#3f51b5" },
+                  },
+                }}
+              >
+                <MenuItem value="true">Sí</MenuItem>
+                <MenuItem value="false">No</MenuItem>
+              </TextField>
+            </Grid>
+          </Grid>
+
+          <Stack direction="row" spacing={2} justifyContent="flex-end" mt={4}>
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              size="large"
+              sx={{
+                borderRadius: 2,
+                borderColor: "#607d8b",
+                color: "#607d8b",
+                "&:hover": {
+                  backgroundColor: "#eceff1",
+                  borderColor: "#455a64",
+                },
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="contained"
+              type="submit"
+              size="large"
+              sx={{
+                borderRadius: 2,
+                backgroundColor: "#4caf50",
+                "&:hover": {
+                  backgroundColor: "#388e3c",
+                },
+              }}
+            >
+              {isEditing ? "Actualizar" : "Registrar"}
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

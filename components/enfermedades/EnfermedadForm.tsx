@@ -1,163 +1,128 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {
+  
+  useUpdateEnfermedadMutation,
+  EnfermedadInput,
+  useGetEnfermedadByIdQuery,
+} from "../../graphql/types";
 import {
   Box,
   Button,
   TextField,
-  MenuItem,
-  Stack,
-  Typography,
   CircularProgress,
-  Snackbar,
   Alert,
 } from "@mui/material";
-import { useCreateEnfermedadMutation } from "../../graphql/types";
 
-interface EnfermedadFormProps {
-  onSubmit: (formData: { nombre_enf: string; sintomas: string; gravedad: string }) => void;
+interface EnfermedadFormEditProps {
+  enfermedadId: string;
   onClose: () => void;
-  defaultValues?: {
-    nombre_enf?: string;
-    sintomas?: string;
-    gravedad?: string;
-  };
 }
 
-const EnfermedadForm: React.FC<EnfermedadFormProps> = ({
-  onSubmit,
+const EnfermedadFormEdit: React.FC<EnfermedadFormEditProps> = ({
+  enfermedadId,
   onClose,
-  defaultValues = {},
 }) => {
-  const [formData, setFormData] = React.useState({
-    nombre_enf: defaultValues.nombre_enf || "",
-    sintomas: defaultValues.sintomas || "",
-    gravedad: defaultValues.gravedad || "Leve",
+  const [formData, setFormData] = useState<EnfermedadInput>({
+    nombre_enf: "",
+    sintomas: "",
+    gravedad: "",
   });
 
-  const [createEnfermedadMutation, { data, loading, error }] = useCreateEnfermedadMutation();
-  
-  const [openSnackbar, setOpenSnackbar] = React.useState(false); // Estado para manejar el Snackbar
-  const [snackbarMessage, setSnackbarMessage] = React.useState(""); // Mensaje del Snackbar
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState<"success" | "error">("success"); // Severidad del snackbar
+  const { data, loading, error } = useGetEnfermedadByIdQuery({
+    variables: { id: enfermedadId },
+  });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const [updateEnfermedadMutation, { loading: updating }] = useUpdateEnfermedadMutation();
+
+  useEffect(() => {
+    if (data?.getEnfermedadById) {
+      const enfermedad = data.getEnfermedadById;
+      setFormData({
+        nombre_enf: enfermedad.nombre_enf ?? "",
+        sintomas: enfermedad.sintomas ?? "",
+        gravedad: enfermedad.gravedad ?? "",
+      });
+    }
+  }, [data]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createEnfermedadMutation({
-        variables: { data: formData },
+      await updateEnfermedadMutation({
+        variables: {
+          enfermedadId,
+          data: formData,
+        },
       });
-      setSnackbarMessage("Enfermedad creada con éxito!"); // Mensaje de éxito
-      setSnackbarSeverity("success"); // Cambiar a éxito
-      setOpenSnackbar(true); // Abrir el Snackbar
-      onSubmit(formData); // Si la mutación es exitosa, llamamos a onSubmit
-      onClose(); // Cerrar el formulario
+      onClose();
     } catch (err) {
-      // Si hay un error, muestra un mensaje de error
-      setSnackbarMessage("Hubo un error al crear la enfermedad. Intenta de nuevo.");
-      setSnackbarSeverity("error"); // Cambiar a error
-      setOpenSnackbar(true);
-      console.error(err); // Puedes personalizar el error si lo deseas
+      console.error("Error al actualizar enfermedad:", err);
     }
   };
 
-  // Comprobar si `error` tiene un valor válido y mostrar mensaje si es necesario
-  React.useEffect(() => {
-    if (error) {
-      setSnackbarMessage("Hubo un error al crear la enfermedad. Intenta de nuevo.");
-      setSnackbarSeverity("error");
-      setOpenSnackbar(true);
-    }
-  }, [error]);
+  if (loading) return <CircularProgress />;
+  if (error) return <Alert severity="error">Error al cargar: {error.message}</Alert>;
 
   return (
     <Box
       component="form"
       onSubmit={handleSubmit}
       sx={{
-        p: 3,
-        backgroundColor: "#f5f5f5",
+        backgroundColor: "#f9f9f9",
+        padding: 3,
         borderRadius: 2,
-        boxShadow: 2,
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+        maxWidth: 600,
+        margin: "0 auto",
       }}
     >
-      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-        {defaultValues.nombre_enf ? "Editar Enfermedad" : "Registrar Enfermedad"}
-      </Typography>
-      <Stack spacing={2}>
-        <TextField
-          label="Nombre de la Enfermedad"
-          name="nombre_enf"
-          value={formData.nombre_enf}
-          onChange={handleInputChange}
-          required
-          fullWidth
-        />
-        <TextField
-          label="Síntomas"
-          name="sintomas"
-          value={formData.sintomas}
-          onChange={handleInputChange}
-          required
-          fullWidth
-          multiline
-          rows={3}
-        />
-        <TextField
-          select
-          label="Gravedad"
-          name="gravedad"
-          value={formData.gravedad}
-          onChange={handleInputChange}
-          required
-          fullWidth
-        >
-          {["Leve", "Moderada", "Grave"].map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Stack>
-      {error && (
-        <Typography color="error" sx={{ mt: 2 }}>
-          Hubo un error al guardar la enfermedad. Por favor intente de nuevo.
-        </Typography>
-      )}
-      <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: "flex-end" }}>
-        <Button variant="outlined" color="secondary" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          type="submit"
-          disabled={loading} // Deshabilitar el botón mientras se está procesando la mutación
-        >
-          {loading ? <CircularProgress size={24} /> : defaultValues.nombre_enf ? "Guardar Cambios" : "Registrar"}
-        </Button>
-      </Stack>
-      {/* Snackbar para mostrar mensaje de éxito o error */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setOpenSnackbar(false)}
+      <TextField
+        name="nombre_enf"
+        label="Nombre de la Enfermedad"
+        value={formData.nombre_enf}
+        onChange={handleChange}
+        fullWidth
+        required
+        sx={{ marginBottom: 2 }}
+      />
+      <TextField
+        name="sintomas"
+        label="Síntomas"
+        value={formData.sintomas}
+        onChange={handleChange}
+        fullWidth
+        multiline
+        rows={3}
+        sx={{ marginBottom: 2 }}
+      />
+      <TextField
+        name="gravedad"
+        label="Gravedad"
+        value={formData.gravedad}
+        onChange={handleChange}
+        fullWidth
+        required
+        sx={{ marginBottom: 2 }}
+      />
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={updating}
+        fullWidth
       >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity={snackbarSeverity}
-          sx={{ width: "100%" }}
-        >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+        {updating ? "Guardando..." : "Guardar Cambios"}
+      </Button>
     </Box>
   );
 };
 
-export default EnfermedadForm;
+export default EnfermedadFormEdit;

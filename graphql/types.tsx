@@ -29,6 +29,7 @@ export type Cita = {
   enfermedades?: Maybe<Array<Enfermedad>>;
   estudios?: Maybe<Array<Estudio>>;
   fechaSolicitud: Scalars['DateTime']['output'];
+  finalizada?: Maybe<Scalars['Boolean']['output']>;
   id_cita?: Maybe<Scalars['ID']['output']>;
   id_userDoctor?: Maybe<Scalars['ID']['output']>;
   medicamentos?: Maybe<Array<Medicamento>>;
@@ -45,6 +46,7 @@ export type CitaEdge = {
 
 export type CitaInput = {
   fechaSolicitud?: InputMaybe<Scalars['DateTime']['input']>;
+  finalizada?: InputMaybe<Scalars['Boolean']['input']>;
   id_cita?: InputMaybe<Scalars['ID']['input']>;
   id_userDoctor?: InputMaybe<Scalars['ID']['input']>;
   motivoConsulta?: InputMaybe<Scalars['String']['input']>;
@@ -64,6 +66,7 @@ export type CitaWhereInput = {
   enfermedades?: InputMaybe<Array<EnfermedadInput>>;
   estudios?: InputMaybe<Array<EstudioInput>>;
   fechaSolicitud?: InputMaybe<Scalars['DateTime']['input']>;
+  finalizada?: InputMaybe<Scalars['Boolean']['input']>;
   id_cita?: InputMaybe<Scalars['ID']['input']>;
   id_userDoctor?: InputMaybe<Scalars['ID']['input']>;
   medicamentos?: InputMaybe<Array<MedicamentoInput>>;
@@ -224,9 +227,11 @@ export type Mutation = {
   createMedicamento: Scalars['String']['output'];
   createPaciente: Scalars['String']['output'];
   createUsuario: Scalars['String']['output'];
+  deleteEnfermedad: Scalars['String']['output'];
   deleteMedicamento: Scalars['String']['output'];
   deleteMedicamentoLog: Scalars['String']['output'];
   deleteUsuario: Scalars['String']['output'];
+  finalizarCita: Scalars['String']['output'];
   reducirStock: Scalars['String']['output'];
   updateCita: Scalars['String']['output'];
   updateEnfermedad: Scalars['String']['output'];
@@ -308,6 +313,11 @@ export type MutationCreateUsuarioArgs = {
 };
 
 
+export type MutationDeleteEnfermedadArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type MutationDeleteMedicamentoArgs = {
   id: Scalars['String']['input'];
 };
@@ -319,6 +329,11 @@ export type MutationDeleteMedicamentoLogArgs = {
 
 
 export type MutationDeleteUsuarioArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type MutationFinalizarCitaArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -336,8 +351,8 @@ export type MutationUpdateCitaArgs = {
 
 
 export type MutationUpdateEnfermedadArgs = {
-  citaId: Scalars['String']['input'];
   data: EnfermedadInput;
+  enfermedadId: Scalars['String']['input'];
 };
 
 
@@ -369,13 +384,17 @@ export type Paciente = {
   alergias?: Maybe<Scalars['String']['output']>;
   altura?: Maybe<Scalars['Int']['output']>;
   apellido_paciente?: Maybe<Scalars['String']['output']>;
+  direccion?: Maybe<Scalars['String']['output']>;
   dni?: Maybe<Scalars['String']['output']>;
   edad?: Maybe<Scalars['Int']['output']>;
   eliminadoLog?: Maybe<Scalars['Boolean']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
   fecha_nacimiento?: Maybe<Scalars['DateTime']['output']>;
   grupo_sanguineo?: Maybe<Scalars['String']['output']>;
   id_paciente?: Maybe<Scalars['ID']['output']>;
+  nacionalidad?: Maybe<Scalars['String']['output']>;
   nombre_paciente?: Maybe<Scalars['String']['output']>;
+  obra_social?: Maybe<Scalars['String']['output']>;
   sexo?: Maybe<Scalars['String']['output']>;
   telefono?: Maybe<Scalars['String']['output']>;
 };
@@ -397,11 +416,15 @@ export type PacienteInput = {
   alergias?: InputMaybe<Scalars['String']['input']>;
   altura?: InputMaybe<Scalars['Int']['input']>;
   apellido_paciente?: InputMaybe<Scalars['String']['input']>;
+  direccion?: InputMaybe<Scalars['String']['input']>;
   dni?: InputMaybe<Scalars['String']['input']>;
   edad?: InputMaybe<Scalars['Int']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   fecha_nacimiento?: InputMaybe<Scalars['DateTime']['input']>;
   grupo_sanguineo?: InputMaybe<Scalars['String']['input']>;
+  nacionalidad?: InputMaybe<Scalars['String']['input']>;
   nombre_paciente?: InputMaybe<Scalars['String']['input']>;
+  obra_social?: InputMaybe<Scalars['String']['input']>;
   sexo?: InputMaybe<Scalars['String']['input']>;
   telefono?: InputMaybe<Scalars['String']['input']>;
 };
@@ -410,13 +433,17 @@ export type PacienteWhereInput = {
   alergias?: InputMaybe<Scalars['String']['input']>;
   altura?: InputMaybe<Scalars['Int']['input']>;
   apellido_paciente?: InputMaybe<Scalars['String']['input']>;
+  direccion?: InputMaybe<Scalars['String']['input']>;
   dni?: InputMaybe<Scalars['String']['input']>;
   edad?: InputMaybe<Scalars['Int']['input']>;
   eliminadoLog?: InputMaybe<Scalars['Boolean']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   fecha_nacimiento?: InputMaybe<Scalars['DateTime']['input']>;
   grupo_sanguineo?: InputMaybe<Scalars['String']['input']>;
   id_paciente?: InputMaybe<Scalars['String']['input']>;
+  nacionalidad?: InputMaybe<Scalars['String']['input']>;
   nombre_paciente?: InputMaybe<Scalars['String']['input']>;
+  obra_social?: InputMaybe<Scalars['String']['input']>;
   sexo?: InputMaybe<Scalars['String']['input']>;
   telefono?: InputMaybe<Scalars['String']['input']>;
 };
@@ -431,7 +458,8 @@ export type Query = {
   __typename?: 'Query';
   getCita?: Maybe<Cita>;
   getCitas: CitaResultadoBusqueda;
-  getEnfermedad?: Maybe<Enfermedad>;
+  getCitasByFecha: CitaResultadoBusqueda;
+  getEnfermedadById?: Maybe<Enfermedad>;
   getEnfermedades: EnfermedadResultadoBusqueda;
   getEstudio?: Maybe<Estudio>;
   getEstudios: EstudioResultadoBusqueda;
@@ -456,7 +484,14 @@ export type QueryGetCitasArgs = {
 };
 
 
-export type QueryGetEnfermedadArgs = {
+export type QueryGetCitasByFechaArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
+  where?: InputMaybe<CitaWhereInput>;
+};
+
+
+export type QueryGetEnfermedadByIdArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -516,11 +551,16 @@ export type QueryGetUsuarioArgs = {
 export type Usuario = {
   __typename?: 'Usuario';
   deletLogico?: Maybe<Scalars['Boolean']['output']>;
+  dni: Scalars['String']['output'];
   email?: Maybe<Scalars['String']['output']>;
+  especialidad: Scalars['String']['output'];
   id_Usuario: Scalars['String']['output'];
+  matricula: Scalars['String']['output'];
+  nombre_completo: Scalars['String']['output'];
   nombre_usuario?: Maybe<Scalars['String']['output']>;
   password: Scalars['String']['output'];
   rol_usuario?: Maybe<Scalars['String']['output']>;
+  telefono?: Maybe<Scalars['String']['output']>;
 };
 
 export type UsuarioEdge = {
@@ -530,10 +570,15 @@ export type UsuarioEdge = {
 };
 
 export type UsuarioInput = {
+  dni: Scalars['String']['input'];
   email?: InputMaybe<Scalars['String']['input']>;
+  especialidad: Scalars['String']['input'];
+  matricula: Scalars['String']['input'];
+  nombre_completo: Scalars['String']['input'];
   nombre_usuario: Scalars['String']['input'];
   password: Scalars['String']['input'];
   rol_usuario?: InputMaybe<Scalars['String']['input']>;
+  telefono?: InputMaybe<Scalars['String']['input']>;
 };
 
 export const CitaFragmentDoc = gql`
@@ -607,6 +652,10 @@ export const PacienteFragmentDoc = gql`
   sexo
   grupo_sanguineo
   alergias
+  obra_social
+  email
+  direccion
+  nacionalidad
   eliminadoLog
 }
     `;
@@ -673,8 +722,8 @@ export function useGetCitaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCitaQuery, GetCitaQueryVariables>(GetCitaDocument, options);
         }
-export function useGetCitaSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCitaQuery, GetCitaQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetCitaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCitaQuery, GetCitaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCitaQuery, GetCitaQueryVariables>(GetCitaDocument, options);
         }
 export type GetCitaQueryHookResult = ReturnType<typeof useGetCitaQuery>;
@@ -689,6 +738,7 @@ export const GetCitasDocument = gql`
         id_cita
         observaciones
         cancelada
+        finalizada
         fechaSolicitud
         motivoConsulta
         enfermedades {
@@ -746,14 +796,74 @@ export function useGetCitasLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetCitasQuery, GetCitasQueryVariables>(GetCitasDocument, options);
         }
-export function useGetCitasSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetCitasQuery, GetCitasQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetCitasSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCitasQuery, GetCitasQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetCitasQuery, GetCitasQueryVariables>(GetCitasDocument, options);
         }
 export type GetCitasQueryHookResult = ReturnType<typeof useGetCitasQuery>;
 export type GetCitasLazyQueryHookResult = ReturnType<typeof useGetCitasLazyQuery>;
 export type GetCitasSuspenseQueryHookResult = ReturnType<typeof useGetCitasSuspenseQuery>;
 export type GetCitasQueryResult = Apollo.QueryResult<GetCitasQuery, GetCitasQueryVariables>;
+export const GetCitasByFechaDocument = gql`
+    query getCitasByFecha($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
+  getCitasByFecha(limit: $limit, skip: $skip, where: $where) {
+    edges {
+      node {
+        id_cita
+        observaciones
+        cancelada
+        finalizada
+        fechaSolicitud
+        motivoConsulta
+        paciente {
+          dni
+          id_paciente
+          nombre_paciente
+          apellido_paciente
+        }
+      }
+    }
+    aggregate {
+      count
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetCitasByFechaQuery__
+ *
+ * To run a query within a React component, call `useGetCitasByFechaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCitasByFechaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCitasByFechaQuery({
+ *   variables: {
+ *      limit: // value for 'limit'
+ *      skip: // value for 'skip'
+ *      where: // value for 'where'
+ *   },
+ * });
+ */
+export function useGetCitasByFechaQuery(baseOptions: Apollo.QueryHookOptions<GetCitasByFechaQuery, GetCitasByFechaQueryVariables> & ({ variables: GetCitasByFechaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>(GetCitasByFechaDocument, options);
+      }
+export function useGetCitasByFechaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>(GetCitasByFechaDocument, options);
+        }
+export function useGetCitasByFechaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>(GetCitasByFechaDocument, options);
+        }
+export type GetCitasByFechaQueryHookResult = ReturnType<typeof useGetCitasByFechaQuery>;
+export type GetCitasByFechaLazyQueryHookResult = ReturnType<typeof useGetCitasByFechaLazyQuery>;
+export type GetCitasByFechaSuspenseQueryHookResult = ReturnType<typeof useGetCitasByFechaSuspenseQuery>;
+export type GetCitasByFechaQueryResult = Apollo.QueryResult<GetCitasByFechaQuery, GetCitasByFechaQueryVariables>;
 export const CreateCitaDocument = gql`
     mutation createCita($data: CitaInput!, $paciente: PacienteCitaInput!) {
   createCita(data: $data, paciente: $paciente)
@@ -882,6 +992,37 @@ export function useCreateCitaMedicamentoMutation(baseOptions?: Apollo.MutationHo
 export type CreateCitaMedicamentoMutationHookResult = ReturnType<typeof useCreateCitaMedicamentoMutation>;
 export type CreateCitaMedicamentoMutationResult = Apollo.MutationResult<CreateCitaMedicamentoMutation>;
 export type CreateCitaMedicamentoMutationOptions = Apollo.BaseMutationOptions<CreateCitaMedicamentoMutation, CreateCitaMedicamentoMutationVariables>;
+export const FinalizarCitaDocument = gql`
+    mutation FinalizarCita($id: String!) {
+  finalizarCita(id: $id)
+}
+    `;
+export type FinalizarCitaMutationFn = Apollo.MutationFunction<FinalizarCitaMutation, FinalizarCitaMutationVariables>;
+
+/**
+ * __useFinalizarCitaMutation__
+ *
+ * To run a mutation, you first call `useFinalizarCitaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useFinalizarCitaMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [finalizarCitaMutation, { data, loading, error }] = useFinalizarCitaMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useFinalizarCitaMutation(baseOptions?: Apollo.MutationHookOptions<FinalizarCitaMutation, FinalizarCitaMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<FinalizarCitaMutation, FinalizarCitaMutationVariables>(FinalizarCitaDocument, options);
+      }
+export type FinalizarCitaMutationHookResult = ReturnType<typeof useFinalizarCitaMutation>;
+export type FinalizarCitaMutationResult = Apollo.MutationResult<FinalizarCitaMutation>;
+export type FinalizarCitaMutationOptions = Apollo.BaseMutationOptions<FinalizarCitaMutation, FinalizarCitaMutationVariables>;
 export const CreateEnfermedadDocument = gql`
     mutation createEnfermedad($data: EnfermedadInput!) {
   createEnfermedad(data: $data)
@@ -913,6 +1054,37 @@ export function useCreateEnfermedadMutation(baseOptions?: Apollo.MutationHookOpt
 export type CreateEnfermedadMutationHookResult = ReturnType<typeof useCreateEnfermedadMutation>;
 export type CreateEnfermedadMutationResult = Apollo.MutationResult<CreateEnfermedadMutation>;
 export type CreateEnfermedadMutationOptions = Apollo.BaseMutationOptions<CreateEnfermedadMutation, CreateEnfermedadMutationVariables>;
+export const DeleteEnfermedadDocument = gql`
+    mutation deleteEnfermedad($id: String!) {
+  deleteEnfermedad(id: $id)
+}
+    `;
+export type DeleteEnfermedadMutationFn = Apollo.MutationFunction<DeleteEnfermedadMutation, DeleteEnfermedadMutationVariables>;
+
+/**
+ * __useDeleteEnfermedadMutation__
+ *
+ * To run a mutation, you first call `useDeleteEnfermedadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteEnfermedadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteEnfermedadMutation, { data, loading, error }] = useDeleteEnfermedadMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteEnfermedadMutation(baseOptions?: Apollo.MutationHookOptions<DeleteEnfermedadMutation, DeleteEnfermedadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteEnfermedadMutation, DeleteEnfermedadMutationVariables>(DeleteEnfermedadDocument, options);
+      }
+export type DeleteEnfermedadMutationHookResult = ReturnType<typeof useDeleteEnfermedadMutation>;
+export type DeleteEnfermedadMutationResult = Apollo.MutationResult<DeleteEnfermedadMutation>;
+export type DeleteEnfermedadMutationOptions = Apollo.BaseMutationOptions<DeleteEnfermedadMutation, DeleteEnfermedadMutationVariables>;
 export const GetEnfermedadesDocument = gql`
     query getEnfermedades($limit: Int!, $skip: Int!, $where: EnfermedadWhereInput) {
   getEnfermedades(limit: $limit, skip: $skip, where: $where) {
@@ -954,14 +1126,86 @@ export function useGetEnfermedadesLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetEnfermedadesQuery, GetEnfermedadesQueryVariables>(GetEnfermedadesDocument, options);
         }
-export function useGetEnfermedadesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEnfermedadesQuery, GetEnfermedadesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetEnfermedadesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEnfermedadesQuery, GetEnfermedadesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetEnfermedadesQuery, GetEnfermedadesQueryVariables>(GetEnfermedadesDocument, options);
         }
 export type GetEnfermedadesQueryHookResult = ReturnType<typeof useGetEnfermedadesQuery>;
 export type GetEnfermedadesLazyQueryHookResult = ReturnType<typeof useGetEnfermedadesLazyQuery>;
 export type GetEnfermedadesSuspenseQueryHookResult = ReturnType<typeof useGetEnfermedadesSuspenseQuery>;
 export type GetEnfermedadesQueryResult = Apollo.QueryResult<GetEnfermedadesQuery, GetEnfermedadesQueryVariables>;
+export const GetEnfermedadByIdDocument = gql`
+    query getEnfermedadById($id: String!) {
+  getEnfermedadById(id: $id) {
+    ...Enfermedad
+  }
+}
+    ${EnfermedadFragmentDoc}`;
+
+/**
+ * __useGetEnfermedadByIdQuery__
+ *
+ * To run a query within a React component, call `useGetEnfermedadByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEnfermedadByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEnfermedadByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetEnfermedadByIdQuery(baseOptions: Apollo.QueryHookOptions<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables> & ({ variables: GetEnfermedadByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>(GetEnfermedadByIdDocument, options);
+      }
+export function useGetEnfermedadByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>(GetEnfermedadByIdDocument, options);
+        }
+export function useGetEnfermedadByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>(GetEnfermedadByIdDocument, options);
+        }
+export type GetEnfermedadByIdQueryHookResult = ReturnType<typeof useGetEnfermedadByIdQuery>;
+export type GetEnfermedadByIdLazyQueryHookResult = ReturnType<typeof useGetEnfermedadByIdLazyQuery>;
+export type GetEnfermedadByIdSuspenseQueryHookResult = ReturnType<typeof useGetEnfermedadByIdSuspenseQuery>;
+export type GetEnfermedadByIdQueryResult = Apollo.QueryResult<GetEnfermedadByIdQuery, GetEnfermedadByIdQueryVariables>;
+export const UpdateEnfermedadDocument = gql`
+    mutation updateEnfermedad($data: EnfermedadInput!, $enfermedadId: String!) {
+  updateEnfermedad(data: $data, enfermedadId: $enfermedadId)
+}
+    `;
+export type UpdateEnfermedadMutationFn = Apollo.MutationFunction<UpdateEnfermedadMutation, UpdateEnfermedadMutationVariables>;
+
+/**
+ * __useUpdateEnfermedadMutation__
+ *
+ * To run a mutation, you first call `useUpdateEnfermedadMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateEnfermedadMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateEnfermedadMutation, { data, loading, error }] = useUpdateEnfermedadMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *      enfermedadId: // value for 'enfermedadId'
+ *   },
+ * });
+ */
+export function useUpdateEnfermedadMutation(baseOptions?: Apollo.MutationHookOptions<UpdateEnfermedadMutation, UpdateEnfermedadMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateEnfermedadMutation, UpdateEnfermedadMutationVariables>(UpdateEnfermedadDocument, options);
+      }
+export type UpdateEnfermedadMutationHookResult = ReturnType<typeof useUpdateEnfermedadMutation>;
+export type UpdateEnfermedadMutationResult = Apollo.MutationResult<UpdateEnfermedadMutation>;
+export type UpdateEnfermedadMutationOptions = Apollo.BaseMutationOptions<UpdateEnfermedadMutation, UpdateEnfermedadMutationVariables>;
 export const CreateEstudioDocument = gql`
     mutation CreateEstudio($data: EstudioInput!, $idCita: String!) {
   createEstudio(data: $data, idCita: $idCita)
@@ -1035,8 +1279,8 @@ export function useGetEstudiosLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetEstudiosQuery, GetEstudiosQueryVariables>(GetEstudiosDocument, options);
         }
-export function useGetEstudiosSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetEstudiosQuery, GetEstudiosQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetEstudiosSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEstudiosQuery, GetEstudiosQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetEstudiosQuery, GetEstudiosQueryVariables>(GetEstudiosDocument, options);
         }
 export type GetEstudiosQueryHookResult = ReturnType<typeof useGetEstudiosQuery>;
@@ -1075,38 +1319,6 @@ export function useUpdateEstudioMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateEstudioMutationHookResult = ReturnType<typeof useUpdateEstudioMutation>;
 export type UpdateEstudioMutationResult = Apollo.MutationResult<UpdateEstudioMutation>;
 export type UpdateEstudioMutationOptions = Apollo.BaseMutationOptions<UpdateEstudioMutation, UpdateEstudioMutationVariables>;
-export const AumentarStockDocument = gql`
-    mutation AumentarStock($medicamentoId: String!, $cantidad: Int!) {
-  aumentarStock(medicamentoId: $medicamentoId, cantidad: $cantidad)
-}
-    `;
-export type AumentarStockMutationFn = Apollo.MutationFunction<AumentarStockMutation, AumentarStockMutationVariables>;
-
-/**
- * __useAumentarStockMutation__
- *
- * To run a mutation, you first call `useAumentarStockMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAumentarStockMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [aumentarStockMutation, { data, loading, error }] = useAumentarStockMutation({
- *   variables: {
- *      medicamentoId: // value for 'medicamentoId'
- *      cantidad: // value for 'cantidad'
- *   },
- * });
- */
-export function useAumentarStockMutation(baseOptions?: Apollo.MutationHookOptions<AumentarStockMutation, AumentarStockMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<AumentarStockMutation, AumentarStockMutationVariables>(AumentarStockDocument, options);
-      }
-export type AumentarStockMutationHookResult = ReturnType<typeof useAumentarStockMutation>;
-export type AumentarStockMutationResult = Apollo.MutationResult<AumentarStockMutation>;
-export type AumentarStockMutationOptions = Apollo.BaseMutationOptions<AumentarStockMutation, AumentarStockMutationVariables>;
 export const CreateMedicamentoDocument = gql`
     mutation CreateMedicamento($data: MedicamentoInput!) {
   createMedicamento(data: $data)
@@ -1201,12 +1413,22 @@ export type DeleteMedicamentoLogMutationHookResult = ReturnType<typeof useDelete
 export type DeleteMedicamentoLogMutationResult = Apollo.MutationResult<DeleteMedicamentoLogMutation>;
 export type DeleteMedicamentoLogMutationOptions = Apollo.BaseMutationOptions<DeleteMedicamentoLogMutation, DeleteMedicamentoLogMutationVariables>;
 export const GetMedicamentoDocument = gql`
-    query getMedicamento($id: String!) {
+    query GetMedicamento($id: String!) {
   getMedicamento(id: $id) {
-    ...Medicamento
+    id_medicamento
+    nombre_med
+    marca
+    fecha_vencimiento
+    dosis_hs
+    agente_principal
+    efectos_secundarios
+    lista_negra
+    categoria
+    contraindicaciones
+    prescripcion_requerida
   }
 }
-    ${MedicamentoFragmentDoc}`;
+    `;
 
 /**
  * __useGetMedicamentoQuery__
@@ -1232,8 +1454,8 @@ export function useGetMedicamentoLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMedicamentoQuery, GetMedicamentoQueryVariables>(GetMedicamentoDocument, options);
         }
-export function useGetMedicamentoSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMedicamentoQuery, GetMedicamentoQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMedicamentoSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMedicamentoQuery, GetMedicamentoQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMedicamentoQuery, GetMedicamentoQueryVariables>(GetMedicamentoDocument, options);
         }
 export type GetMedicamentoQueryHookResult = ReturnType<typeof useGetMedicamentoQuery>;
@@ -1281,46 +1503,14 @@ export function useGetMedicamentosLazyQuery(baseOptions?: Apollo.LazyQueryHookOp
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetMedicamentosQuery, GetMedicamentosQueryVariables>(GetMedicamentosDocument, options);
         }
-export function useGetMedicamentosSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetMedicamentosQuery, GetMedicamentosQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetMedicamentosSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMedicamentosQuery, GetMedicamentosQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetMedicamentosQuery, GetMedicamentosQueryVariables>(GetMedicamentosDocument, options);
         }
 export type GetMedicamentosQueryHookResult = ReturnType<typeof useGetMedicamentosQuery>;
 export type GetMedicamentosLazyQueryHookResult = ReturnType<typeof useGetMedicamentosLazyQuery>;
 export type GetMedicamentosSuspenseQueryHookResult = ReturnType<typeof useGetMedicamentosSuspenseQuery>;
 export type GetMedicamentosQueryResult = Apollo.QueryResult<GetMedicamentosQuery, GetMedicamentosQueryVariables>;
-export const ReducirStockDocument = gql`
-    mutation ReducirStock($medicamentoId: String!, $cantidad: Int!) {
-  reducirStock(medicamentoId: $medicamentoId, cantidad: $cantidad)
-}
-    `;
-export type ReducirStockMutationFn = Apollo.MutationFunction<ReducirStockMutation, ReducirStockMutationVariables>;
-
-/**
- * __useReducirStockMutation__
- *
- * To run a mutation, you first call `useReducirStockMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useReducirStockMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [reducirStockMutation, { data, loading, error }] = useReducirStockMutation({
- *   variables: {
- *      medicamentoId: // value for 'medicamentoId'
- *      cantidad: // value for 'cantidad'
- *   },
- * });
- */
-export function useReducirStockMutation(baseOptions?: Apollo.MutationHookOptions<ReducirStockMutation, ReducirStockMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ReducirStockMutation, ReducirStockMutationVariables>(ReducirStockDocument, options);
-      }
-export type ReducirStockMutationHookResult = ReturnType<typeof useReducirStockMutation>;
-export type ReducirStockMutationResult = Apollo.MutationResult<ReducirStockMutation>;
-export type ReducirStockMutationOptions = Apollo.BaseMutationOptions<ReducirStockMutation, ReducirStockMutationVariables>;
 export const UpdateMedicamentoDocument = gql`
     mutation UpdateMedicamento($medicamentoId: String!, $data: MedicamentoInput!) {
   updateMedicamento(medicamentoId: $medicamentoId, data: $data)
@@ -1478,8 +1668,8 @@ export function useGetPacienteLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPacienteQuery, GetPacienteQueryVariables>(GetPacienteDocument, options);
         }
-export function useGetPacienteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPacienteQuery, GetPacienteQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPacienteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPacienteQuery, GetPacienteQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPacienteQuery, GetPacienteQueryVariables>(GetPacienteDocument, options);
         }
 export type GetPacienteQueryHookResult = ReturnType<typeof useGetPacienteQuery>;
@@ -1527,8 +1717,8 @@ export function useGetPacientesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptio
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetPacientesQuery, GetPacientesQueryVariables>(GetPacientesDocument, options);
         }
-export function useGetPacientesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetPacientesQuery, GetPacientesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useGetPacientesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPacientesQuery, GetPacientesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetPacientesQuery, GetPacientesQueryVariables>(GetPacientesDocument, options);
         }
 export type GetPacientesQueryHookResult = ReturnType<typeof useGetPacientesQuery>;
@@ -1590,7 +1780,16 @@ export type GetCitasQueryVariables = Exact<{
 }>;
 
 
-export type GetCitasQuery = { __typename?: 'Query', getCitas: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, fechaSolicitud: any, motivoConsulta: string, enfermedades?: Array<{ __typename?: 'Enfermedad', nombre_enf: string, id_enfermedad?: string | null }> | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null } | null, estudios?: Array<{ __typename?: 'Estudio', fecha_realizacion?: any | null, codigo_referencia?: string | null, medico_solicitante: string, tipo_estudio?: string | null, resultado?: string | null }> | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetCitasQuery = { __typename?: 'Query', getCitas: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaSolicitud: any, motivoConsulta: string, enfermedades?: Array<{ __typename?: 'Enfermedad', nombre_enf: string, id_enfermedad?: string | null }> | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null } | null, estudios?: Array<{ __typename?: 'Estudio', fecha_realizacion?: any | null, codigo_referencia?: string | null, medico_solicitante: string, tipo_estudio?: string | null, resultado?: string | null }> | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+
+export type GetCitasByFechaQueryVariables = Exact<{
+  limit: Scalars['Int']['input'];
+  skip: Scalars['Int']['input'];
+  where?: InputMaybe<CitaWhereInput>;
+}>;
+
+
+export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaSolicitud: any, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type CreateCitaMutationVariables = Exact<{
   data: CitaInput;
@@ -1624,12 +1823,26 @@ export type CreateCitaMedicamentoMutationVariables = Exact<{
 
 export type CreateCitaMedicamentoMutation = { __typename?: 'Mutation', createCitaMedicamento: string };
 
+export type FinalizarCitaMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type FinalizarCitaMutation = { __typename?: 'Mutation', finalizarCita: string };
+
 export type CreateEnfermedadMutationVariables = Exact<{
   data: EnfermedadInput;
 }>;
 
 
 export type CreateEnfermedadMutation = { __typename?: 'Mutation', createEnfermedad: string };
+
+export type DeleteEnfermedadMutationVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type DeleteEnfermedadMutation = { __typename?: 'Mutation', deleteEnfermedad: string };
 
 export type EnfermedadFragment = { __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string, sintomas?: string | null, gravedad?: string | null };
 
@@ -1641,6 +1854,21 @@ export type GetEnfermedadesQueryVariables = Exact<{
 
 
 export type GetEnfermedadesQuery = { __typename?: 'Query', getEnfermedades: { __typename?: 'EnfermedadResultadoBusqueda', edges: Array<{ __typename?: 'EnfermedadEdge', node: { __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string, sintomas?: string | null, gravedad?: string | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+
+export type GetEnfermedadByIdQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetEnfermedadByIdQuery = { __typename?: 'Query', getEnfermedadById?: { __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string, sintomas?: string | null, gravedad?: string | null } | null };
+
+export type UpdateEnfermedadMutationVariables = Exact<{
+  data: EnfermedadInput;
+  enfermedadId: Scalars['String']['input'];
+}>;
+
+
+export type UpdateEnfermedadMutation = { __typename?: 'Mutation', updateEnfermedad: string };
 
 export type CreateEstudioMutationVariables = Exact<{
   data: EstudioInput;
@@ -1669,14 +1897,6 @@ export type UpdateEstudioMutationVariables = Exact<{
 
 export type UpdateEstudioMutation = { __typename?: 'Mutation', updateEstudio: string };
 
-export type AumentarStockMutationVariables = Exact<{
-  medicamentoId: Scalars['String']['input'];
-  cantidad: Scalars['Int']['input'];
-}>;
-
-
-export type AumentarStockMutation = { __typename?: 'Mutation', aumentarStock: string };
-
 export type CreateMedicamentoMutationVariables = Exact<{
   data: MedicamentoInput;
 }>;
@@ -1698,14 +1918,14 @@ export type DeleteMedicamentoLogMutationVariables = Exact<{
 
 export type DeleteMedicamentoLogMutation = { __typename?: 'Mutation', deleteMedicamentoLog: string };
 
-export type MedicamentoFragment = { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null };
-
 export type GetMedicamentoQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetMedicamentoQuery = { __typename?: 'Query', getMedicamento?: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null } | null };
+export type GetMedicamentoQuery = { __typename?: 'Query', getMedicamento?: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null } | null };
+
+export type MedicamentoFragment = { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null };
 
 export type GetMedicamentosQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1715,14 +1935,6 @@ export type GetMedicamentosQueryVariables = Exact<{
 
 
 export type GetMedicamentosQuery = { __typename?: 'Query', getMedicamentos: { __typename?: 'MedicamentoResultadoBusqueda', edges: Array<{ __typename?: 'MedicamentoEdge', node: { __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null, marca?: string | null, fecha_vencimiento?: any | null, dosis_hs?: string | null, agente_principal?: string | null, efectos_secundarios?: string | null, lista_negra?: boolean | null, categoria?: string | null, contraindicaciones?: string | null, prescripcion_requerida?: boolean | null, stock?: number | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
-
-export type ReducirStockMutationVariables = Exact<{
-  medicamentoId: Scalars['String']['input'];
-  cantidad: Scalars['Int']['input'];
-}>;
-
-
-export type ReducirStockMutation = { __typename?: 'Mutation', reducirStock: string };
 
 export type UpdateMedicamentoMutationVariables = Exact<{
   medicamentoId: Scalars['String']['input'];
@@ -1753,14 +1965,14 @@ export type ElimiarPacienteLogMutationVariables = Exact<{
 
 export type ElimiarPacienteLogMutation = { __typename?: 'Mutation', ElimiarPacienteLog: string };
 
-export type PacienteFragment = { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, eliminadoLog?: boolean | null };
+export type PacienteFragment = { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, obra_social?: string | null, email?: string | null, direccion?: string | null, nacionalidad?: string | null, eliminadoLog?: boolean | null };
 
 export type GetPacienteQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetPacienteQuery = { __typename?: 'Query', getPaciente?: { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, eliminadoLog?: boolean | null } | null };
+export type GetPacienteQuery = { __typename?: 'Query', getPaciente?: { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, obra_social?: string | null, email?: string | null, direccion?: string | null, nacionalidad?: string | null, eliminadoLog?: boolean | null } | null };
 
 export type GetPacientesQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -1769,7 +1981,7 @@ export type GetPacientesQueryVariables = Exact<{
 }>;
 
 
-export type GetPacientesQuery = { __typename?: 'Query', getPacientes: { __typename?: 'PacientesResultadoBusqueda', edges: Array<{ __typename?: 'PacienteEdge', node: { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, eliminadoLog?: boolean | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetPacientesQuery = { __typename?: 'Query', getPacientes: { __typename?: 'PacientesResultadoBusqueda', edges: Array<{ __typename?: 'PacienteEdge', node: { __typename?: 'Paciente', id_paciente?: string | null, dni?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null, edad?: number | null, altura?: number | null, telefono?: string | null, fecha_nacimiento?: any | null, sexo?: string | null, grupo_sanguineo?: string | null, alergias?: string | null, obra_social?: string | null, email?: string | null, direccion?: string | null, nacionalidad?: string | null, eliminadoLog?: boolean | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type UpdatePacienteMutationVariables = Exact<{
   data: PacienteInput;
