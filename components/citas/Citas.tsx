@@ -225,10 +225,17 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
-      where: {},
+      where: {
+      motivoConsulta: searchTerm, // solo string
+
+        fechaSolicitud: {
+fechaSolicitud: {
+  equals: fecha.format("YYYY-MM-DD"),
+},
+        },
+      },
     },
   });
-
   const citas = data?.getCitasByFecha.edges || [];
   const totalCount = data?.getCitasByFecha.aggregate.count || 0;
 
@@ -250,7 +257,19 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+ React.useEffect(() => {
+    refetch({
+      limit: rowsPerPage,
+      skip: page * rowsPerPage,
+      where: {
+          motivoConsulta: searchTerm, // solo string
 
+        fechaSolicitud: {
+          equals: fecha.toISOString(),
+        },
+      },
+    });
+  }, [searchTerm, page, rowsPerPage, fecha, refetch]);
   if (loading) return <TableSkeleton rows={3} columns={5} />;
   if (error)
     return <Typography color="error">Error: {error.message}</Typography>;

@@ -212,6 +212,13 @@ export default function SignIn() {
             <Button fullWidth onClick={() => setOpen(true)} sx={{ mt: 2 }}>
               Registrarse
             </Button>
+            <Button
+  fullWidth
+  href="/auth/restore-password"
+  sx={{ mt: 1 }}
+>
+  ¿Olvidaste tu contraseña?
+</Button>
           </CardContent>
         </Card>
       </Container>
