@@ -51,9 +51,37 @@ const IndexPage: React.FC = () => {
         }}
       >
         {/* Título */}
-        <Typography variant="h4" align="center" gutterBottom>
-          Bienvenidos al consultorio médico 👩‍⚕️👨‍⚕️
-        </Typography>
+        <Box
+          sx={{
+            textAlign: "center",
+            background: "linear-gradient(to right,rgb(67, 152, 236),rgb(76, 106, 175))",
+            borderRadius: 4,
+            padding: 3,
+            color: "white",
+            marginBottom: 4,
+            boxShadow: 3,
+          }}
+        >
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: "bold",
+    fontFamily: "'Poppins', sans-serif",
+              mb: 1,
+            }}
+          >
+  ¡BIENVENIDO AL CONSULTORIO MÉDICO!
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontStyle: "italic",
+              opacity: 0.9,
+            }}
+          >
+            Cuidamos tu salud con dedicación y compromiso 👩‍⚕️👨‍⚕️
+          </Typography>
+        </Box>
         <Grid container spacing={2} alignItems="stretch">
           {/* Información del Consultorio */}
           <Grid xs={12} md={6} sx={{ display: "flex" }}>

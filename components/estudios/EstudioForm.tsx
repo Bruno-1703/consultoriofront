@@ -3,16 +3,19 @@ import dayjs, { Dayjs } from "dayjs";
 import {
   Box,
   Button,
-  TextField,
   Checkbox,
-  FormControlLabel,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  Grid,
   Snackbar,
+  TextField,
   Alert,
   Paper,
+  Fade,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -33,11 +36,10 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     try {
       await createEstudio({
         variables: {
-          idCita:"",
+          idCita: "",
           data: {
             tipo_estudio: tipoEstudio,
             resultado,
@@ -63,113 +65,117 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <Paper sx={{ borderRadius: 3 }}>
+    <Dialog open onClose={onClose} maxWidth="md" fullWidth scroll="body" TransitionComponent={Fade}>
+      <Paper sx={{ borderRadius: 4, backgroundColor: "#e3f2fd" }}>
         <DialogTitle
           sx={{
             backgroundColor: "#1976d2",
             color: "#fff",
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            padding: 2.5,
+            fontWeight: "bold",
+            fontSize: "1.5rem",
+            py: 2,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
           }}
         >
           Registrar Estudio
         </DialogTitle>
 
         <Box component="form" onSubmit={handleSubmit}>
-          <DialogContent
-            sx={{
-              backgroundColor: "#fafafa",
-              padding: 3,
-            }}
-          >
-            <TextField
-              label="Tipo de Estudio"
-              variant="outlined"
-              fullWidth
-              required
-              value={tipoEstudio}
-              onChange={(e) => setTipoEstudio(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+          <DialogContent sx={{ backgroundColor: "#fff", py: 3 }}>
+            <Container maxWidth="md">
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Tipo de Estudio"
+                    fullWidth
+                    required
+                    value={tipoEstudio}
+                    onChange={(e) => setTipoEstudio(e.target.value)}
+                  />
+                </Grid>
 
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Fecha de Realización"
-                value={fechaRealizacion}
-                onChange={(newDate) => setFechaRealizacion(newDate)}
-                slotProps={{
-                  textField: { fullWidth: true, sx: { mb: 2 } },
-                }}
-              />
-            </LocalizationProvider>
+                <Grid item xs={12} sm={6}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Fecha de Realización"
+                      value={fechaRealizacion}
+                      onChange={(newDate) => setFechaRealizacion(newDate)}
+                      slotProps={{ textField: { fullWidth: true } }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
 
-            <TextField
-              label="Resultado"
-              variant="outlined"
-              fullWidth
-              value={resultado}
-              onChange={(e) => setResultado(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Resultado"
+                    fullWidth
+                    value={resultado}
+                    onChange={(e) => setResultado(e.target.value)}
+                  />
+                </Grid>
 
-            <TextField
-              label="Código de Referencia"
-              variant="outlined"
-              fullWidth
-              required
-              value={codigoReferencia}
-              onChange={(e) => setCodigoReferencia(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Código de Referencia"
+                    fullWidth
+                    required
+                    value={codigoReferencia}
+                    onChange={(e) => setCodigoReferencia(e.target.value)}
+                  />
+                </Grid>
 
-            <TextField
-              label="Médico Solicitante"
-              variant="outlined"
-              fullWidth
-              required
-              value={medicoSolicitante}
-              onChange={(e) => setMedicoSolicitante(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Médico Solicitante"
+                    fullWidth
+                    required
+                    value={medicoSolicitante}
+                    onChange={(e) => setMedicoSolicitante(e.target.value)}
+                  />
+                </Grid>
 
-            <TextField
-              label="Observaciones"
-              variant="outlined"
-              fullWidth
-              multiline
-              rows={3}
-              value={observaciones}
-              onChange={(e) => setObservaciones(e.target.value)}
-              sx={{ mb: 2 }}
-            />
+                <Grid item xs={12} sm={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={urgente}
+                        onChange={(e) => setUrgente(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Marcar como urgente"
+                  />
+                </Grid>
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={urgente}
-                  onChange={(e) => setUrgente(e.target.checked)}
-                />
-              }
-              label="Urgente"
-              sx={{ mb: 1 }}
-            />
+                <Grid item xs={12}>
+                  <TextField
+                    label="Observaciones"
+                    fullWidth
+                    multiline
+                    rows={3}
+                    value={observaciones}
+                    onChange={(e) => setObservaciones(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
 
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                Error al registrar el estudio. Intenta nuevamente.
-              </Alert>
-            )}
+              {error && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  Error al registrar el estudio. Intenta nuevamente.
+                </Alert>
+              )}
+            </Container>
           </DialogContent>
 
           <DialogActions
             sx={{
-              backgroundColor: "#fafafa",
               px: 3,
               py: 2,
-              borderBottomLeftRadius: 12,
-              borderBottomRightRadius: 12,
+              backgroundColor: "#f5f5f5",
+              borderBottomLeftRadius: 16,
+              borderBottomRightRadius: 16,
+              justifyContent: "space-between",
             }}
           >
             <Button
@@ -177,10 +183,19 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               variant="contained"
               color="primary"
               disabled={loading}
+              sx={{ minWidth: 120 }}
             >
               {loading ? "Registrando..." : "Registrar"}
             </Button>
-            <Button variant="outlined" onClick={onClose}>
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              sx={{
+                borderColor: "#90caf9",
+                color: "#1976d2",
+                minWidth: 120,
+              }}
+            >
               Cancelar
             </Button>
           </DialogActions>
@@ -193,11 +208,7 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: "100%" }}>
           Estudio creado exitosamente.
         </Alert>
       </Snackbar>

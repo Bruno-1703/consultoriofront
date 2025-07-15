@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const hashedPassword = await bcrypt.hash(password, 10); // 10 es el número de "salt rounds"
 
     // Insertamos el nuevo usuario en la colección
-    await usersCollection.insertOne({ email, password: hashedPassword, name });
+    await usersCollection.insertOne({ email, password: hashedPassword, name , role: "SIN ROL"});
 
     // Respondemos con éxito
     res.status(201).json({ message: "Usuario creado exitosamente" });

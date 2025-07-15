@@ -1,48 +1,54 @@
+import { Session } from "next-auth";
+import { IMenuItem } from "../types";
+import { ROUTES } from "./routes";
+// tus íconos e items base
 import {
   Dashboard as DashboardIcon,
-  ShoppingCart as ShoppingCartIcon,
+  CalendarMonth as CalendarMonthIcon,
+  Person as PersonIcon,
+  LibraryBooks as LibraryBooksIcon,
+  Medication as MedicationIcon,
+  CoronavirusOutlined as CoronavirusOutlinedIcon,
   People as PeopleIcon,
-  AttachMoney as AttachMoneyIcon,
-  
 } from '@mui/icons-material';
-import CoronavirusOutlinedIcon from '@mui/icons-material/CoronavirusOutlined';
-import MedicationIcon from '@mui/icons-material/Medication';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import PersonIcon from '@mui/icons-material/Person';
-import { IMenuItem } from '../types';
-import { ROUTES } from './routes';
 
-export const MENU_LIST: IMenuItem[] = [
-  
-  {
-    route: ROUTES.main,
-    literal: 'Dashboard',
-    Icon: DashboardIcon,
-  },
-  {
-    route: ROUTES.citas,
-    literal: 'Citas',
-    Icon: CalendarMonthIcon,
-  },
-  {
-    route: ROUTES.pacientes,
-    literal: 'Pacientes',
-    Icon: PersonIcon,
-  },
-   {
-     route: ROUTES.estudios,
-     literal: 'Estudios',
-     Icon: LibraryBooksIcon,
-   },
-   {
-     route: ROUTES.medicamentos,
-     literal: 'Medicamentos',
-     Icon: MedicationIcon,
-   },
-  {
-    route: ROUTES.enfermedades,
-    literal: 'Enfermedades',
-    Icon: CoronavirusOutlinedIcon,
-  },
-];
+  export const MENU_LIST: IMenuItem[] = [
+    {
+      route: ROUTES.main,
+      literal: 'Dashboard',
+      Icon: DashboardIcon,
+    },
+    {
+      route: ROUTES.citas,
+      literal: 'Citas',
+      Icon: CalendarMonthIcon,
+    },
+    {
+      route: ROUTES.pacientes,
+      literal: 'Pacientes',
+      Icon: PersonIcon,
+    },
+    {
+      route: ROUTES.estudios,
+      literal: 'Estudios',
+      Icon: LibraryBooksIcon,
+    },
+    {
+      route: ROUTES.medicamentos,
+      literal: 'Medicamentos',
+      Icon: MedicationIcon,
+    },
+    {
+      route: ROUTES.enfermedades,
+      literal: 'Enfermedades',
+      Icon: CoronavirusOutlinedIcon,
+    },
+    {
+ route: ROUTES.admin,
+      literal: 'Admin',
+      Icon: PeopleIcon,
+    }
+  ];
+
+
+
