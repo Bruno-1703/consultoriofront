@@ -73,7 +73,7 @@ export default function SignIn() {
       .value;
     const dni = (form.elements.namedItem("dni") as HTMLInputElement).value;
     const telefono = (form.elements.namedItem("telefono") as HTMLInputElement)
-      .value; 
+      .value;
     const direccion = (form.elements.namedItem("direccion") as HTMLInputElement)
       .value;
     if (password !== confirmPassword) {
@@ -86,16 +86,17 @@ export default function SignIn() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          nombre_usuario: name, // este es el campo correcto que espera el backend
           email,
           password,
-          name,
           nombre_completo,
           especialidad,
           matricula,
           dni,
-          telefono,   
-          direccion,
+          telefono,
+          rol_usuario: "SIN ROL", // opcional, pero útil para evitar undefined
         }),
+
       });
 
       const data = await response.json();
@@ -213,12 +214,12 @@ export default function SignIn() {
               Registrarse
             </Button>
             <Button
-  fullWidth
-  href="/auth/restore-password"
-  sx={{ mt: 1 }}
->
-  ¿Olvidaste tu contraseña?
-</Button>
+              fullWidth
+              href="/auth/restore-password"
+              sx={{ mt: 1 }}
+            >
+              ¿Olvidaste tu contraseña?
+            </Button>
           </CardContent>
         </Card>
       </Container>

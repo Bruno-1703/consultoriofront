@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Box,
   Button,
   Collapse,
   TextField,
@@ -9,62 +8,81 @@ import {
   Alert,
   CircularProgress,
   Autocomplete,
+  Box,
 } from "@mui/material";
 import {
   CitaInput,
   PacienteCitaInput,
   useCreateCitaMutation,
   useGetPacientesQuery,
+  useGetUsuariosQuery,
 } from "../../graphql/types";
-import { useSession } from "next-auth/react";
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers";
 
 interface FormularioCitaProps {
   onClose: () => void;
 }
 
 export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
-  const { data: session } = useSession();
-  const userId = session?.user?.email;
-
-  const [isFormOpen, setIsFormOpen] = useState(true);
   const [motivoConsulta, setMotivoConsulta] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [fechaSolicitud, setFechaSolicitud] = useState<string>("");
+  const [fechaSolicitud, setFechaSolicitud] = useState("");
   const [selectedPaciente, setSelectedPaciente] = useState<PacienteCitaInput | null>(null);
+  const [selectedProfesional, setSelectedProfesional] = useState<any | null>(null);
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [limit, setLimit] = useState(50);
   const [skip, setSkip] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const { data: pacientesData, loading: pacientesLoading, error: pacientesError, fetchMore } = useGetPacientesQuery({
+  const { data: pacientesData, loading: pacientesLoading, fetchMore: fetchMorePacientes } = useGetPacientesQuery({
+    variables: { limit, skip, where: {} },
+  });
+
+  const { data: profesionalesData, loading: profesionalesLoading } = useGetUsuariosQuery({
     variables: {
       limit,
-      skip,
+      skip: 0,
       where: {},
     },
   });
 
   const [createCitaMutation] = useCreateCitaMutation();
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!motivoConsulta || !fechaSolicitud || !selectedPaciente) {
+
+    if (!motivoConsulta || !fechaSolicitud || !selectedPaciente || !selectedProfesional) {
       setShowErrorAlert(true);
       return;
     }
+
     setLoading(true);
     try {
       const citaForm: CitaInput = {
         motivoConsulta,
         observaciones,
-        fechaSolicitud: fechaSolicitud,
+        fechaProgramada: fechaSolicitud,
+        doctor: {
+          id: selectedProfesional.id_Usuario,
+          nombre_completo: selectedProfesional.nombre_completo || "",
+          email: selectedProfesional.email || "",
+          especialidad: selectedProfesional.especialidad || "",
+          matricula: selectedProfesional.matricula || "",
+          nombre_usuario: selectedProfesional.nombre_usuario || "",
+          dni: selectedProfesional.dni || "",
+          telefono: selectedProfesional.telefono || "",
+          rol_usuario: selectedProfesional.rol_usuario || "",
+        },
       };
       const pacienteForm: PacienteCitaInput = {
-        id_paciente: selectedPaciente?.id_paciente || "",
-        dni: selectedPaciente?.dni || "",
-        nombre_paciente: selectedPaciente?.nombre_paciente || "",
-        apellido_paciente: selectedPaciente?.apellido_paciente || "",
+        id_paciente: selectedPaciente.id_paciente,
+        dni: selectedPaciente.dni,
+        nombre_paciente: selectedPaciente.nombre_paciente,
+        apellido_paciente: selectedPaciente.apellido_paciente,
       };
 
       await createCitaMutation({
@@ -73,6 +91,8 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
 
       setShowSuccessAlert(true);
       resetForm();
+      onClose(); // ← esta línea cierra el formulario
+
     } catch (error) {
       console.error("Error al enviar el formulario:", error);
       setShowErrorAlert(true);
@@ -86,130 +106,112 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
     setObservaciones("");
     setFechaSolicitud("");
     setSelectedPaciente(null);
-  };
-
-  const loadMorePacientes = async () => {
-    await fetchMore({
-      variables: {
-        limit,
-        skip: skip + limit,
-      },
-    });
-    setSkip(skip + limit);
+    setSelectedProfesional(null);
   };
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
-    const bottom =
-      e.currentTarget.scrollHeight - e.currentTarget.scrollTop ===
-      e.currentTarget.clientHeight;
+    const bottom = e.currentTarget.scrollHeight - e.currentTarget.scrollTop === e.currentTarget.clientHeight;
     if (bottom && !pacientesLoading) {
-      loadMorePacientes();
+      fetchMorePacientes({ variables: { limit, skip: skip + limit } });
+      setSkip(skip + limit);
     }
   };
 
   return (
-    <Box sx={{ margin: 2 }}>
-      <Collapse in={isFormOpen}>
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{
-            padding: 2,
-            border: "1px solid #ccc",
-            borderRadius: 2,
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-            backgroundColor: "#f9f9f9",
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            Formulario de Cita
-          </Typography>
+    <Collapse in={true}>
+      <form onSubmit={handleSubmit}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Registrar nueva cita
+        </Typography>
 
-          <TextField
-            label="Motivo de Consulta"
-            fullWidth
-            margin="normal"
-            value={motivoConsulta}
-            onChange={(e) => setMotivoConsulta(e.target.value)}
-            error={!motivoConsulta}
-            helperText={!motivoConsulta && "Este campo es obligatorio"}
-          />
-
-          <TextField
+        <TextField
+          label="Motivo de Consulta"
+          fullWidth
+          required
+          value={motivoConsulta}
+          onChange={(e) => setMotivoConsulta(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
             label="Fecha y Hora"
-            type="datetime-local"
-            fullWidth
-            margin="normal"
-            value={fechaSolicitud}
-            onChange={(e) => setFechaSolicitud(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            error={!fechaSolicitud}
-            helperText={!fechaSolicitud && "Este campo es obligatorio"}
+            value={fechaSolicitud ? dayjs(fechaSolicitud) : null}
+            onChange={(newValue) => {
+              if (newValue) setFechaSolicitud(newValue.toISOString());
+            }}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                required: true,
+                sx: { mb: 2 },
+              },
+            }}
           />
+        </LocalizationProvider>
+        <TextField
+          label="Observaciones"
+          multiline
+          rows={3}
+          fullWidth
+          value={observaciones}
+          onChange={(e) => setObservaciones(e.target.value)}
+          sx={{ mb: 2 }}
+        />
 
-          <TextField
-            label="Observaciones"
-            multiline
-            rows={4}
-            fullWidth
-            margin="normal"
-            value={observaciones}
-            onChange={(e) => setObservaciones(e.target.value)}
-          />
-
-          {/* Autocomplete para seleccionar paciente */}
-          <Autocomplete
-            id="paciente-autocomplete"
-            options={pacientesData?.getPacientes.edges.map(({ node }: any) => node) || []}
-            getOptionLabel={(option: PacienteCitaInput) => `${option.nombre_paciente} ${option.apellido_paciente}`}
-            onChange={(event, value) => setSelectedPaciente(value)}
-            value={selectedPaciente}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Seleccionar Paciente"
-                variant="outlined"
-                fullWidth
-                margin="normal"
-                error={!selectedPaciente}
-                helperText={!selectedPaciente && "Este campo es obligatorio"}
-              />
-            )}
-            loading={pacientesLoading}
-            onScroll={handleScroll}
-            noOptionsText="No hay pacientes disponibles"
-          />
-
-          {pacientesLoading && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-              <CircularProgress />
-            </Box>
+        <Autocomplete
+          options={pacientesData?.getPacientes.edges.map(({ node }) => node) || []}
+          getOptionLabel={(option) => `${option.nombre_paciente} ${option.apellido_paciente}`}
+          value={selectedPaciente}
+          onChange={(_, value) => setSelectedPaciente(value)}
+          onScroll={handleScroll}
+          loading={pacientesLoading}
+          renderInput={(params) => (
+            <TextField {...params} label="Seleccionar Paciente" required sx={{ mb: 2 }} />
           )}
+        />
 
+        <Autocomplete
+          options={profesionalesData?.getUsuarios.edges.map(({ node }) => node) || []}
+          getOptionLabel={(option) =>
+            `${option.nombre_completo} (${option.especialidad || "General"})`
+          }
+          value={selectedProfesional}
+          onChange={(_, value) => setSelectedProfesional(value)}
+          loading={profesionalesLoading}
+          renderInput={(params) => (
+            <TextField {...params} label="Seleccionar Profesional" required sx={{ mb: 2 }} />
+          )}
+        />
+
+        {loading && <CircularProgress size={24} sx={{ mb: 2 }} />}
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={onClose}
+            sx={{ mr: 2, borderRadius: 2, boxShadow: 2 }}
+          >
+            Cancelar
+          </Button>
           <Button
             type="submit"
             variant="contained"
             color="primary"
-            sx={{ mt: 2 }}
-            disabled={pacientesLoading || loading}
+            disabled={loading}
           >
-            {loading ? "Guardando..." : "Guardar"}
+            {loading ? "Guardando..." : "Guardar Cita"}
           </Button>
         </Box>
-      </Collapse>
+      </form>
 
       <Snackbar
         open={showSuccessAlert}
         autoHideDuration={4000}
         onClose={() => setShowSuccessAlert(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setShowSuccessAlert(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          Cita creada con éxito!
+        <Alert onClose={() => setShowSuccessAlert(false)} severity="success">
+          ¡Cita creada con éxito!
         </Alert>
       </Snackbar>
 
@@ -217,16 +219,11 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
         open={showErrorAlert}
         autoHideDuration={4000}
         onClose={() => setShowErrorAlert(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setShowErrorAlert(false)}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          Error al crear la cita. Por favor, intente de nuevo.
+        <Alert onClose={() => setShowErrorAlert(false)} severity="error">
+          Por favor, completá todos los campos requeridos.
         </Alert>
       </Snackbar>
-    </Box>
+    </Collapse>
   );
 };

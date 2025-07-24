@@ -40,12 +40,22 @@ export default NextAuth({
           if (!isValid) {
             throw new Error("¡La contraseña no coincide!");
           }
-
+          console.log(user)
           return {
             id: user._id.toString(),
             email: user.email,
-            name: user.name,
-            role: user.role
+            name: user.nombre_completo,
+            role: user.rol_usuario
+
+        // nombre_usuario: usuario.nombre_usuario,
+        // email: usuario.email,
+        // password: usuario.password,
+        // rol_usuario: usuario.rol_usuario,
+        // nombre_completo: usuario.nombre_completo,
+        // especialidad: usuario.especialidad || '',
+        // matricula: usuario.matricula || '',
+        // telefono: usuario.telefono || '',
+        // dni: usuario.dni || '',
           };
         } catch (error) {
           throw new Error(error instanceof Error ? error.message : "Ocurrió un error");

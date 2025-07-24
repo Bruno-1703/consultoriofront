@@ -24,9 +24,15 @@ import { FormularioCita } from "../components/citas/FormularioCita";
 import 'dayjs/locale/es'; // Importa el idioma
 dayjs.locale('es');       // 
 const IndexPage: React.FC = () => {
-  const [value, setValue] = React.useState<Dayjs | null>(dayjs());
+  const now = dayjs();
+  const [value, setValue] = React.useState<Dayjs>(now);
+  console.log(value)
   const [dialogOpen, setDialogOpen] = React.useState(false);
-
+  const handleDateChange = (newValue: Dayjs | null) => {
+    if (newValue) {
+      setValue(newValue);
+    }
+  };
   const toggleDialog = (open: boolean) => () => {
     setDialogOpen(open);
   };
@@ -66,11 +72,11 @@ const IndexPage: React.FC = () => {
             variant="h3"
             sx={{
               fontWeight: "bold",
-    fontFamily: "'Poppins', sans-serif",
+              fontFamily: "'Poppins', sans-serif",
               mb: 1,
             }}
           >
-  ¡BIENVENIDO AL CONSULTORIO MÉDICO!
+            ¡BIENVENIDO AL CONSULTORIO MÉDICO!
           </Typography>
           <Typography
             variant="subtitle1"
@@ -129,7 +135,7 @@ const IndexPage: React.FC = () => {
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DateCalendar
                     value={value}
-                    onChange={(newValue) => setValue(newValue)}
+                    onChange={handleDateChange}
                   />
                 </LocalizationProvider>
                 <Button
@@ -145,7 +151,7 @@ const IndexPage: React.FC = () => {
                 </Typography>
               </Box>
             </Paper>
-          </Grid>
+          </Grid> 
         </Grid>
 
         {/* Dialogo para agregar cita */}
@@ -164,7 +170,7 @@ const IndexPage: React.FC = () => {
         {/* Lista de Citas */}
         <Paper sx={{ padding: 3 }}>
           <Typography variant="h6">Lista de Citas</Typography>
-          <Citas fecha={value || dayjs()} />
+<Citas fecha={value?.format("YYYY-MM-DD")} />
         </Paper>
       </Container>
     </Box>

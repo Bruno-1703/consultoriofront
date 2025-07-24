@@ -99,11 +99,10 @@ const CitaRow = ({ row }: { row: Cita }) => {
             <Typography sx={{ flex: "2 1 150px", fontWeight: "600" }}>
               {row.motivoConsulta}
             </Typography>
-            <Typography
-              sx={{ flex: "1 1 100px", textAlign: "center", color: "#555" }}
-            >
-              {dayjs(row.fechaSolicitud).format("DD/MM/YYYY HH:mm")}
+            <Typography>
+              {dayjs(Number(row.fechaProgramada)).format("DD MMM YYYY")}
             </Typography>
+
             <Box sx={{ flex: "1 1 110px", textAlign: "center" }}>
               <Chip
                 label={row.cancelada ? "Cancelada" : "Pendiente"}
@@ -138,14 +137,13 @@ const CitaRow = ({ row }: { row: Cita }) => {
           </Box>
         </TableCell>
       </TableRow>
-
       <TableRow>
         <TableCell colSpan={5} sx={{ paddingBottom: 0, paddingTop: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box
               sx={{
                 margin: 2,
-                padding: 2,
+                padding: 3,
                 backgroundColor: "#f0f4ff",
                 borderRadius: 2,
                 boxShadow: 2,
@@ -154,27 +152,43 @@ const CitaRow = ({ row }: { row: Cita }) => {
             >
               <Typography
                 variant="h6"
-                sx={{ fontWeight: "bold", color: "#303f9f", mb: 2 }}
+                sx={{ fontWeight: "bold", color: "#303f9f", mb: 3 }}
               >
                 Detalles de la Cita
               </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
-                <Box sx={{ minWidth: 150 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>
-                    Observaciones:
-                  </Typography>
-                  <Typography>{row.observaciones || "N/A"}</Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+                  gap: 3,
+                }}
+              >
+                <Box>
+                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Observaciones:</Typography>
+                  <Typography sx={{ color: "#555" }}>{row.observaciones || "N/A"}</Typography>
                 </Box>
-                <Box sx={{ minWidth: 150 }}>
-                  <Typography sx={{ fontWeight: "bold" }}>Paciente:</Typography>
-                  <Typography>
-                    {row.paciente?.nombre_paciente || "N/A"}{" "}
-                    {row.paciente?.apellido_paciente || ""}
+
+                <Box>
+                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Paciente:</Typography>
+                  <Typography sx={{ color: "#555" }}>
+                    {row.paciente?.nombre_paciente || "N/A"} {row.paciente?.apellido_paciente || ""}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Usuario Médico:</Typography>
+                  <Typography sx={{ color: "#555" }}>
+                    <strong>DNI:</strong> {row.doctor?.dni || "N/A"} <br />
+                    <strong>Nombre:</strong> {row.doctor?.nombre_completo || "N/A"} <br />
+                    <strong>Especialidad:</strong> {row.doctor?.especialidad || "N/A"} <br />
+                    <strong>Email:</strong> {row.doctor?.email || "N/A"} <br />
+                    <strong>Teléfono:</strong> {row.doctor?.telefono || "N/A"}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Collapse>
+
         </TableCell>
       </TableRow>
 
@@ -213,29 +227,24 @@ const CitaRow = ({ row }: { row: Cita }) => {
 };
 
 interface CollapsibleTableProps {
-  fecha: dayjs.Dayjs;
+  fecha: string;
 }
 
 const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-
+  console.log(fecha)
   const { data, loading, error, refetch } = useGetCitasByFechaQuery({
     variables: {
       limit: rowsPerPage,
-      skip: page * rowsPerPage,
+      skip: page,
       where: {
-      motivoConsulta: searchTerm, // solo string
-
-        fechaSolicitud: {
-fechaSolicitud: {
-  equals: fecha.format("YYYY-MM-DD"),
-},
-        },
-      },
+        fechaProgramada: fecha
+      }
     },
   });
+  console.log(data)
   const citas = data?.getCitasByFecha.edges || [];
   const totalCount = data?.getCitasByFecha.aggregate.count || 0;
 
@@ -257,16 +266,14 @@ fechaSolicitud: {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
- React.useEffect(() => {
+  React.useEffect(() => {
     refetch({
       limit: rowsPerPage,
       skip: page * rowsPerPage,
       where: {
-          motivoConsulta: searchTerm, // solo string
+        motivoConsulta: searchTerm,
+        fechaProgramada: fecha,
 
-        fechaSolicitud: {
-          equals: fecha.toISOString(),
-        },
       },
     });
   }, [searchTerm, page, rowsPerPage, fecha, refetch]);
@@ -325,9 +332,6 @@ fechaSolicitud: {
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
-
-
-
           <TableBody>
             {citas.map((items) => (
               <CitaRow key={items.node.id_cita} row={items.node as Cita} />

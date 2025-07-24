@@ -72,7 +72,7 @@ const CitaModal: React.FC<{
     motivoConsulta,
     observaciones,
     cancelada,
-    fechaSolicitud,
+    fechaProgramada,
     enfermedades,
     medicamentos,
     paciente,
@@ -118,7 +118,7 @@ const CitaModal: React.FC<{
                 Fecha
               </Typography>
               <Typography sx={{ fontSize: 14, color: "#444" }}>
-                {new Date(fechaSolicitud).toLocaleString("es-AR", {
+                {new Date(fechaProgramada).toLocaleString("es-AR", {
                   weekday: "short",
                   year: "numeric",
                   month: "short",

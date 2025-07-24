@@ -12,15 +12,34 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad }) => {
+interface Enfermedad {
+  id: string;
+  nombre_enf: string;
+  sintomas: string;
+  gravedad: string;
+}
+
+interface EnfermedadesModalProps {
+  open: boolean;
+  onClose: () => void;
+  enfermedadSeleccionada: Enfermedad | null;
+  onEditar: () => void;
+}
+
+const EnfermedadesModal: React.FC<EnfermedadesModalProps> = ({
+  open,
+  onClose,
+  enfermedadSeleccionada,
+  onEditar,
+}) => {
   return (
-    <Dialog open={drawerOpen} onClose={handleCloseDrawer} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ m: 0, p: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" sx={{ fontWeight: "bold" }}>
             Detalles de la Enfermedad
           </Typography>
-          <IconButton onClick={handleCloseDrawer} size="small">
+          <IconButton onClick={onClose} size="small" aria-label="cerrar">
             <CloseIcon />
           </IconButton>
         </Stack>
@@ -29,22 +48,22 @@ const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad 
       <Divider />
 
       <DialogContent dividers>
-        {selectedEnfermedad ? (
+        {enfermedadSeleccionada ? (
           <Stack spacing={2}>
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
               Nombre:
             </Typography>
-            <Typography>{selectedEnfermedad.nombre_enf}</Typography>
+            <Typography>{enfermedadSeleccionada.nombre_enf}</Typography>
 
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
               Síntomas:
             </Typography>
-            <Typography>{selectedEnfermedad.sintomas}</Typography>
+            <Typography>{enfermedadSeleccionada.sintomas}</Typography>
 
             <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
               Gravedad:
             </Typography>
-            <Typography>{selectedEnfermedad.gravedad}</Typography>
+            <Typography>{enfermedadSeleccionada.gravedad}</Typography>
           </Stack>
         ) : (
           <Typography variant="body1" color="text.secondary">
@@ -54,7 +73,15 @@ const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad 
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={handleCloseDrawer} color="primary">
+        <Button
+          onClick={onEditar}
+          color="primary"
+          disabled={!enfermedadSeleccionada}
+          variant="contained"
+        >
+          Editar
+        </Button>
+        <Button onClick={onClose} color="primary" variant="outlined">
           Cerrar
         </Button>
       </DialogActions>
@@ -62,4 +89,4 @@ const EnfermedadesDrawer = ({ drawerOpen, handleCloseDrawer, selectedEnfermedad 
   );
 };
 
-export default EnfermedadesDrawer;
+export default EnfermedadesModal;

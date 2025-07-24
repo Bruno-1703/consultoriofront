@@ -1,15 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  TextField,
-  Tooltip,
-  IconButton,
-  Badge,
-  Snackbar,
-  Alert,
   Table,
   TableBody,
   TableCell,
@@ -17,227 +7,312 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Typography,
+  Box,
+  Button,
+  TextField,
   TablePagination,
-  CircularProgress,
-} from '@mui/material';
-import {
-  useGetEnfermedadesQuery,
-  useDeleteEnfermedadMutation,
-} from '../../graphql/types';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
-import EnfermedadFormEdit from './EnfermedadForm';
-import EnfermedadesDrawer from './EnfermedadesDrawer';
-import ConfirmarEliminacion from '../../utils/ConfirmarEliminacion';
+  IconButton,
+  Stack,
+  Badge,
+  Tooltip,
+  Snackbar,
+  Alert,
+  LinearProgress,
+} from "@mui/material";
 
-const EnfermedadesList: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+
+import { NetworkStatus } from "@apollo/client";
+
+import ConfirmarEliminacionEnfermedad from "../../utils/ConfirmarEliminacionEnfermedad";
+import TableSkeleton from "../../utils/TableSkeleton";
+import { useDeleteEnfermedadMutation, useGetEnfermedadesQuery } from "../../graphql/types";
+import EnfermedadFormEdit from "./EnfermedadCrear";
+import EnfermedadesModal from "./EnfermedadesModal";
+
+const Enfermedades: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showForm, setShowForm] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [enfermedadIdEditar, setEnfermedadIdEditar] = useState<string | null>(null);
-  const [selectedEnfermedad, setSelectedEnfermedad] = useState<any>(null);
-  const [eliminarId, setEliminarId] = useState<string | null>(null);
-  const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
   const [errorSnackbar, setErrorSnackbar] = useState<string | null>(null);
+  const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedEnfermedad, setSelectedEnfermedad] = useState<any>(null);
+  const [eliminarEnfermedad, setEliminarEnfermedad] = useState<string | null>(null);
+  const [enfermedadIdEditar, setEnfermedadIdEditar] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const { data, loading, error, refetch } = useGetEnfermedadesQuery({
+  const { data, loading, error, refetch, networkStatus } = useGetEnfermedadesQuery({
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
-      where: searchTerm ? { nombre_enf: searchTerm } : undefined,
+      where: {
+        nombre_enf: searchTerm,
+      },
     },
   });
 
-  const [deleteEnfermedad] = useDeleteEnfermedadMutation();
+  const [deleteEnfermedadMutation] = useDeleteEnfermedadMutation();
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  // Manejo del cambio en el buscador
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
     setPage(0);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => setPage(newPage);
+  // Cambio de página en la tabla
+  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Cambio de cantidad de filas por página
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  const handleOpenDrawer = (enfermedad: any) => {
-    setSelectedEnfermedad(enfermedad);
-    setDrawerOpen(true);
-  };
-
-  const handleCloseDrawer = () => {
-    setDrawerOpen(false);
-    setSelectedEnfermedad(null);
-  };
-
- const handleEdit = (id: string | null) => {
-  if (!id) return; // evitar nulos
-  setEnfermedadIdEditar(id);
-  setShowForm(false);
-};
-
-
-  const handleCloseEdit = () => {
-    setEnfermedadIdEditar(null);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteEnfermedad({ variables: { id } });
-      refetch();
-      setSuccessSnackbar('Enfermedad eliminada con éxito.');
-    } catch (err) {
-      setErrorSnackbar('Error al eliminar la enfermedad.');
+  // Abrir edición para enfermedad
+  const handleEditEnfermedad = (id: string | null) => {
+    if (id) {
+      setEnfermedadIdEditar(id);
+      setIsEditing(true);
+      setShowForm(false);
     }
   };
 
+  // Cerrar edición
+  const handleCloseEdit = () => {
+    setIsEditing(false);
+    setEnfermedadIdEditar(null);
+  };
+
+  // Abrir modal para visualizar
+  const handleOpenModal = (enfermedad: any) => {
+    setSelectedEnfermedad(enfermedad);
+    setModalOpen(true);
+  };
+
+  // Cerrar modal
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedEnfermedad(null);
+  };
+
+  // Confirmar eliminación
+  const handleConfirmDelete = async () => {
+    if (eliminarEnfermedad) {
+      try {
+        await deleteEnfermedadMutation({ variables: { id: eliminarEnfermedad } });
+        setSuccessSnackbar("Enfermedad eliminada exitosamente.");
+        setEliminarEnfermedad(null);
+        refetch();
+      } catch (err: any) {
+        setErrorSnackbar(`Error al eliminar enfermedad: ${err.message}`);
+        setEliminarEnfermedad(null);
+      }
+    }
+  };
+
+  // Mostrar loading skeleton si está cargando
+  if (loading && networkStatus !== NetworkStatus.refetch) return <TableSkeleton rows={3} columns={4} />;
+
+  // Mostrar error y snackbar
+  if (error) {
+    setErrorSnackbar(error.message);
+    return null;
+  }
+
+  const enfermedades = data?.getEnfermedades?.edges?.map(edge => edge.node) || [];
+
   return (
-    <Box sx={{ padding: 3, backgroundColor: '#f5f5f5', borderRadius: 2, boxShadow: 3 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ marginBottom: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Gestión de Enfermedades</Typography>
-        <Badge badgeContent={data?.getEnfermedades.aggregate.count || 0} color="primary">
-          <LocalHospitalIcon sx={{ color: '#1976d2' }} />
-        </Badge>
+    <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 3 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+          Gestión de Enfermedades
+        </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={2} sx={{ marginBottom: 2 }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: "center" }}>
         <Button
           variant="contained"
-          onClick={() => setShowForm(!showForm)}
+          color="primary"
+          onClick={() => setShowForm(prev => !prev)}
           sx={{
-            backgroundColor: '#1976d2',
-            fontWeight: 'bold',
-            '&:hover': { backgroundColor: '#115293' },
+            backgroundColor: "#1976d2",
+            "&:hover": { backgroundColor: "#115293" },
+            fontWeight: "bold",
+            px: 2,
           }}
         >
-          {showForm ? 'Ocultar Formulario' : 'Registrar Enfermedad'}
+          {showForm ? "Ocultar Formulario" : "Registrar Enfermedad"}
         </Button>
 
         <TextField
-          label="Buscar por Nombre"
+          label="Buscar por nombre"
+          variant="outlined"
           value={searchTerm}
           onChange={handleSearchChange}
           sx={{ flexGrow: 1 }}
         />
 
         <Tooltip title="Refrescar">
-          <IconButton onClick={() => refetch()} color="secondary">
-            <RefreshIcon />
-          </IconButton>
+          <span>
+            <IconButton
+              onClick={() => refetch()}
+              color="secondary"
+              disabled={networkStatus === NetworkStatus.refetch}
+              sx={{
+                borderRadius: 1,
+                backgroundColor: "#f0f0f0",
+                "&:hover": { backgroundColor: "#e0e0e0" },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Tooltip title="Enfermedades">
+          <Badge badgeContent={data?.getEnfermedades?.aggregate.count || 0} color="primary">
+            <MedicalServicesIcon sx={{ color: "#1976d2" }} />
+          </Badge>
         </Tooltip>
       </Stack>
 
-      {enfermedadIdEditar && (
-        <Box sx={{ marginBottom: 2, backgroundColor: '#e3f2fd', borderRadius: 2, padding: 2 }}>
+      {networkStatus === NetworkStatus.refetch && <LinearProgress />}
+
+      {showForm && !isEditing && (
+        <Box sx={{ mt: 2, p: 2, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
+          {/* Aquí iría tu formulario de registro */}
+          <Typography>Formulario para registrar nueva enfermedad (a implementar)</Typography>
+        </Box>
+      )}
+
+      {isEditing && enfermedadIdEditar && (
+        <Box sx={{ mt: 2, p: 2, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
           <EnfermedadFormEdit enfermedadId={enfermedadIdEditar} onClose={handleCloseEdit} />
         </Box>
       )}
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" marginY={3}>
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Alert severity="error">Error al cargar enfermedades: {error.message}</Alert>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#1976d2' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Nombre</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Síntomas</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Gravedad</TableCell>
-                <TableCell align="center" sx={{ color: 'white', fontWeight: 'bold' }}>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data?.getEnfermedades.edges.map((enf, index) => (
-                <TableRow
-                  key={enf.node.id_enfermedad}
-                  sx={{ backgroundColor: index % 2 === 0 ? '#fafafa' : '#f5f5f5' }}
+      <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
+        <Table sx={{ minWidth: 900 }}>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: "#1976d2" }}>
+              {["ID", "Nombre", "Acciones"].map(header => (
+                <TableCell
+                  key={header}
+                  sx={{
+                    color: "white",
+                    fontWeight: "bold",
+                    padding: "6px 16px",
+                  }}
                 >
-                  <TableCell>{enf.node.nombre_enf}</TableCell>
-                  <TableCell>{enf.node.sintomas}</TableCell>
-                  <TableCell>{enf.node.gravedad}</TableCell>
-                  <TableCell align="center">
-                    <Tooltip title="Visualizar">
-                      <IconButton color="primary" onClick={() => handleOpenDrawer(enf.node)}>
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Editar">
-                      <IconButton color="secondary" onClick={() => handleEdit(enf.node.id_enfermedad || null )}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                      <IconButton color="error" onClick={() => setEliminarId(enf.node.id_enfermedad || null )}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
+                  {header}
+                </TableCell>
               ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {enfermedades.map((enfermedad, index) => (
+              <TableRow
+                key={enfermedad.id_enfermedad}
+                sx={{
+                  backgroundColor: index % 2 === 0 ? "#fafafa" : "#f5f5f5",
+                  "&:hover": { backgroundColor: "#e0e0e0" },
+                  height: "48px",
+                }}
+              >
+                <TableCell>{enfermedad.id_enfermedad}</TableCell>
+                <TableCell>{enfermedad.nombre_enf}</TableCell>
+                <TableCell align="center">
+                  <Tooltip title="Visualizar">
+                    <IconButton color="primary" onClick={() => handleOpenModal(enfermedad)}>
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Editar">
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleEditEnfermedad(enfermedad.id_enfermedad ?? null)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar">
+                    <IconButton color="error" onClick={() => setEliminarEnfermedad(enfermedad.id_enfermedad ?? null)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       <TablePagination
+        rowsPerPageOptions={[5, 10, 15]}
         component="div"
-        count={data?.getEnfermedades.aggregate.count || 0}
+        count={data?.getEnfermedades?.aggregate.count || 0}
+        rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        sx={{ mt: 2 }}
       />
 
-      <EnfermedadesDrawer
-        drawerOpen={drawerOpen}
-        handleCloseDrawer={handleCloseDrawer}
-        selectedEnfermedad={selectedEnfermedad}
+      {/* Confirmación de eliminación */}
+      <ConfirmarEliminacionEnfermedad
+        open={!!eliminarEnfermedad}
+        onClose={() => setEliminarEnfermedad(null)}
+        id={eliminarEnfermedad || ""}
+        onConfirm={handleConfirmDelete}
       />
 
-      <ConfirmarEliminacion
-        open={Boolean(eliminarId)}
-        onClose={() => setEliminarId(null)}
-        onConfirmar={() => {
-          if (eliminarId) handleDelete(eliminarId);
-          setEliminarId(null);
-        }}
-        mensaje="¿Estás seguro de que deseas eliminar esta enfermedad?"
-        titulo="Confirmar Eliminación"
-        disable={false}
-      />
-
+      {/* Snackbar para errores */}
       <Snackbar
-        open={Boolean(successSnackbar)}
+        open={!!errorSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setErrorSnackbar(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={() => setErrorSnackbar(null)} severity="error" sx={{ width: "100%" }}>
+          {errorSnackbar}
+        </Alert>
+      </Snackbar>
+
+      {/* Snackbar para éxito */}
+      <Snackbar
+        open={!!successSnackbar}
         autoHideDuration={6000}
         onClose={() => setSuccessSnackbar(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert severity="success" onClose={() => setSuccessSnackbar(null)}>
+        <Alert onClose={() => setSuccessSnackbar(null)} severity="success" sx={{ width: "100%" }}>
           {successSnackbar}
         </Alert>
       </Snackbar>
 
-      <Snackbar
-        open={Boolean(errorSnackbar)}
-        autoHideDuration={6000}
-        onClose={() => setErrorSnackbar(null)}
-      >
-        <Alert severity="error" onClose={() => setErrorSnackbar(null)}>
-          {errorSnackbar}
-        </Alert>
-      </Snackbar>
+      {/* Modal para visualizar */}
+      <EnfermedadesModal
+        open={modalOpen}
+        enfermedadSeleccionada={selectedEnfermedad}
+        onClose={handleCloseModal}
+        onEditar={() => {
+          if (selectedEnfermedad?.id_enfermedad) {
+            handleEditEnfermedad(selectedEnfermedad.id_enfermedad);
+            handleCloseModal();
+          }
+        }}
+      />
     </Box>
   );
 };
 
-export default EnfermedadesList;
+export default Enfermedades;

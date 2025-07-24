@@ -14,9 +14,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Si no es POST, devolvemos un error 405 (Método no permitido)
     return res.status(405).json({ message: "Método no permitido" });
   }
-
+ 
   // Extraemos los datos enviados desde el cuerpo de la solicitud
-  const { email, password, name } = req.body;
+const {
+  nombre_usuario,
+  email,
+  password,
+  nombre_completo,
+  especialidad,
+  matricula,
+  telefono,
+  dni,
+  direccion
+} = req.body;
+console.log( nombre_usuario,
+  email,
+  password,
+  nombre_completo,
+  especialidad,
+  matricula,
+  telefono,
+  dni,)
+// Validar campos obligatorios
+if (
+  !nombre_usuario ||
+  !email ||
+  !password ||
+  !nombre_completo ||
+  !especialidad ||
+  !matricula ||
+  !dni ||
+  !direccion
+
+) {
+  return res.status(400).json({ message: "Faltan datos obligatorios" });
+}
+
 
   // Validamos que se haya enviado el email y la contraseña
   if (!email || !password) {
@@ -40,8 +73,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const hashedPassword = await bcrypt.hash(password, 10); // 10 es el número de "salt rounds"
 
     // Insertamos el nuevo usuario en la colección
-    await usersCollection.insertOne({ email, password: hashedPassword, name , role: "SIN ROL"});
+    const rol_usuario = "SIN ROL"; // por defecto
 
+await usersCollection.insertOne({
+  nombre_usuario,
+  email,
+  password: hashedPassword,
+  rol_usuario,
+  nombre_completo,
+  especialidad,
+  matricula,
+  telefono,
+  dni,
+  direccion
+});
     // Respondemos con éxito
     res.status(201).json({ message: "Usuario creado exitosamente" });
   } catch (error) {

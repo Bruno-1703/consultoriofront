@@ -35,6 +35,7 @@ import CitaModal from "../components/citas/citaModal";
 import AgregarEstudio from "../components/selectores/AgregarEstudios";
 import AgregarEnfermedad from "../components/selectores/AgregarEnfermedad";
 import AgregarMedicamento from "../components/selectores/AgregarMedicamento";
+import dayjs from "dayjs";
 
 const HistoriasPaciente: React.FC = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -220,8 +221,11 @@ const HistoriasPaciente: React.FC = () => {
                 }}
               >
                 <TableCell>
-                  {new Date(historia.node.fechaSolicitud).toLocaleDateString()}
+                     <Typography>
+                              {dayjs(Number(historia.node.fechaProgramada)).format("DD MMM YYYY")}
+                            </Typography>
                 </TableCell>
+
                 <TableCell>{historia.node.motivoConsulta}</TableCell>
                 <TableCell>{historia.node.observaciones}</TableCell>
                 <TableCell align="center">

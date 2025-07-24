@@ -3,19 +3,15 @@ import dayjs, { Dayjs } from "dayjs";
 import {
   Box,
   Button,
+  TextField,
   Checkbox,
-  Container,
+  FormControlLabel,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  Grid,
   Snackbar,
-  TextField,
   Alert,
-  Paper,
-  Fade,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -36,23 +32,21 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
     try {
-      await createEstudio({
-        variables: {
-          idCita: "",
-          data: {
-            tipo_estudio: tipoEstudio,
-            resultado,
-            codigo_referencia: codigoReferencia,
-            fecha_realizacion: fechaRealizacion
-              ? fechaRealizacion.format("YYYY-MM-DD")
-              : null,
-            medico_solicitante: medicoSolicitante,
-            observaciones,
-            urgente,
-          },
-        },
-      });
+      // await createEstudio({
+      //   variables: {
+      //     data: {
+      //       tipo_estudio: tipoEstudio,
+      //       resultado,
+      //       codigo_referencia: codigoReferencia,
+      //       fecha_realizacion: fechaRealizacion ? fechaRealizacion.format("YYYY-MM-DD") : null,
+      //       medico_solicitante: medicoSolicitante,
+      //       observaciones,
+      //       urgente,
+      //     },
+      //   },
+      // });
       setSnackbarOpen(true);
       onClose();
     } catch (e) {
@@ -65,142 +59,86 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   };
 
   return (
-    <Dialog open onClose={onClose} maxWidth="md" fullWidth scroll="body" TransitionComponent={Fade}>
-      <Paper sx={{ borderRadius: 4, backgroundColor: "#e3f2fd" }}>
-        <DialogTitle
-          sx={{
-            backgroundColor: "#1976d2",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: "1.5rem",
-            py: 2,
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-          }}
-        >
-          Registrar Estudio
-        </DialogTitle>
-
-        <Box component="form" onSubmit={handleSubmit}>
-          <DialogContent sx={{ backgroundColor: "#fff", py: 3 }}>
-            <Container maxWidth="md">
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Tipo de Estudio"
-                    fullWidth
-                    required
-                    value={tipoEstudio}
-                    onChange={(e) => setTipoEstudio(e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Fecha de Realización"
-                      value={fechaRealizacion}
-                      onChange={(newDate) => setFechaRealizacion(newDate)}
-                      slotProps={{ textField: { fullWidth: true } }}
-                    />
-                  </LocalizationProvider>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Resultado"
-                    fullWidth
-                    value={resultado}
-                    onChange={(e) => setResultado(e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Código de Referencia"
-                    fullWidth
-                    required
-                    value={codigoReferencia}
-                    onChange={(e) => setCodigoReferencia(e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Médico Solicitante"
-                    fullWidth
-                    required
-                    value={medicoSolicitante}
-                    onChange={(e) => setMedicoSolicitante(e.target.value)}
-                  />
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={urgente}
-                        onChange={(e) => setUrgente(e.target.checked)}
-                        color="primary"
-                      />
-                    }
-                    label="Marcar como urgente"
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    label="Observaciones"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    value={observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
-
-              {error && (
-                <Alert severity="error" sx={{ mt: 2 }}>
-                  Error al registrar el estudio. Intenta nuevamente.
-                </Alert>
-              )}
-            </Container>
-          </DialogContent>
-
-          <DialogActions
-            sx={{
-              px: 3,
-              py: 2,
-              backgroundColor: "#f5f5f5",
-              borderBottomLeftRadius: 16,
-              borderBottomRightRadius: 16,
-              justifyContent: "space-between",
-            }}
-          >
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              disabled={loading}
-              sx={{ minWidth: 120 }}
-            >
-              {loading ? "Registrando..." : "Registrar"}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={onClose}
-              sx={{
-                borderColor: "#90caf9",
-                color: "#1976d2",
-                minWidth: 120,
-              }}
-            >
-              Cancelar
-            </Button>
-          </DialogActions>
-        </Box>
-      </Paper>
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth sx={{ borderRadius: '8px' }}>
+      <DialogTitle sx={{ backgroundColor: '#1976d2', color: '#fff', borderRadius: '8px 8px 0 0' }}>
+        Registrar Estudio
+      </DialogTitle>
+      <Box component="form" onSubmit={handleSubmit} sx={{ padding: 3 }}>
+        <DialogContent dividers sx={{ backgroundColor: '#f5f5f5' }}>
+          <TextField
+            label="Tipo de Estudio"
+            variant="outlined"
+            fullWidth
+            required
+            value={tipoEstudio}
+            onChange={(e) => setTipoEstudio(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Fecha de Realización"
+              value={fechaRealizacion}
+              onChange={(newDate) => setFechaRealizacion(newDate)}
+            
+            />
+          </LocalizationProvider>
+          <TextField
+            label="Resultado"
+            variant="outlined"
+            fullWidth
+            value={resultado}
+            onChange={(e) => setResultado(e.target.value)}
+            sx={{ marginBottom: 3 }} // Aumenta el margen inferior
+          />
+          <TextField
+            label="Código de Referencia"
+            variant="outlined"
+            fullWidth
+            required
+            value={codigoReferencia}
+            onChange={(e) => setCodigoReferencia(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Médico Solicitante"
+            variant="outlined"
+            fullWidth
+            required
+            value={medicoSolicitante}
+            onChange={(e) => setMedicoSolicitante(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <TextField
+            label="Observaciones"
+            variant="outlined"
+            fullWidth
+            multiline
+            rows={3}
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            sx={{ marginBottom: 2 }}
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={urgente}
+                onChange={(e) => setUrgente(e.target.checked)}
+              />
+            }
+            label="Urgente"
+            sx={{ marginBottom: 2 }}
+          />
+          {error && <p style={{ color: "red" }}>Error al registrar el estudio. Intenta nuevamente.</p>}
+        </DialogContent>
+        <DialogActions sx={{ backgroundColor: '#f5f5f5' }}>
+          <Button type="submit" variant="contained" color="primary" disabled={loading}>
+            {loading ? "Registrando..." : "Registrar"}
+          </Button>
+          <Button variant="outlined" onClick={onClose}>
+            Cancelar
+          </Button>
+        </DialogActions>
+      </Box>
 
       <Snackbar
         open={snackbarOpen}

@@ -40,7 +40,8 @@ import {
 import { useEffect, useRef } from "react";
 
 const Pacientes: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState(""); // Lo que escribe el usuario
+  const [searchTerm, setSearchTerm] = useState("");   // Lo que se usa en la query
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showForm, setShowForm] = useState(false);
@@ -48,24 +49,20 @@ const Pacientes: React.FC = () => {
   const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any>(null);
-const [eliminarPaciente, setEliminarPaciente] = useState<string | null | undefined>(null);
-const [pacienteIdEditar, setPacienteIdEditar] = useState<string | null>(null);
+  const [eliminarPaciente, setEliminarPaciente] = useState<string | null | undefined>(null);
+  const [pacienteIdEditar, setPacienteIdEditar] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setPage(0); // Reiniciar a la primera página al cambiar filtro
+    }, 500); // Espera 500ms
 
-
-const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
-useEffect(() => {
-  const handler = setTimeout(() => {
-    setDebouncedSearchTerm(searchTerm);
-  }, 300); // 300ms espera
-
-  return () => {
-    clearTimeout(handler);
-  };
-}, [searchTerm]);
+    return () => clearTimeout(delayDebounce); // Limpia el timeout anterior
+  }, [searchInput]);
 
   const { data, loading, error, refetch, networkStatus } = useGetPacientesQuery({
     variables: {
@@ -82,7 +79,7 @@ useEffect(() => {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setPage(0); // Resetear a la primera página
+    setPage(0);
   };
 
   const handleChangePage = (
@@ -113,7 +110,7 @@ useEffect(() => {
     setShowForm(false);
   };
 
-  const handleEliminarPaciente = async (pacienteId: string  ) => {
+  const handleEliminarPaciente = async (pacienteId: string) => {
     try {
       await eliminarPacienteLogMutation({ variables: { pacienteId } });
       await refetch();
@@ -149,7 +146,6 @@ useEffect(() => {
     setErrorSnackbar(error.message);
     return null;
   }
-
   return (
     <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 3 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
@@ -172,12 +168,12 @@ useEffect(() => {
         >
           {showForm ? "Ocultar Formulario" : "Registrar Paciente"}
         </Button>
-
         <TextField
+          inputRef={inputRef}
           label="Buscar por nombre o apellido"
           variant="outlined"
-          value={searchTerm}
-          onChange={handleSearchChange}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           sx={{ flexGrow: 1 }}
         />
 
@@ -266,13 +262,13 @@ useEffect(() => {
                   <Tooltip title="Eliminar">
                     <IconButton
                       color="error"
-onClick={() => {
-  if (paciente.node.id_paciente) {
-    setEliminarPaciente(paciente.node.id_paciente);
-  } else {
-    console.error("ID del paciente indefinido");
-  }
-}}
+                      onClick={() => {
+                        if (paciente.node.id_paciente) {
+                          setEliminarPaciente(paciente.node.id_paciente);
+                        } else {
+                          console.error("ID del paciente indefinido");
+                        }
+                      }}
                     >
                       <DeleteIcon />
                     </IconButton>
