@@ -29,7 +29,7 @@ interface EnfermedadFormProps {
   enfermedadId: string;
   onClose: () => void;
 }
-const EnfermedadForm: React.FC<EnfermedadFormProps> = ({ onClose }) => {
+const EnfermedadCrear: React.FC<EnfermedadFormProps> = ({ onClose }) => {
   const [nombre_enfermedad, setNombreEnfermedad] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [fecha_diagnostico, setFechaDiagnostico] = useState<Dayjs | null>(null);
@@ -245,4 +245,4 @@ const EnfermedadForm: React.FC<EnfermedadFormProps> = ({ onClose }) => {
   );
 };
 
-export default EnfermedadForm;
+export default EnfermedadCrear;

@@ -176,10 +176,10 @@ const CitaRow = ({ row }: { row: Cita }) => {
                 </Box>
 
                 <Box>
-                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Usuario Médico:</Typography>
+                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Médico Asignado:</Typography>
                   <Typography sx={{ color: "#555" }}>
                     <strong>DNI:</strong> {row.doctor?.dni || "N/A"} <br />
-                    <strong>Nombre:</strong> {row.doctor?.nombre_completo || "N/A"} <br />
+                    <strong>Nombre:</strong> {row.doctor?.nombre_completo || "Laura Mendez"} <br />
                     <strong>Especialidad:</strong> {row.doctor?.especialidad || "N/A"} <br />
                     <strong>Email:</strong> {row.doctor?.email || "N/A"} <br />
                     <strong>Teléfono:</strong> {row.doctor?.telefono || "N/A"}

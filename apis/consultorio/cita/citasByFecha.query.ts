@@ -23,7 +23,10 @@ query getCitasByFecha($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
         email
         especialidad
         matricula
-        dni} 
+        dni
+        telefono
+        nombre_completo
+        } 
   
       }      
     }

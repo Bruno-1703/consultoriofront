@@ -246,7 +246,7 @@ export default function SignIn() {
             />
             <TextField
               fullWidth
-              label="Nombre"
+              label="Nombre de Usuario"
               name="name"
               type="text"
               margin="normal"

@@ -76,6 +76,7 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
           dni: selectedProfesional.dni || "",
           telefono: selectedProfesional.telefono || "",
           rol_usuario: selectedProfesional.rol_usuario || "",
+          
         },
       };
       const pacienteForm: PacienteCitaInput = {
@@ -186,14 +187,14 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
         {loading && <CircularProgress size={24} sx={{ mb: 2 }} />}
 
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-          <Button
+          {/* <Button
             variant="contained"
             color="error"
             onClick={onClose}
             sx={{ mr: 2, borderRadius: 2, boxShadow: 2 }}
           >
             Cancelar
-          </Button>
+          </Button> */}
           <Button
             type="submit"
             variant="contained"
@@ -207,7 +208,7 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
 
       <Snackbar
         open={showSuccessAlert}
-        autoHideDuration={4000}
+        autoHideDuration={6500}
         onClose={() => setShowSuccessAlert(false)}
       >
         <Alert onClose={() => setShowSuccessAlert(false)} severity="success">

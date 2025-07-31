@@ -233,6 +233,8 @@ export type Mutation = {
   deleteUsuario: Scalars['String']['output'];
   finalizarCita: Scalars['String']['output'];
   reducirStock: Scalars['String']['output'];
+  resetearPassword: Scalars['String']['output'];
+  solicitarRecuperacionPassword: Scalars['String']['output'];
   updateCita: Scalars['String']['output'];
   updateEnfermedad: Scalars['String']['output'];
   updateEstudio: Scalars['String']['output'];
@@ -341,6 +343,17 @@ export type MutationFinalizarCitaArgs = {
 export type MutationReducirStockArgs = {
   cantidad: Scalars['Int']['input'];
   medicamentoId: Scalars['String']['input'];
+};
+
+
+export type MutationResetearPasswordArgs = {
+  nuevaPassword: Scalars['String']['input'];
+  token: Scalars['String']['input'];
+};
+
+
+export type MutationSolicitarRecuperacionPasswordArgs = {
+  email: Scalars['String']['input'];
 };
 
 
@@ -469,6 +482,7 @@ export type Query = {
   getPacientes: PacientesResultadoBusqueda;
   getStock: Scalars['Float']['output'];
   getUsuario?: Maybe<Usuario>;
+  getUsuarioById?: Maybe<Usuario>;
   getUsuarios: UsuarioResultadoBusqueda;
 };
 
@@ -547,6 +561,11 @@ export type QueryGetStockArgs = {
 
 export type QueryGetUsuarioArgs = {
   email: Scalars['String']['input'];
+};
+
+
+export type QueryGetUsuarioByIdArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -645,10 +664,12 @@ export const CitaFragmentDoc = gql`
   doctor {
     id_Usuario
     nombre_usuario
+    nombre_completo
     email
     especialidad
     matricula
     dni
+    telefono
   }
 }
     `;
@@ -877,6 +898,8 @@ export const GetCitasByFechaDocument = gql`
           especialidad
           matricula
           dni
+          telefono
+          nombre_completo
         }
       }
     }
@@ -1814,6 +1837,86 @@ export function useUpdatePacienteMutation(baseOptions?: Apollo.MutationHookOptio
 export type UpdatePacienteMutationHookResult = ReturnType<typeof useUpdatePacienteMutation>;
 export type UpdatePacienteMutationResult = Apollo.MutationResult<UpdatePacienteMutation>;
 export type UpdatePacienteMutationOptions = Apollo.BaseMutationOptions<UpdatePacienteMutation, UpdatePacienteMutationVariables>;
+export const GetUsuarioByIdDocument = gql`
+    query getUsuarioById($id: String!) {
+  getUsuarioById(id: $id) {
+    id_Usuario
+    nombre_usuario
+    email
+    nombre_completo
+    especialidad
+    matricula
+    telefono
+    dni
+    rol_usuario
+  }
+}
+    `;
+
+/**
+ * __useGetUsuarioByIdQuery__
+ *
+ * To run a query within a React component, call `useGetUsuarioByIdQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUsuarioByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUsuarioByIdQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetUsuarioByIdQuery(baseOptions: Apollo.QueryHookOptions<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables> & ({ variables: GetUsuarioByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>(GetUsuarioByIdDocument, options);
+      }
+export function useGetUsuarioByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>(GetUsuarioByIdDocument, options);
+        }
+export function useGetUsuarioByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>(GetUsuarioByIdDocument, options);
+        }
+export type GetUsuarioByIdQueryHookResult = ReturnType<typeof useGetUsuarioByIdQuery>;
+export type GetUsuarioByIdLazyQueryHookResult = ReturnType<typeof useGetUsuarioByIdLazyQuery>;
+export type GetUsuarioByIdSuspenseQueryHookResult = ReturnType<typeof useGetUsuarioByIdSuspenseQuery>;
+export type GetUsuarioByIdQueryResult = Apollo.QueryResult<GetUsuarioByIdQuery, GetUsuarioByIdQueryVariables>;
+export const UpdateUsuarioDocument = gql`
+    mutation updateUsuario($usuarioId: String!, $data: UsuarioInput!) {
+  updateUsuario(usuarioId: $usuarioId, data: $data)
+}
+    `;
+export type UpdateUsuarioMutationFn = Apollo.MutationFunction<UpdateUsuarioMutation, UpdateUsuarioMutationVariables>;
+
+/**
+ * __useUpdateUsuarioMutation__
+ *
+ * To run a mutation, you first call `useUpdateUsuarioMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUsuarioMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUsuarioMutation, { data, loading, error }] = useUpdateUsuarioMutation({
+ *   variables: {
+ *      usuarioId: // value for 'usuarioId'
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateUsuarioMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUsuarioMutation, UpdateUsuarioMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateUsuarioMutation, UpdateUsuarioMutationVariables>(UpdateUsuarioDocument, options);
+      }
+export type UpdateUsuarioMutationHookResult = ReturnType<typeof useUpdateUsuarioMutation>;
+export type UpdateUsuarioMutationResult = Apollo.MutationResult<UpdateUsuarioMutation>;
+export type UpdateUsuarioMutationOptions = Apollo.BaseMutationOptions<UpdateUsuarioMutation, UpdateUsuarioMutationVariables>;
 export const GetUsuariosDocument = gql`
     query getUsuarios($limit: Int!, $skip: Int!, $where: UsuarioWhereInput) {
   getUsuarios(limit: $limit, skip: $skip, where: $where) {
@@ -1878,14 +1981,14 @@ export type CancelarCitaMutationVariables = Exact<{
 
 export type CancelarCitaMutation = { __typename?: 'Mutation', cancelarCita: string };
 
-export type CitaFragment = { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: string | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null } | null };
+export type CitaFragment = { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: string | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null };
 
 export type GetCitaQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetCitaQuery = { __typename?: 'Query', getCita?: { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: string | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null } | null } | null };
+export type GetCitaQuery = { __typename?: 'Query', getCita?: { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: string | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null } | null };
 
 export type GetCitasQueryVariables = Exact<{
   limit: Scalars['Int']['input'];
@@ -1903,7 +2006,7 @@ export type GetCitasByFechaQueryVariables = Exact<{
 }>;
 
 
-export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null, nombre_completo?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type CreateCitaMutationVariables = Exact<{
   data: CitaInput;
@@ -2104,6 +2207,21 @@ export type UpdatePacienteMutationVariables = Exact<{
 
 
 export type UpdatePacienteMutation = { __typename?: 'Mutation', updatePaciente: string };
+
+export type GetUsuarioByIdQueryVariables = Exact<{
+  id: Scalars['String']['input'];
+}>;
+
+
+export type GetUsuarioByIdQuery = { __typename?: 'Query', getUsuarioById?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, nombre_completo?: string | null, especialidad?: string | null, matricula?: string | null, telefono?: string | null, dni?: string | null, rol_usuario?: string | null } | null };
+
+export type UpdateUsuarioMutationVariables = Exact<{
+  usuarioId: Scalars['String']['input'];
+  data: UsuarioInput;
+}>;
+
+
+export type UpdateUsuarioMutation = { __typename?: 'Mutation', updateUsuario: string };
 
 export type GetUsuariosQueryVariables = Exact<{
   limit: Scalars['Int']['input'];

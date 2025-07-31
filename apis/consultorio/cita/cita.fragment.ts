@@ -20,13 +20,16 @@ export default gql`
           nombre_paciente
           dni          
         }
-           doctor{
+      doctor{
         id_Usuario
         nombre_usuario
+        nombre_completo
         email
         especialidad
         matricula
-        dni}
+        dni
+        telefono
+        }
   
   }
 `;
