@@ -39,19 +39,20 @@ export default function ResetPasswordForm() {
     try {
       const res = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT!, {
   method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: `
-            mutation ResetearPassword($token: String!, $nuevaPassword: String!) {
-              resetearPassword(token: $token, nuevaPassword: $nuevaPassword)
-            }
-          `,
-          variables: {
-            token,
-            nuevaPassword,
-          },
-        }),
-      });
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    query: `
+      mutation ResetearPassword($token: String!, $nuevaPassword: String!) {
+        resetearPassword(token: $token, nuevaPassword: $nuevaPassword)
+      }
+    `,
+    variables: {
+      token,
+      nuevaPassword,
+    },
+  }),
+});
+
 
       const json = await res.json();
       if (json.errors) {

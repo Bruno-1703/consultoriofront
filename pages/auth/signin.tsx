@@ -15,6 +15,8 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { IconButton, InputAdornment } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 import backgroundImage from "./background.jpg";
 
@@ -23,6 +25,9 @@ export default function SignIn() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   async function handleSignIn(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -194,10 +199,20 @@ export default function SignIn() {
                 fullWidth
                 label="Clave"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 margin="normal"
                 required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
+
               <Button
                 fullWidth
                 type="submit"
@@ -302,18 +317,38 @@ export default function SignIn() {
               fullWidth
               label="Clave"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               margin="normal"
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
             <TextField
               fullWidth
-              label="Confirme su Clave"
-              name="confirmPassword"
-              type="password"
+              label="Clave"
+              name="password"
+              type={showRegisterPassword ? "text" : "password"}
               margin="normal"
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowRegisterPassword(!showRegisterPassword)} edge="end">
+                      {showRegisterPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
           </Box>
         </DialogContent>
         <DialogActions>

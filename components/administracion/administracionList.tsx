@@ -14,7 +14,8 @@ import { useGetUsuariosQuery } from "../../graphql/types";
 import UsuarioDetalleModal from "./UsuarioDetalleModal";
 import ConfirmarEliminacion from "./ConfirmarEliminacion";
 import UsuarioEditarFormulario from "./UsuarioEditarFormulario";
-
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // icono PDF
+import FileDownloadIcon from "@mui/icons-material/FileDownload"; // icono descarga
 const Administracion: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [page, setPage] = useState(0);
@@ -34,6 +35,92 @@ const Administracion: React.FC = () => {
       where: searchTerm ? { nombre_completo: searchTerm } : {},
     },
   });
+  const descargarReporteUsuarios = () => {
+    const fecha = new Date();
+    const fechaStr = fecha
+      .toISOString()
+      .replace(/T/, "_")
+      .replace(/:/g, "")
+      .split(".")[0];
+
+    const escapeCSV = (str: any) =>
+      `"${String(str ?? "").replace(/"/g, '""')}"`;
+
+    const encabezado =
+      ["DNI", "Nombre completo", "Email", "Teléfono", "Rol", "Especialidad"].map(escapeCSV).join(",") +
+      "\n";
+
+    const filas = usuarios
+      .map((u: any) =>
+        [
+          u.dni,
+          u.nombre_completo,
+          u.email,
+          u.telefono,
+          u.rol_usuario,
+          u.especialidad,
+        ]
+          .map(escapeCSV)
+          .join(",")
+      )
+      .join("\n");
+
+    const contenido = encabezado + filas;
+
+    const blob = new Blob([contenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `reporte_usuarios_${fechaStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  const descargarReporteCitas = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/reportes/citas', {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo descargar el archivo');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'reporte-citas.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Error al descargar el archivo:', error);
+    }
+  };
+
+  const handleBackup = async () => {
+    try {
+      const res = await fetch('/api/backup/json');
+      if (!res.ok) throw new Error('Error al generar backup');
+
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-${new Date().toISOString()}.json`;
+      a.click();
+
+      setBackupSnackbar("Backup descargado correctamente.");
+    } catch (err) {
+      console.error(err);
+      setErrorSnackbar("Error al generar el backup.");
+    }
+  };
+
 
   // Manejo de búsqueda
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +176,73 @@ const Administracion: React.FC = () => {
           Gestión de Usuarios
         </Typography>
       </Stack>
+ <Box
+  sx={{
+    mb: 3,
+    p: 2,
+    backgroundColor: "#e3f2fd",
+    borderRadius: 2,
+    border: "1px solid #90caf9",
+    boxShadow: 1,
+  }}
+>
+  <Typography
+    variant="h6"
+    sx={{ fontWeight: "bold", mb: 2, color: "#1976d2", textTransform: "uppercase" }}
+  >
+    Backup del Sistema
+  </Typography>
+
+  <Stack direction="row" spacing={2}>
+    <Button
+      variant="outlined"
+      startIcon={<PictureAsPdfIcon />}
+      onClick={descargarReporteCitas}
+      sx={{
+        borderColor: "#1976d2",
+        color: "#1976d2",
+        "&:hover": {
+          backgroundColor: "#1976d2",
+          color: "#fff",
+        },
+      }}
+    >
+      Reporte Citas (PDF)
+    </Button>
+
+    <Button
+      variant="outlined"
+      startIcon={<FileDownloadIcon />}
+      onClick={descargarReporteUsuarios}
+      sx={{
+        borderColor: "#1976d2",
+        color: "#1976d2",
+        "&:hover": {
+          backgroundColor: "#1976d2",
+          color: "#fff",
+        },
+      }}
+    >
+      Usuarios (CSV)
+    </Button>
+
+    <Button
+      variant="outlined"
+      startIcon={<FileDownloadIcon />}
+      onClick={handleBackup}
+      sx={{
+        borderColor: "#1976d2",
+        color: "#1976d2",
+        "&:hover": {
+          backgroundColor: "#1976d2",
+          color: "#fff",
+        },
+      }}
+    >
+      Backup JSON
+    </Button>
+  </Stack>
+</Box>
 
       <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: "center" }}>
         <Button
@@ -108,11 +262,11 @@ const Administracion: React.FC = () => {
           sx={{ flexGrow: 1 }}
         />
 
-        <Tooltip title="Refrescar">
+        {/* <Tooltip title="Refrescar">
           <IconButton onClick={() => refetch()} color="secondary" sx={{ borderRadius: 1 }}>
             <RefreshIcon />
           </IconButton>
-        </Tooltip>
+        </Tooltip> */}
 
         <Tooltip title="Total de Usuarios">
           <Badge badgeContent={totalCount} color="primary">
@@ -200,6 +354,8 @@ const Administracion: React.FC = () => {
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
+
+
                   </TableCell>
                 </TableRow>
               ))
@@ -249,3 +405,7 @@ const Administracion: React.FC = () => {
 };
 
 export default Administracion;
+function setBackupSnackbar(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
