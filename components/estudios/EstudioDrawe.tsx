@@ -47,9 +47,9 @@ const EstudiosDrawer = ({ drawerOpen, handleCloseDrawer, selectedEstudio }) => {
           }}
         >
           <CardContent>
-            <Typography variant="body1" sx={{ color: '#90caf9' }}>
+            {/* <Typography variant="body1" sx={{ color: '#90caf9' }}>
               <strong>ID Estudio:</strong> {selectedEstudio.id_estudio || 'N/A'}
-            </Typography>
+            </Typography> */}
             <Typography variant="body1" sx={{ marginTop: 1 }}>
               <strong>Tipo de Estudio:</strong> {selectedEstudio.tipo_estudio || 'N/A'}
             </Typography>

@@ -330,7 +330,6 @@ export default function SignIn() {
                 ),
               }}
             />
-
             <TextField
               fullWidth
               label="Clave"
@@ -348,7 +347,6 @@ export default function SignIn() {
                 ),
               }}
             />
-
           </Box>
         </DialogContent>
         <DialogActions>

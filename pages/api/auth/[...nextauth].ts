@@ -5,9 +5,9 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from 'bcryptjs';
 
 interface Credentials {
-    email: string;
-    password: string;
-  }
+  email: string;
+  password: string;
+}
 
 export default NextAuth({
   providers: [
@@ -24,19 +24,19 @@ export default NextAuth({
 
         try {
           const client = await clientPromise;
-          
+
           const usersCollection = client.db("consultorio").collection("Usuario");
 
-          const user = await usersCollection.findOne({ 
-            email: credentials.email 
+          const user = await usersCollection.findOne({
+            email: credentials.email
           });
-          
+
           if (!user) {
             throw new Error("¡Usuario no encontrado!");
           }
 
           const isValid = await compare(credentials.password, user.password);
-          
+
           if (!isValid) {
             throw new Error("¡La contraseña no coincide!");
           }
@@ -59,29 +59,29 @@ export default NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   callbacks: {
-  async jwt({ token, user }) {
-    if (user) {
-      const u = user as { id : string , role : string}
-      token.id = u.id;
-      token.role = u.role;
+    async jwt({ token, user }) {
+      if (user) {
+        const u = user as { id: string, role: string }
+        token.id = u.id;
+        token.role = u.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+
+        (session.user as any).id = token.id as string;
+        (session.user as any).role = token.role as string;
+      }
+      console.log({
+        "msg": "Inicio de session del usuario",
+        "token": token,
+        "session": session
+      })
+      return session;
     }
-    return token;
-  },
-  async session({ session, token }) {
-    if (token && session.user) {
-      
-      (session.user as any).id = token.id as string;
-      (session.user as any ).role = token.role as string;
-    }
-    console.log({
-          "msg": "Inicio de session del usuario",
-          "token": token,
-          "session": session
-        })
-    return session;
   }
-}
-,
+  ,
   pages: {
     signIn: '/auth/signin',
     error: '/auth/error',

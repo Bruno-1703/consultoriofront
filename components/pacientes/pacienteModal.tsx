@@ -108,7 +108,6 @@ const PacientesModal: React.FC<PacientesModalProps> = ({ modalOpen, handleCloseM
           >
             <CardContent sx={{ '&:last-child': { pb: 2 } }}> {/* Ajusta padding inferior */}
               {[
-                { label: 'ID Paciente', value: selectedPaciente.id_paciente },
                 { label: 'DNI', value: selectedPaciente.dni },
                 { label: 'Nombre', value: selectedPaciente.nombre_paciente },
                 { label: 'Apellido', value: selectedPaciente.apellido_paciente },

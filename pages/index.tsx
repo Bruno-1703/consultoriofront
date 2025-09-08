@@ -151,7 +151,7 @@ const IndexPage: React.FC = () => {
                 </Typography>
               </Box>
             </Paper>
-          </Grid> 
+          </Grid>
         </Grid>
 
         {/* Dialogo para agregar cita */}
@@ -170,7 +170,7 @@ const IndexPage: React.FC = () => {
         {/* Lista de Citas */}
         <Paper sx={{ padding: 3 }}>
           <Typography variant="h6">Lista de Citas</Typography>
-<Citas fecha={value?.format("YYYY-MM-DD")} />
+          <Citas fecha={value?.format("YYYY-MM-DD")} />
         </Paper>
       </Container>
     </Box>

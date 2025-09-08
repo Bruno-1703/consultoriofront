@@ -206,8 +206,8 @@ const Enfermedades: React.FC = () => {
         <DialogContent sx={{ p: 0 }}>
           <EnfermedadCrear
             onClose={() => setShowCreateFormModal(false)} enfermedadId={""}            // onSuccess={handleFormSuccess}
-            // onError={handleFormError}
-            // isEditing={false}
+          // onError={handleFormError}
+          // isEditing={false}
           />
         </DialogContent>
       </Dialog>
@@ -233,7 +233,7 @@ const Enfermedades: React.FC = () => {
         <Table sx={{ minWidth: 900 }}>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#1976d2" }}>
-              {["ID", "Nombre", "Acciones"].map((header) => (
+              {[, "Nombre", "Gravedad", "Sintomas", "Acciones"].map((header) => (
                 <TableCell
                   key={header}
                   sx={{
@@ -257,11 +257,19 @@ const Enfermedades: React.FC = () => {
                   height: "48px",
                 }}
               >
-                <TableCell>{enfermedad.id_enfermedad}</TableCell>
                 <TableCell>
-                  {enfermedad.nombre_enf?.charAt(0).toUpperCase() +
-                    enfermedad.nombre_enf?.slice(1)}
+                  {`${enfermedad.nombre_enf ?? ""}`.charAt(0).toUpperCase() +
+                    `${enfermedad.nombre_enf ?? ""}`.slice(1)}
                 </TableCell>
+                <TableCell>
+                  {`${enfermedad.gravedad ?? ""}`.charAt(0).toUpperCase() +
+                    `${enfermedad.gravedad ?? ""}`.slice(1)}
+                </TableCell>
+                <TableCell>
+                  {`${enfermedad.sintomas ?? ""}`.charAt(0).toUpperCase() +
+                    `${enfermedad.sintomas ?? ""}`.slice(1)}
+                </TableCell>
+
                 <TableCell align="center">
                   <Tooltip title="Visualizar">
                     <IconButton

@@ -73,14 +73,7 @@ const EnfermedadesModal: React.FC<EnfermedadesModalProps> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button
-          onClick={onEditar}
-          color="primary"
-          disabled={!enfermedadSeleccionada}
-          variant="contained"
-        >
-          Editar
-        </Button>
+ 
         <Button onClick={onClose} color="primary" variant="outlined">
           Cerrar
         </Button>
