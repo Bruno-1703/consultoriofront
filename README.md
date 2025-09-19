@@ -46,10 +46,16 @@ cd consultoriofront
 
 ▶️ Comandos principales
 
+Instala las dependencias:
+npm install
+Ejecutar el proyecto en desarrollo:
 npm build
 npm start
 
+Formatear código con Prettier:
 npm format
+
+Generar tipos de GraphQL con GraphQL Code Generator:
 npm generate
  
 
