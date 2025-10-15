@@ -9,6 +9,7 @@ export const ROUTES = {
   estudios: '/estudios',
   enfermedades: '/enfermedades',
   admin: '/admin',
-  manual: '/manual'
+  manual: '/manual',
+  pageIA: '/pageIA'
 
 };
