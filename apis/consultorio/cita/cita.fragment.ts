@@ -4,7 +4,7 @@ export default gql`
     fragment Cita on Cita {
       id_cita
     motivoConsulta 
-    fechaSolicitud     
+    fechaProgramada
     observaciones
     cancelada,    
     medicamentos{
@@ -19,6 +19,16 @@ export default gql`
           id_paciente
           nombre_paciente
           dni          
+        }
+      doctor{
+        id_Usuario
+        nombre_usuario
+        nombre_completo
+        email
+        especialidad
+        matricula
+        dni
+        telefono
         }
   
   }

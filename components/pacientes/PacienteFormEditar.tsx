@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { useUpdatePacienteMutation, PacienteInput, useGetPacienteQuery } from "../../graphql/types"; // Asegúrate de importar el tipo correcto
-import { Box, Button, TextField } from "@mui/material";
+import {
+  useUpdatePacienteMutation,
+  useGetPacienteQuery,
+  PacienteInput,
+} from "../../graphql/types";
+import {
+  Box,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+} from "@mui/material";
 
 interface PacienteFormProps {
   pacienteId: string;
@@ -8,107 +21,247 @@ interface PacienteFormProps {
 }
 
 const PacienteFormEdit: React.FC<PacienteFormProps> = ({ pacienteId, onClose }) => {
-    console.log(pacienteId)
   const [formData, setFormData] = useState<PacienteInput>({
     dni: "",
     nombre_paciente: "",
     apellido_paciente: "",
     telefono: "",
-    edad: 0,
+    edad: undefined,
+    altura: undefined,
+    fecha_nacimiento: undefined,
     sexo: "",
     grupo_sanguineo: "",
+    alergias: "",
+    obra_social: "",
+    email: "",
+    direccion: "",
+    nacionalidad: "",
   });
 
-  // Obtener los datos del paciente a través de la consulta
   const { data, loading, error } = useGetPacienteQuery({
-    variables: {
-      id: pacienteId, // Asegúrate de pasar el id del paciente
-    },
+    variables: { id: pacienteId },
   });
-  // Mutación para actualizar el paciente
-  const [updatePacienteMutation] = useUpdatePacienteMutation();
 
-  // Actualiza los valores del formulario cuando se obtienen los datos del paciente
+  const [updatePacienteMutation, { loading: updating }] = useUpdatePacienteMutation();
+
   useEffect(() => {
     if (data?.getPaciente) {
+      const paciente = data.getPaciente;
       setFormData({
-        dni: data.getPaciente.dni,
-        nombre_paciente: data.getPaciente.nombre_paciente,
-        apellido_paciente: data.getPaciente.apellido_paciente,
-        telefono: data.getPaciente.telefono,
-        edad: data.getPaciente.edad,
-        sexo: data.getPaciente.sexo,
-        grupo_sanguineo: data.getPaciente.grupo_sanguineo,
+        dni: paciente.dni ?? "",
+        nombre_paciente: paciente.nombre_paciente ?? "",
+        apellido_paciente: paciente.apellido_paciente ?? "",
+        telefono: paciente.telefono ?? "",
+        edad: paciente.edad ?? undefined,
+        altura: paciente.altura ?? undefined,
+        fecha_nacimiento: paciente.fecha_nacimiento
+          ? new Date(paciente.fecha_nacimiento)
+          : undefined,
+        sexo: paciente.sexo ?? "",
+        grupo_sanguineo: paciente.grupo_sanguineo ?? "",
+        alergias: paciente.alergias ?? "",
+        obra_social: paciente.obra_social ?? "",
+        email: paciente.email ?? "",
+        direccion: paciente.direccion ?? "",
+        nacionalidad: paciente.nacionalidad ?? "",
       });
     }
   }, [data]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleInputChange = (key: keyof PacienteInput) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSelectChange = (key: keyof PacienteInput) => (e: SelectChangeEvent<string>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [key]: e.target.value,
+    }));
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      fecha_nacimiento: e.target.value ? new Date(e.target.value) : undefined,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await updatePacienteMutation({
         variables: {
-          pacienteId: pacienteId,
-          data: formData, // Pasa los datos del formulario como variables
+          pacienteId,
+          data: formData,
         },
       });
-      onClose(); // Cierra el formulario después de la actualización
-    } catch (error) {
-      console.error("Error al actualizar el paciente:", error);
+      onClose();
+    } catch (err) {
+      console.error("Error al actualizar paciente:", err);
     }
   };
 
-  if (loading) return <div>Cargando...</div>;
-  if (error) return <div>Error al cargar el paciente</div>;
+  if (loading) return <div>Cargando paciente...</div>;
+  if (error) return <div>Error al cargar paciente: {error.message}</div>;
+
+  // Estilos comunes para inputs y selects para separarlos
+  const inputStyle = { marginBottom: "16px" };
 
   return (
-    <Box component="form" onSubmit={handleSubmit}>
+     <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{
+        backgroundColor: "#f9f9f9",
+        padding: 3,
+        borderRadius: 2,
+        maxWidth: 1500,
+        width: "90%",
+        boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+      }}
+    >
       <TextField
         label="DNI"
-        value={formData.dni}
-        onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
+        value={formData.dni || ""}
+        onChange={handleInputChange("dni")}
         fullWidth
+        sx={inputStyle}
       />
       <TextField
         label="Nombre"
-        value={formData.nombre_paciente}
-        onChange={(e) => setFormData({ ...formData, nombre_paciente: e.target.value })}
+        value={formData.nombre_paciente || ""}
+        onChange={handleInputChange("nombre_paciente")}
         fullWidth
+        sx={inputStyle}
       />
       <TextField
         label="Apellido"
-        value={formData.apellido_paciente}
-        onChange={(e) => setFormData({ ...formData, apellido_paciente: e.target.value })}
+        value={formData.apellido_paciente || ""}
+        onChange={handleInputChange("apellido_paciente")}
         fullWidth
+        sx={inputStyle}
       />
       <TextField
         label="Teléfono"
-        value={formData.telefono}
-        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+        value={formData.telefono || ""}
+        onChange={handleInputChange("telefono")}
         fullWidth
+        sx={inputStyle}
       />
       <TextField
         label="Edad"
-        value={formData.edad}
         type="number"
-        onChange={(e) => setFormData({ ...formData, edad: parseInt(e.target.value) })}
+        value={formData.edad ?? ""}
+        onChange={handleInputChange("edad")}
         fullWidth
-      />
-      {/* Otros campos del formulario, como sexo y grupo sanguíneo */}
-      <TextField
-        label="Sexo"
-        value={formData.sexo}
-        onChange={(e) => setFormData({ ...formData, sexo: e.target.value })}
-        fullWidth
+        inputProps={{ min: 0 }}
+        sx={inputStyle}
       />
       <TextField
-        label="Grupo Sanguíneo"
-        value={formData.grupo_sanguineo}
-        onChange={(e) => setFormData({ ...formData, grupo_sanguineo: e.target.value })}
+        label="Altura (cm)"
+        type="number"
+        value={formData.altura ?? ""}
+        onChange={handleInputChange("altura")}
         fullWidth
+        inputProps={{ min: 0 }}
+        sx={inputStyle}
       />
-      <Button type="submit" variant="contained" color="primary">
-        Guardar Cambios
+      <TextField
+        label="Fecha de nacimiento"
+        type="date"
+        value={formData.fecha_nacimiento ? formData.fecha_nacimiento.toISOString().substring(0, 10) : ""}
+        onChange={handleDateChange}
+        fullWidth
+        InputLabelProps={{ shrink: true }}
+        sx={inputStyle}
+      />
+      <FormControl fullWidth sx={inputStyle}>
+        <InputLabel>Sexo</InputLabel>
+        <Select
+          value={formData.sexo || ""}
+          label="Sexo"
+          onChange={handleSelectChange("sexo")}
+        >
+          <MenuItem value="">
+            <em>Seleccionar</em>
+          </MenuItem>
+          <MenuItem value="M">Masculino</MenuItem>
+          <MenuItem value="F">Femenino</MenuItem>
+          <MenuItem value="O">Otro</MenuItem>
+        </Select>
+      </FormControl>
+      <FormControl fullWidth sx={inputStyle}>
+        <InputLabel>Grupo Sanguíneo</InputLabel>
+        <Select
+          value={formData.grupo_sanguineo || ""}
+          label="Grupo Sanguíneo"
+          onChange={handleSelectChange("grupo_sanguineo")}
+        >
+          <MenuItem value="">
+            <em>Seleccionar</em>
+          </MenuItem>
+          <MenuItem value="A+">A+</MenuItem>
+          <MenuItem value="A-">A-</MenuItem>
+          <MenuItem value="B+">B+</MenuItem>
+          <MenuItem value="B-">B-</MenuItem>
+          <MenuItem value="O+">O+</MenuItem>
+          <MenuItem value="O-">O-</MenuItem>
+          <MenuItem value="AB+">AB+</MenuItem>
+          <MenuItem value="AB-">AB-</MenuItem>
+        </Select>
+      </FormControl>
+      <TextField
+        label="Alergias"
+        value={formData.alergias || ""}
+        onChange={handleInputChange("alergias")}
+        fullWidth
+        multiline
+        rows={2}
+        sx={inputStyle}
+      />
+      <TextField
+        label="Obra Social"
+        value={formData.obra_social || ""}
+        onChange={handleInputChange("obra_social")}
+        fullWidth
+        sx={inputStyle}
+      />
+      <TextField
+        label="Email"
+        type="email"
+        value={formData.email || ""}
+        onChange={handleInputChange("email")}
+        fullWidth
+        sx={inputStyle}
+      />
+      <TextField
+        label="Dirección"
+        value={formData.direccion || ""}
+        onChange={handleInputChange("direccion")}
+        fullWidth
+        multiline
+        rows={2}
+        sx={inputStyle}
+      />
+      <TextField
+        label="Nacionalidad"
+        value={formData.nacionalidad || ""}
+        onChange={handleInputChange("nacionalidad")}
+        fullWidth
+        sx={inputStyle}
+      />
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={updating}
+        fullWidth
+      >
+        {updating ? "Guardando..." : "Guardar Cambios"}
       </Button>
     </Box>
   );

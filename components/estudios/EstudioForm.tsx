@@ -34,19 +34,19 @@ export const EstudioForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     event.preventDefault();
 
     try {
-      await createEstudio({
-        variables: {
-          data: {
-            tipo_estudio: tipoEstudio,
-            resultado,
-            codigo_referencia: codigoReferencia,
-            fecha_realizacion: fechaRealizacion ? fechaRealizacion.format("YYYY-MM-DD") : null,
-            medico_solicitante: medicoSolicitante,
-            observaciones,
-            urgente,
-          },
-        },
-      });
+      // await createEstudio({
+      //   variables: {
+      //     data: {
+      //       tipo_estudio: tipoEstudio,
+      //       resultado,
+      //       codigo_referencia: codigoReferencia,
+      //       fecha_realizacion: fechaRealizacion ? fechaRealizacion.format("YYYY-MM-DD") : null,
+      //       medico_solicitante: medicoSolicitante,
+      //       observaciones,
+      //       urgente,
+      //     },
+      //   },
+      // });
       setSnackbarOpen(true);
       onClose();
     } catch (e) {

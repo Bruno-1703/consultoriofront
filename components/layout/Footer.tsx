@@ -7,7 +7,6 @@ export const Footer = ({ children }: PropsWithChildren<unknown>) => {
   if (!children) {
     return null;
   }
-
   return (
     <Box
       sx={{

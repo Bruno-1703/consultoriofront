@@ -1,47 +1,69 @@
-# TypeScript Next.js example
+# 🏥 SistMedical - Frontend
 
-This is a really simple project that shows the usage of Next.js with TypeScript.
+**SistMedical Frontend** es la interfaz web de la plataforma **SistMedical**, diseñada para optimizar la gestión integral de centros de salud.  
+Permite a médicos y personal administrativo:
 
-## Deploy your own
+- 📅 Gestionar turnos médicos.
+- 📋 Consultar y actualizar historias clínicas.
+- 💊 Prescribir medicamentos.
+- 🧪 Registrar y consultar estudios médicos.
+- 👩‍⚕️ Consultar información de pacientes de forma rápida y segura.
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=next-example) or preview live with [StackBlitz](https://stackblitz.com/github/vercel/next.js/tree/canary/examples/with-typescript)
+El sistema es accesible desde cualquier navegador, tanto en computadoras como en dispositivos móviles con conexión a internet.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/next.js/tree/canary/examples/with-typescript&project-name=with-typescript&repository-name=with-typescript)
+---
 
-## How to use it?
+## 🚀 Tecnologías utilizadas
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
+- [Next.js](https://nextjs.org/) – Framework frontend basado en React.
+- [TypeScript](https://www.typescriptlang.org/) – Lenguaje principal del proyecto.
+- [GraphQL](https://graphql.org/) – API flexible para consultas y mutaciones.
+- [Apollo Client](https://www.apollographql.com/docs/react/) – Cliente GraphQL para consumir la API.
+- [Tailwind CSS](https://tailwindcss.com/) – Framework de diseño para estilos rápidos y responsivos.
+- [pnpm](https://pnpm.io/) – Gestor de paquetes.
+
+---
+
+## ⚙️ Requisitos previos
+
+Antes de correr el proyecto, asegúrate de tener instalado:
+
+- [Node.js](https://nodejs.org/) (v18 o superior recomendado)
+- [pnpm](https://pnpm.io/) (o [npm](https://www.npmjs.com/) si lo prefieres)
+
+---
+
+## 📦 Instalación
+npm install
+⚡ Configuración del entorno
+NEXT_PUBLIC_API_URL="http://localhost:3000/graphql"
+
+Clona el repositorio:
 
 ```bash
-npx create-next-app --example with-typescript with-typescript-app
-```
+git clone https://github.com/Bruno-1703/consultoriofront.git
+cd consultoriofront
 
-```bash
-yarn create next-app --example with-typescript with-typescript-app
-```
+▶️ Comandos principales
 
-```bash
-pnpm create next-app --example with-typescript with-typescript-app
-```
+Instala las dependencias:
+npm install
+Ejecutar el proyecto en desarrollo:
+npm build
+npm start
 
-Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+Formatear código con Prettier:
+npm format
 
-## Notes
+Generar tipos de GraphQL con GraphQL Code Generator:
+npm generate
+ 
 
-This example shows how to integrate the TypeScript type system into Next.js. Since TypeScript is supported out of the box with Next.js, all we have to do is to install TypeScript.
+⚡ Configuración del entorno
+NEXT_PUBLIC_API_URL="http://localhost:3000/graphql"
 
-```
-npm install --save-dev typescript
-```
-
-To enable TypeScript's features, we install the type declarations for React and Node.
-
-```
-npm install --save-dev @types/react @types/react-dom @types/node
-```
-
-When we run `next dev` the next time, Next.js will start looking for any `.ts` or `.tsx` files in our project and builds it. It even automatically creates a `tsconfig.json` file for our project with the recommended settings.
-
-Next.js has built-in TypeScript declarations, so we'll get autocompletion for Next.js' modules straight away.
-
-A `type-check` script is also added to `package.json`, which runs TypeScript's `tsc` CLI in `noEmit` mode to run type-checking separately. You can then include this, for example, in your `test` scripts.
+👨‍💻 Autor
+Proyecto desarrollado por Bruno-1703
+.
+🔗 Acceso a la aplicación
+http://localhost:3000

@@ -8,7 +8,8 @@ query getCitas($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
       id_cita   
         observaciones
         cancelada    
-        fechaSolicitud        
+        finalizada
+        fechaProgramada
         motivoConsulta 
         enfermedades{
           nombre_enf
@@ -23,6 +24,14 @@ query getCitas($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
           id_paciente
           nombre_paciente
         }
+        estudios{
+        fecha_realizacion
+        codigo_referencia
+        medico_solicitante
+        tipo_estudio
+        resultado
+        }
+      
   
       }      
     }

@@ -27,7 +27,7 @@
 // interface CitaProvider {
 //   buscar?: string;
 //   refetch?: boolean;
-// //   token?: string;
+//   token?: string;
 //   children: React.ReactNode;
 //   setRefetch?: (arg: boolean) => void;
 //   setCount?: (arg: number) => void;
@@ -42,7 +42,7 @@
 //  export type CitaType = { id: string; type: Area; prioridad: string };
 
 // export const CitasContextProvider (props: CitaProvider) => {
-//   //* PROPS
+//   * PROPS
 //   const {
 //     buscar,
 //     refetch,
@@ -50,7 +50,7 @@
 //     setCount,
 //     section,
 //   } = props;  
-//   // HOOKS
+//   HOOKS
 //   const [rowsCita, setRowsCita] = useState<CitaResultado[] >([]);
 //   const [availableCitas, setAvailableCitas] = useState<boolean>(true);
 //   const [moreCita, setMoreCita] = useState<boolean>(false);
@@ -64,14 +64,14 @@
 //   const [alerta, setAlerta] = useState<TAlerta>(null);
 
 //   const { user } = userAuth()
-//   // VARIABLES
+//   VARIABLES
 //   const variablesQuery: GetCitasQueryVariables = {
 //     take: maxItems,
 //     skip: skipScrollCita,
 //     where: { buscar: busquedaContext, dni_origen: user.usuarioDni },
 //     seccion: section,
 //   };
-//   //* QUERY
+//   * QUERY
 //   const {
 //     loading: loadingCitas,
 //     error: errorCitas,
@@ -79,15 +79,15 @@
 //     refetch: refetchCitas,
 //   } = useGetMailsQuery({ variables: variablesQuery });
 
-//   // FUNCTIONS
-//   //* Limpia estados Citas
+//   FUNCTIONS
+//   * Limpia estados Citas
 //   const clearDataRows = () => {
 //     setRowsCita([]);
 //     setSkipScrollCita(0);
 //     setAvailableCitas(true);
 //   };
 
-//   //* Refrescar query Citas
+//   * Refrescar query Citas
 //   const refrescarEmails = async () => {
 //     setRefetch(false);
 //     clearDataRows();
@@ -108,7 +108,7 @@
 //     }
 //   }, [refetch]);
   
-//    //Efecto para filtros
+//    Efecto para filtros
 //    useEffect(() => {
 //      if (busquedaContext !== buscar) {
 //          setBusquedaContext(buscar)
@@ -122,7 +122,7 @@
 
 //   }
 
-//   // Valor inicial contexto
+//   Valor inicial contexto
 //   const valorInicial = {
 //     errorCitas,
 //     loadingCitas,
@@ -137,7 +137,7 @@
 //     setAlerta,
 //     getMailsNoLeidos,
 //     getAllMails
-//     // handleSetOrder
+//     handleSetOrder
     
 //   };
 //   return <EmailsContext.Provider value={valorInicial} {...props} />;
@@ -152,13 +152,13 @@
 //   return context;
 // }
 
-// //* Funcion para sort
-// // const calcularOrderBy = (order) => {
-// //   if (order) {
-// //     // alert('hola');
-// //     return (order.key +
-// //       "_" +
-// //       order.order.toUpperCase()) as OrderBy;
-// //   }
-// //   return SolicitudOrderByInput.FechaEntradaDesc;
-// // };
+// * Funcion para sort
+// const calcularOrderBy = (order) => {
+//   if (order) {
+//     // alert('hola');
+//     return (order.key +
+//       "_" +
+//       order.order.toUpperCase()) as OrderBy;
+//   }
+//   return SolicitudOrderByInput.FechaEntradaDesc;
+// };
