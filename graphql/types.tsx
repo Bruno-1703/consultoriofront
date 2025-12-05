@@ -1837,6 +1837,37 @@ export function useUpdatePacienteMutation(baseOptions?: Apollo.MutationHookOptio
 export type UpdatePacienteMutationHookResult = ReturnType<typeof useUpdatePacienteMutation>;
 export type UpdatePacienteMutationResult = Apollo.MutationResult<UpdatePacienteMutation>;
 export type UpdatePacienteMutationOptions = Apollo.BaseMutationOptions<UpdatePacienteMutation, UpdatePacienteMutationVariables>;
+export const CreateUsuarioDocument = gql`
+    mutation CreateUsuario($data: UsuarioInput!) {
+  createUsuario(data: $data)
+}
+    `;
+export type CreateUsuarioMutationFn = Apollo.MutationFunction<CreateUsuarioMutation, CreateUsuarioMutationVariables>;
+
+/**
+ * __useCreateUsuarioMutation__
+ *
+ * To run a mutation, you first call `useCreateUsuarioMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateUsuarioMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createUsuarioMutation, { data, loading, error }] = useCreateUsuarioMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useCreateUsuarioMutation(baseOptions?: Apollo.MutationHookOptions<CreateUsuarioMutation, CreateUsuarioMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateUsuarioMutation, CreateUsuarioMutationVariables>(CreateUsuarioDocument, options);
+      }
+export type CreateUsuarioMutationHookResult = ReturnType<typeof useCreateUsuarioMutation>;
+export type CreateUsuarioMutationResult = Apollo.MutationResult<CreateUsuarioMutation>;
+export type CreateUsuarioMutationOptions = Apollo.BaseMutationOptions<CreateUsuarioMutation, CreateUsuarioMutationVariables>;
 export const GetUsuarioByIdDocument = gql`
     query getUsuarioById($id: String!) {
   getUsuarioById(id: $id) {
@@ -2207,6 +2238,13 @@ export type UpdatePacienteMutationVariables = Exact<{
 
 
 export type UpdatePacienteMutation = { __typename?: 'Mutation', updatePaciente: string };
+
+export type CreateUsuarioMutationVariables = Exact<{
+  data: UsuarioInput;
+}>;
+
+
+export type CreateUsuarioMutation = { __typename?: 'Mutation', createUsuario: string };
 
 export type GetUsuarioByIdQueryVariables = Exact<{
   id: Scalars['String']['input'];

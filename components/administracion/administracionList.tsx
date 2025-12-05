@@ -14,6 +14,7 @@ import { useGetUsuariosQuery } from "../../graphql/types";
 import UsuarioDetalleModal from "./UsuarioDetalleModal";
 import ConfirmarEliminacion from "./ConfirmarEliminacion";
 import UsuarioEditarFormulario from "./UsuarioEditarFormulario";
+import CrearUsuarioFormulario from "./CrearUsuarioFormulario";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf"; // icono PDF
 import FileDownloadIcon from "@mui/icons-material/FileDownload"; // icono descarga
 const Administracion: React.FC = () => {
@@ -277,8 +278,14 @@ const Administracion: React.FC = () => {
 
       {/* Modal Crear Usuario */}
       <Dialog open={showCreateFormModal} onClose={() => setShowCreateFormModal(false)} maxWidth="sm" fullWidth>
-        <DialogContent sx={{ p: 0 }}>
-          {/* Aquí puedes agregar tu formulario para crear usuario */}
+        <DialogContent sx={{ p: 3 }}>
+          <CrearUsuarioFormulario
+            onUsuarioCreado={() => {
+              setShowCreateFormModal(false);
+              setSuccessSnackbar("Usuario creado correctamente.");
+              refetch();
+            }}
+          />
         </DialogContent>
       </Dialog>
 

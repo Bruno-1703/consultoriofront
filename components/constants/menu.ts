@@ -49,16 +49,7 @@ export const MENU_LIST: IMenuItem[] = [
     literal: 'Administracion',
     Icon: PeopleIcon,
   },
-  {
-    route: ROUTES.manual,
-    literal: 'Manual De Usuario',
-    Icon: MenuBookIcon,  // o HelpOutlineIcon si preferís
-  },
-  {
-    route: ROUTES.pageIA,
-    literal: 'PageIA',
-    Icon: MenuBookIcon,  // o HelpOutlineIcon si preferís
-  },
+
 
 ];
 
