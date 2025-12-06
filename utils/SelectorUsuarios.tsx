@@ -7,10 +7,8 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
-  InputAdornment,
 } from "@mui/material";
 import { useGetPacientesQuery } from "../graphql/types";
-import SearchIcon from "@mui/icons-material/Search";
 
 interface PersonaSelectorProps {
   value: string | null;
@@ -24,87 +22,84 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
   const { data, loading, error } = useGetPacientesQuery();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.value || null); // Este valor es el DNI
+    onChange(event.target.value || null);
   };
 
   return (
     <Box
       sx={{
-        padding: 3,
-        borderRadius: 3,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-        background: "linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%)",
+        padding: 2,
+        borderRadius: 2,
+        boxShadow: 1,
+        backgroundColor: "#f0f4f8",
       }}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{ color: "#1976d2", letterSpacing: 0.4 }}
+          variant="subtitle1"
+          fontWeight="600"
+          color="#1976d2"
         >
           Seleccionar Persona
         </Typography>
 
         {error && (
-          <Alert severity="error">
-            Error al cargar las personas: {error.message}
-          </Alert>
+          <Alert severity="error">{`Error al cargar personas: ${error.message}`}</Alert>
         )}
 
-        {/* Entrada de DNI */}
+        {/* Input de búsqueda por DNI */}
         <TextField
           label="Escribe el DNI"
           value={value ?? ""}
           onChange={handleChange}
           fullWidth
+          size="small"
           variant="outlined"
-          disabled={loading}
-          placeholder="Ej: 12345678"
+          disabled={loading || !!error}
+          helperText={
+            error
+              ? "No se puede cargar personas"
+              : "Escribe el DNI o selecciona de la lista"
+          }
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="primary" />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <>
-                {loading && (
-                  <CircularProgress size={20} sx={{ marginRight: 1 }} />
-                )}
-              </>
-            ),
             sx: {
-              borderRadius: 2,
               backgroundColor: "#fff",
+              borderRadius: 1,
+              fontSize: "0.85rem",
             },
+            endAdornment: loading && (
+              <CircularProgress size={18} sx={{ marginRight: 1 }} />
+            ),
           }}
-          helperText="Puedes escribir el DNI directamente o elegir de la lista"
         />
 
-        {/* Lista de selección */}
+        {/* Selector de la lista */}
         <Box>
           <Typography
-            variant="subtitle2"
-            sx={{ mb: 1, color: "#555", fontWeight: 600 }}
+            variant="caption"
+            sx={{ mb: 1, color: "#555", fontWeight: 500 }}
           >
             O selecciona de la lista:
           </Typography>
-
           <TextField
             select
             value={value ?? ""}
             onChange={handleChange}
             fullWidth
+            size="small"
             variant="outlined"
             disabled={loading || !!error}
             sx={{
               backgroundColor: "#fff",
-              borderRadius: 2,
+              borderRadius: 1,
+              "& .MuiOutlinedInput-root": {
+                fontSize: "0.85rem",
+              },
             }}
           >
             {loading ? (
               <MenuItem disabled>
-                <CircularProgress size={20} />
+                <CircularProgress size={18} />
               </MenuItem>
             ) : (
               data?.getPacientes?.edges.map((persona) => (
@@ -112,7 +107,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                   key={persona.node.id_paciente}
                   value={persona.node.dni ?? ""}
                 >
-                  {`${persona.node.nombre_paciente} ${persona.node.apellido_paciente} — DNI: ${persona.node.dni}`}
+                  {`${persona.node.nombre_paciente} ${persona.node.apellido_paciente} (DNI: ${persona.node.dni})`}
                 </MenuItem>
               ))
             )}

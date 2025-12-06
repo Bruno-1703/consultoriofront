@@ -12,6 +12,7 @@ import {
   Snackbar,
   Typography,
   CircularProgress,
+  Modal
 } from "@mui/material";
 import MuiAlert, { AlertProps } from "@mui/material/Alert";
 
@@ -25,11 +26,14 @@ const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function Snac
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
+// ✅ AGREGADO onCreated
 interface PacienteFormProps {
-  onClose?: () => void;
+  open: boolean;
+  onClose: () => void;
+  onCreated?: () => void; // ← agregado
 }
 
-const PacienteForm: React.FC<PacienteFormProps> = ({ onClose }) => {
+const PacienteForm: React.FC<PacienteFormProps> = ({ open, onClose, onCreated }) => {
   const [dni, setDni] = useState("");
   const [nombre_paciente, setNombrePaciente] = useState("");
   const [apellido_paciente, setApellidoPaciente] = useState("");
@@ -47,7 +51,8 @@ const PacienteForm: React.FC<PacienteFormProps> = ({ onClose }) => {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "warning" | "info">("info");
+  const [snackbarSeverity, setSnackbarSeverity] =
+    useState<"success" | "error" | "warning" | "info">("info");
 
   const [errors, setErrors] = useState({
     dni: false,
@@ -59,9 +64,7 @@ const PacienteForm: React.FC<PacienteFormProps> = ({ onClose }) => {
 
   const [createPacienteMutation, { loading }] = useCreatePacienteMutation();
 
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
+  const handleSnackbarClose = () => setSnackbarOpen(false);
 
   const resetForm = () => {
     setDni("");
@@ -131,13 +134,17 @@ const PacienteForm: React.FC<PacienteFormProps> = ({ onClose }) => {
 
     try {
       await createPacienteMutation({ variables: { data: pacienteInput } });
+
       setSnackbarMessage("Paciente creado exitosamente.");
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
+
       resetForm();
-      if (onClose) {
-        setTimeout(() => onClose(), 500);
-      }
+
+      // 🔥 SOLO CUANDO REALMENTE LO CREASTE
+      if (onCreated) onCreated();
+
+      setTimeout(() => onClose(), 400);
     } catch (error) {
       console.error(error);
       setSnackbarMessage("Error al crear el paciente.");
@@ -147,212 +154,243 @@ const PacienteForm: React.FC<PacienteFormProps> = ({ onClose }) => {
   };
 
   return (
-    <Box
+    <Modal
+      open={open}
+      onClose={onClose} // ← Cerrar ESC ya NO dispara éxito
       sx={{
-        p: 3,
-        backgroundColor: "#fff",
-        borderRadius: 2,
-        boxShadow: 3,
-        transition: "all 0.3s ease",
-        "&:hover": { boxShadow: 6 },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backdropFilter: "blur(3px)",
       }}
     >
-      <Typography variant="h5" textAlign="center" fontWeight="bold" color="primary" mb={3}>
-        Registrar Nuevo Paciente
-      </Typography>
-
-      <Box component="form" onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="DNI"
-              value={dni}
-              onChange={(e) => setDni(e.target.value)}
-              fullWidth
-              size="small"
-              error={errors.dni}
-              helperText={errors.dni ? "El DNI es obligatorio" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Nombre"
-              value={nombre_paciente}
-              onChange={(e) => setNombrePaciente(e.target.value)}
-              fullWidth
-              size="small"
-              error={errors.nombre_paciente}
-              helperText={errors.nombre_paciente ? "El nombre es obligatorio" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Apellido"
-              value={apellido_paciente}
-              onChange={(e) => setApellidoPaciente(e.target.value)}
-              fullWidth
-              size="small"
-              error={errors.apellido_paciente}
-              helperText={errors.apellido_paciente ? "El apellido es obligatorio" : ""}
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Edad"
-              type="number"
-              value={edad}
-              onChange={(e) => setEdad(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Altura (cm)"
-              type="number"
-              value={altura}
-              onChange={(e) => setAltura(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              label="Teléfono"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Fecha de Nacimiento"
-                value={fechaNacimiento}
-                onChange={(newValue) => {
-                  setFechaNacimiento(newValue);
-                  setErrors((prev) => ({
-                    ...prev,
-                    fechaNacimiento: !newValue || !newValue.isValid(),
-                  }));
-                }}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    size: "small",
-                    error: errors.fechaNacimiento,
-                    helperText: errors.fechaNacimiento ? "Fecha inválida" : "",
-                  },
-                }}
-              />
-            </LocalizationProvider>
-          </Grid>
-
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Sexo</InputLabel>
-              <Select value={sexo} onChange={(e) => setSexo(e.target.value)} label="Sexo">
-                <MenuItem value=""><em>Ninguno</em></MenuItem>
-                <MenuItem value="M">Masculino</MenuItem>
-                <MenuItem value="F">Femenino</MenuItem>
-                <MenuItem value="O">Otro</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Grupo Sanguíneo</InputLabel>
-              <Select
-                value={grupo_sanguineo}
-                onChange={(e) => setGrupoSanguineo(e.target.value)}
-                label="Grupo Sanguíneo"
-              >
-                <MenuItem value=""><em>Ninguno</em></MenuItem>
-                {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((g) => (
-                  <MenuItem key={g} value={g}>{g}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Alergias"
-              value={alergias}
-              onChange={(e) => setAlergias(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              size="small"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Obra Social"
-              value={obraSocial}
-              onChange={(e) => setObraSocial(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              fullWidth
-              size="small"
-              error={errors.email}
-              helperText={errors.email ? "Email inválido" : ""}
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Dirección"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              size="small"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <TextField
-              label="Nacionalidad"
-              value={nacionalidad}
-              onChange={(e) => setNacionalidad(e.target.value)}
-              fullWidth
-              size="small"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading} sx={{ py: 1.5 }}>
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Registrar Paciente"}
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={5000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      <Box
+        sx={{
+          width: "90%",
+          maxWidth: 650,
+          maxHeight: "90vh",
+          bgcolor: "background.paper",
+          p: 3,
+          borderRadius: 3,
+          boxShadow: 24,
+          overflowY: "auto",
+        }}
       >
-        <SnackbarAlert onClose={handleSnackbarClose} severity={snackbarSeverity}>
-          {snackbarMessage}
-        </SnackbarAlert>
-      </Snackbar>
-    </Box>
+        <Typography variant="h5" textAlign="center" fontWeight="bold" color="primary" mb={3}>
+          Registrar Nuevo Paciente
+        </Typography>
+
+        <Box component="form" onSubmit={handleSubmit}>
+          {/* TODO TU FORM COMPLETO SIN CAMBIOS */}
+          {/* ------------------------------- */}
+
+          <Grid container spacing={2}>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="DNI"
+                value={dni}
+                onChange={(e) => setDni(e.target.value)}
+                fullWidth
+                size="small"
+                error={errors.dni}
+                helperText={errors.dni ? "El DNI es obligatorio" : ""}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Nombre"
+                value={nombre_paciente}
+                onChange={(e) => setNombrePaciente(e.target.value)}
+                fullWidth
+                size="small"
+                error={errors.nombre_paciente}
+                helperText={errors.nombre_paciente ? "El nombre es obligatorio" : ""}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Apellido"
+                value={apellido_paciente}
+                onChange={(e) => setApellidoPaciente(e.target.value)}
+                fullWidth
+                size="small"
+                error={errors.apellido_paciente}
+                helperText={errors.apellido_paciente ? "El apellido es obligatorio" : ""}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Edad"
+                type="number"
+                value={edad}
+                onChange={(e) => setEdad(e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Altura (cm)"
+                type="number"
+                value={altura}
+                onChange={(e) => setAltura(e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Teléfono"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Fecha de Nacimiento"
+                  value={fechaNacimiento}
+                  onChange={(newValue) => {
+                    setFechaNacimiento(newValue);
+                    setErrors((prev) => ({
+                      ...prev,
+                      fechaNacimiento: !newValue || !newValue.isValid(),
+                    }));
+                  }}
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      size: "small",
+                      error: errors.fechaNacimiento,
+                      helperText: errors.fechaNacimiento ? "Fecha inválida" : "",
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Sexo</InputLabel>
+                <Select value={sexo} onChange={(e) => setSexo(e.target.value)} label="Sexo">
+                  <MenuItem value=""><em>Ninguno</em></MenuItem>
+                  <MenuItem value="M">Masculino</MenuItem>
+                  <MenuItem value="F">Femenino</MenuItem>
+                  <MenuItem value="O">Otro</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Grupo Sanguíneo</InputLabel>
+                <Select
+                  value={grupo_sanguineo}
+                  onChange={(e) => setGrupoSanguineo(e.target.value)}
+                  label="Grupo Sanguíneo"
+                >
+                  <MenuItem value=""><em>Ninguno</em></MenuItem>
+                  {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((g) => (
+                    <MenuItem key={g} value={g}>{g}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Alergias"
+                value={alergias}
+                onChange={(e) => setAlergias(e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Obra Social"
+                value={obraSocial}
+                onChange={(e) => setObraSocial(e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                fullWidth
+                size="small"
+                error={errors.email}
+                helperText={errors.email ? "Email inválido" : ""}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Dirección"
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+                fullWidth
+                multiline
+                rows={2}
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                label="Nacionalidad"
+                value={nacionalidad}
+                onChange={(e) => setNacionalidad(e.target.value)}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={loading}
+                sx={{ py: 1.5 }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Registrar Paciente"}
+              </Button>
+            </Grid>
+
+          </Grid>
+        </Box>
+
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={5000}
+          onClose={handleSnackbarClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <SnackbarAlert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+            {snackbarMessage}
+          </SnackbarAlert>
+        </Snackbar>
+      </Box>
+    </Modal>
   );
 };
 

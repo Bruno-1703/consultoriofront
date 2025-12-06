@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -7,7 +7,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  CircularProgress,
   Alert,
   Typography,
   Box,
@@ -21,11 +20,13 @@ import {
   Snackbar,
   LinearProgress,
 } from "@mui/material";
+
 import PersonIcon from "@mui/icons-material/Person";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+
 import { NetworkStatus } from "@apollo/client";
 
 import PacienteForm from "./PacienteForm";
@@ -33,35 +34,44 @@ import PacienteFormEdit from "./PacienteFormEditar";
 import PacientesModal from "./pacienteModal";
 import ConfirmarEliminacion from "../../utils/ConfirmarEliminacion";
 import TableSkeleton from "../../utils/TableSkeleton";
+
 import {
   useElimiarPacienteLogMutation,
   useGetPacientesQuery,
 } from "../../graphql/types";
-import { useEffect, useRef } from "react";
 
 const Pacientes: React.FC = () => {
-  const [searchInput, setSearchInput] = useState(""); // Lo que escribe el usuario
-  const [searchTerm, setSearchTerm] = useState("");   // Lo que se usa en la query
+  const [searchInput, setSearchInput] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [showForm, setShowForm] = useState(false);
+
+  const [openDrawer, setOpenDrawer] = useState(false);
+
   const [errorSnackbar, setErrorSnackbar] = useState<string | null>(null);
   const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any>(null);
+
   const [eliminarPaciente, setEliminarPaciente] = useState<string | null | undefined>(null);
+
   const [pacienteIdEditar, setPacienteIdEditar] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
   const [debugMessage, setDebugMessage] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Debounce para búsqueda
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       setSearchTerm(searchInput);
-      setPage(0); // Reiniciar a la primera página al cambiar filtro
-    }, 500); // Espera 500ms
+      setPage(0);
+    }, 500);
 
-    return () => clearTimeout(delayDebounce); // Limpia el timeout anterior
+    return () => clearTimeout(delayDebounce);
   }, [searchInput]);
 
   const { data, loading, error, refetch, networkStatus } = useGetPacientesQuery({
@@ -77,17 +87,10 @@ const Pacientes: React.FC = () => {
 
   const [eliminarPacienteLogMutation] = useElimiarPacienteLogMutation();
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0);
-  };
-
   const handleChangePage = (
     event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number
-  ) => {
-    setPage(newPage);
-  };
+  ) => setPage(newPage);
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -107,7 +110,6 @@ const Pacientes: React.FC = () => {
   const handleCloseEdit = () => {
     setIsEditing(false);
     setPacienteIdEditar(null);
-    setShowForm(false);
   };
 
   const handleEliminarPaciente = async (pacienteId: string) => {
@@ -131,13 +133,8 @@ const Pacientes: React.FC = () => {
     setSelectedPaciente(null);
   };
 
-  const handleSnackbarClose = () => {
-    setErrorSnackbar(null);
-  };
-
-  const handleSuccessSnackbarClose = () => {
-    setSuccessSnackbar(null);
-  };
+  const handleSnackbarClose = () => setErrorSnackbar(null);
+  const handleSuccessSnackbarClose = () => setSuccessSnackbar(null);
 
   if (loading && networkStatus !== NetworkStatus.refetch)
     return <TableSkeleton rows={3} columns={5} />;
@@ -146,8 +143,10 @@ const Pacientes: React.FC = () => {
     setErrorSnackbar(error.message);
     return null;
   }
+
   return (
     <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 3 }}>
+
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h4" sx={{ fontWeight: "bold" }}>
           Gestión de Pacientes
@@ -158,16 +157,11 @@ const Pacientes: React.FC = () => {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => setShowForm((prev) => !prev)}
-          sx={{
-            backgroundColor: "#1976d2",
-            "&:hover": { backgroundColor: "#115293" },
-            fontWeight: "bold",
-            px: 2,
-          }}
+          onClick={() => setOpenDrawer(true)}
         >
-          {showForm ? "Ocultar Formulario" : "Registrar Paciente"}
+          Registrar Paciente
         </Button>
+
         <TextField
           inputRef={inputRef}
           label="Buscar por nombre o apellido"
@@ -203,18 +197,24 @@ const Pacientes: React.FC = () => {
 
       {networkStatus === NetworkStatus.refetch && <LinearProgress />}
 
-      {showForm && (
-        <Box sx={{ mb: 2, p: 2, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
-          <PacienteForm />
-        </Box>
-      )}
-
+      {/* FORMULARIO - DRAWER */}
+      {/* FORMULARIO - MODAL */}
+      <PacienteForm
+        open={openDrawer}
+        onClose={() => {
+          setOpenDrawer(false);
+          refetch(); // refresca la tabla cuando se cierra el modal
+          setSuccessSnackbar("Paciente creado con éxito.");
+        }}
+      />
+      {/* FORM EDIT */}
       {isEditing && pacienteIdEditar && (
         <Box sx={{ mt: 2, p: 2, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
           <PacienteFormEdit pacienteId={pacienteIdEditar} onClose={handleCloseEdit} />
         </Box>
       )}
 
+      {/* TABLA */}
       <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
         <Table sx={{ minWidth: 1110 }}>
           <TableHead>
@@ -222,17 +222,14 @@ const Pacientes: React.FC = () => {
               {["DNI", "Nombre", "Apellido", "Edad", "Teléfono", "Acciones"].map((header) => (
                 <TableCell
                   key={header}
-                  sx={{
-                    color: "white",
-                    fontWeight: "bold",
-                    padding: "6px 16px",
-                  }}
+                  sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
                 >
                   {header}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
             {data?.getPacientes?.edges.map((paciente, index) => (
               <TableRow
@@ -248,38 +245,37 @@ const Pacientes: React.FC = () => {
                 <TableCell>{paciente.node.apellido_paciente}</TableCell>
                 <TableCell>{paciente.node.edad}</TableCell>
                 <TableCell>{paciente.node.telefono}</TableCell>
+
                 <TableCell align="center">
                   <Tooltip title="Visualizar">
                     <IconButton color="primary" onClick={() => handleOpenModal(paciente.node)}>
                       <VisibilityIcon />
                     </IconButton>
                   </Tooltip>
+
                   <Tooltip title="Editar">
                     <IconButton color="secondary" onClick={() => handleEditPaciente(paciente.node.id_paciente)}>
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
+
                   <Tooltip title="Eliminar">
                     <IconButton
                       color="error"
-                      onClick={() => {
-                        if (paciente.node.id_paciente) {
-                          setEliminarPaciente(paciente.node.id_paciente);
-                        } else {
-                          console.error("ID del paciente indefinido");
-                        }
-                      }}
+                      onClick={() => setEliminarPaciente(paciente.node.id_paciente)}
                     >
                       <DeleteIcon />
                     </IconButton>
                   </Tooltip>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* PAGINACIÓN */}
       <TablePagination
         rowsPerPageOptions={[5, 10, 15]}
         component="div"
@@ -290,7 +286,7 @@ const Pacientes: React.FC = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
 
-      {/* Snackbars */}
+      {/* SNACKBARS */}
       <Snackbar open={Boolean(errorSnackbar)} autoHideDuration={6000} onClose={handleSnackbarClose}>
         <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: "100%" }}>
           {errorSnackbar}
@@ -309,19 +305,19 @@ const Pacientes: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      {/* Modals */}
+      {/* MODAL VER PACIENTE */}
       <PacientesModal
         modalOpen={modalOpen}
         handleCloseModal={handleCloseModal}
         selectedPaciente={selectedPaciente}
       />
+
+      {/* CONFIRMAR ELIMINACIÓN */}
       <ConfirmarEliminacion
         open={Boolean(eliminarPaciente)}
         onClose={() => setEliminarPaciente(null)}
         onConfirmar={() => {
-          if (eliminarPaciente) {
-            handleEliminarPaciente(eliminarPaciente);
-          }
+          if (eliminarPaciente) handleEliminarPaciente(eliminarPaciente);
           setEliminarPaciente(null);
         }}
         mensaje="¿Estás seguro de que deseas eliminar este paciente?"
