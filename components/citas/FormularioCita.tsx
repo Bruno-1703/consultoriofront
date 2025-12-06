@@ -21,6 +21,7 @@ import dayjs from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers";
+import { useSession } from "next-auth/react";
 
 interface FormularioCitaProps {
   onClose: () => void;
@@ -37,6 +38,7 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
   const [limit, setLimit] = useState(50);
   const [skip, setSkip] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { data: session, status } = useSession(); // <--- Aquí obtienes la sesión
 
   const { data: pacientesData, loading: pacientesLoading, fetchMore: fetchMorePacientes } = useGetPacientesQuery({
     variables: { limit, skip, where: {} },
@@ -46,7 +48,9 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
     variables: {
       limit,
       skip: 0,
-      where: {},
+      where: {
+        rol_usuario:"doctor"
+      },
     },
   });
 

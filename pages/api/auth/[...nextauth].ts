@@ -45,8 +45,14 @@ export default NextAuth({
             id: user._id.toString(),
             email: user.email,
             name: user.nombre_completo,
-            role: user.rol_usuario
+            role: user.rol_usuario,
+            matricula: user.matricula,
+            dni: user.dni,
+            // especialidad: user.especialidad,
+            // nombre_usuario: user.nombre_usuario,
+            // telefono: user.telefono,
           };
+
         } catch (error) {
           throw new Error(error instanceof Error ? error.message : "Ocurrió un error");
         }
@@ -61,17 +67,26 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const u = user as { id: string, role: string }
+        const u = user as any;
         token.id = u.id;
         token.role = u.role;
+        token.email = u.email;
+        token.name = u.name;
+        token.matricula = u.matricula;
+        token.dni = u.dni;
+        token.especialidad = u.especialidad;
+        token.nombre_usuario = u.nombre_usuario;
+        token.telefono = u.telefono;
       }
       return token;
     },
+
     async session({ session, token }) {
       if (token && session.user) {
 
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
+
       }
       console.log({
         "msg": "Inicio de session del usuario",

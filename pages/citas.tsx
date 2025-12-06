@@ -36,8 +36,11 @@ import AgregarEstudio from "../components/selectores/AgregarEstudios";
 import AgregarEnfermedad from "../components/selectores/AgregarEnfermedad";
 import AgregarMedicamento from "../components/selectores/AgregarMedicamento";
 import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
 
 const HistoriasPaciente: React.FC = () => {
+  const { data: session } = useSession();
+const userId = session?.user.id; 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -103,6 +106,7 @@ const HistoriasPaciente: React.FC = () => {
       }
     }
   };
+  
 
   const { data, loading, error, refetch } = useGetCitasQuery({
     variables: {
@@ -110,6 +114,7 @@ const HistoriasPaciente: React.FC = () => {
       skip: page * rowsPerPage,
       where: {
         buscar: searchTerm,
+        doctor: {id: userId, dni:"",nombre_completo:"",matricula:"", especialidad:"",nombre_usuario:"",telefono:"",email:""},
         paciente: {
           dni: selectedPersona,
         },
