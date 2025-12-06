@@ -221,9 +221,13 @@ const HistoriasPaciente: React.FC = () => {
                 }}
               >
                 <TableCell>
-                     <Typography>
-                              {dayjs(Number(historia.node.fechaProgramada)).format("DD MMM YYYY")}
-                            </Typography>
+                  <Typography sx={{ fontWeight: "bold", color: "#1976d2" }}>
+                    {historia.node.fechaProgramada
+                      ? dayjs(historia.node.fechaProgramada).isValid()
+                        ? dayjs(historia.node.fechaProgramada).format("DD/MM/YYYY HH:mm")
+                        : "Fecha inválida"
+                      : "Sin fecha"}
+                  </Typography>
                 </TableCell>
 
                 <TableCell>{historia.node.motivoConsulta}</TableCell>

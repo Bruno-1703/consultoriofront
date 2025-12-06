@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, TextField, Box, Typography } from "@mui/material";
+import { Button, TextField, Box, Typography, MenuItem } from "@mui/material";
 import { useMutation } from "@apollo/client";
 import { useCreateUsuarioMutation } from "../../graphql/types";
 
@@ -10,6 +10,7 @@ const initialState = {
   matricula: "",
   nombre_completo: "",
   nombre_usuario: "",
+  telefono: "",
   password: "",
   rol_usuario: "usuario",
 };
@@ -52,13 +53,27 @@ export default function CrearUsuarioFormulario({ onUsuarioCreado }: { onUsuarioC
         Crear Nuevo Usuario
       </Typography>
       <TextField label="DNI" name="dni" value={form.dni} onChange={handleChange} required size="small" />
+      <TextField label="Nombre completo" name="nombre_completo" value={form.nombre_completo} onChange={handleChange} required size="small" />
       <TextField label="Email" name="email" value={form.email} onChange={handleChange} required type="email" size="small" />
+      <TextField label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} required size="small" />
       <TextField label="Especialidad" name="especialidad" value={form.especialidad} onChange={handleChange} required size="small" />
       <TextField label="Matricula" name="matricula" value={form.matricula} onChange={handleChange} required size="small" />
-      <TextField label="Nombre completo" name="nombre_completo" value={form.nombre_completo} onChange={handleChange} required size="small" />
       <TextField label="Nombre de usuario" name="nombre_usuario" value={form.nombre_usuario} onChange={handleChange} required size="small" />
       <TextField label="Contraseña" name="password" value={form.password} onChange={handleChange} required type="password" size="small" />
-      <TextField label="Rol" name="rol_usuario" value={form.rol_usuario} onChange={handleChange} required size="small" />
+      <TextField
+        select
+        label="Rol"
+        name="rol_usuario"
+        value={form.rol_usuario}
+        onChange={handleChange}
+        required
+        size="small"
+      >
+        <MenuItem value="admin">Admin</MenuItem>
+        <MenuItem value="usuario">Usuario</MenuItem>
+        <MenuItem value="doctor">Doctor</MenuItem>
+        <MenuItem value="recepcionista">Recepcionista</MenuItem>
+      </TextField>
       <Button type="submit" variant="contained" disabled={loading} sx={{ mt: 2, fontWeight: "bold" }}>
         {loading ? "Creando..." : "Crear Usuario"}
       </Button>
