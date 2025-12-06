@@ -36,6 +36,7 @@ import {
 import TableSkeleton from "../../utils/TableSkeleton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import { useSession } from "next-auth/react";
 
 const CitaRow = ({ row }: { row: Cita }) => {
   const [open, setOpen] = React.useState(false);
@@ -231,6 +232,8 @@ interface CollapsibleTableProps {
 }
 
 const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
+  const { data: session, status } = useSession(); // <--- Aquí obtienes la sesión
+
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -238,10 +241,11 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
   const { data, loading, error, refetch } = useGetCitasByFechaQuery({
     variables: {
       limit: rowsPerPage,
-      skip: page,
+      skip: page * rowsPerPage,
       where: {
-        fechaProgramada: fecha
-      }
+        fechaProgramada: fecha,
+        registradoPorId: session?.user?.id || "", // <- usar el ID del usuario logueado
+      },
     },
   });
   console.log(data)

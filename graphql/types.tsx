@@ -33,9 +33,11 @@ export type Cita = {
   finalizada?: Maybe<Scalars['Boolean']['output']>;
   id_cita?: Maybe<Scalars['ID']['output']>;
   medicamentos?: Maybe<Array<Medicamento>>;
+  modificadoPorId?: Maybe<Scalars['ID']['output']>;
   motivoConsulta: Scalars['String']['output'];
   observaciones?: Maybe<Scalars['String']['output']>;
   paciente?: Maybe<Paciente>;
+  registradoPorId?: Maybe<Scalars['ID']['output']>;
 };
 
 export type CitaEdge = {
@@ -52,6 +54,7 @@ export type CitaInput = {
   motivoConsulta?: InputMaybe<Scalars['String']['input']>;
   observaciones?: InputMaybe<Scalars['String']['input']>;
   paciente?: InputMaybe<PacienteCitaInput>;
+  registradoPorId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CitaResultadoBusqueda = {
@@ -73,6 +76,7 @@ export type CitaWhereInput = {
   motivoConsulta?: InputMaybe<Scalars['String']['input']>;
   observaciones?: InputMaybe<Scalars['String']['input']>;
   paciente?: InputMaybe<PacienteCitaInput>;
+  registradoPorId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Enfermedad = {
@@ -885,6 +889,7 @@ export const GetCitasByFechaDocument = gql`
         finalizada
         fechaProgramada
         motivoConsulta
+        registradoPorId
         paciente {
           dni
           id_paciente
@@ -2037,7 +2042,7 @@ export type GetCitasByFechaQueryVariables = Exact<{
 }>;
 
 
-export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null, nombre_completo?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, registradoPorId?: string | null, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null, nombre_completo?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type CreateCitaMutationVariables = Exact<{
   data: CitaInput;

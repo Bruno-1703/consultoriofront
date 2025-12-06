@@ -70,6 +70,7 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
         motivoConsulta,
         observaciones,
         fechaProgramada: fechaSolicitud,
+        registradoPorId: session?.user?.id || "", 
         doctor: {
           id: selectedProfesional.id_Usuario,
           nombre_completo: selectedProfesional.nombre_completo || "",
