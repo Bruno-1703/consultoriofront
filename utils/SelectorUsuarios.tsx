@@ -35,11 +35,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
       }}
     >
       <Stack spacing={2}>
-        <Typography
-          variant="subtitle1"
-          fontWeight="600"
-          color="#1976d2"
-        >
+        <Typography variant="subtitle1" fontWeight="600" color="#1976d2">
           Seleccionar Persona
         </Typography>
 
@@ -47,40 +43,15 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({
           <Alert severity="error">{`Error al cargar personas: ${error.message}`}</Alert>
         )}
 
-        {/* Input de búsqueda por DNI */}
-        <TextField
-          label="Escribe el DNI"
-          value={value ?? ""}
-          onChange={handleChange}
-          fullWidth
-          size="small"
-          variant="outlined"
-          disabled={loading || !!error}
-          helperText={
-            error
-              ? "No se puede cargar personas"
-              : "Escribe el DNI o selecciona de la lista"
-          }
-          InputProps={{
-            sx: {
-              backgroundColor: "#fff",
-              borderRadius: 1,
-              fontSize: "0.85rem",
-            },
-            endAdornment: loading && (
-              <CircularProgress size={18} sx={{ marginRight: 1 }} />
-            ),
-          }}
-        />
-
-        {/* Selector de la lista */}
+        {/* Selector único */}
         <Box>
           <Typography
             variant="caption"
             sx={{ mb: 1, color: "#555", fontWeight: 500 }}
           >
-            O selecciona de la lista:
+            Selecciona una persona:
           </Typography>
+
           <TextField
             select
             value={value ?? ""}

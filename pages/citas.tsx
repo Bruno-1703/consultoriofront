@@ -40,7 +40,7 @@ import { useSession } from "next-auth/react";
 
 const HistoriasPaciente: React.FC = () => {
   const { data: session } = useSession();
-const userId = session?.user.id; 
+  const userId = session?.user.id;
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -106,7 +106,7 @@ const userId = session?.user.id;
       }
     }
   };
-  
+
 
   const { data, loading, error, refetch } = useGetCitasQuery({
     variables: {
@@ -114,7 +114,7 @@ const userId = session?.user.id;
       skip: page * rowsPerPage,
       where: {
         buscar: searchTerm,
-        doctor: {id: userId, dni:"",nombre_completo:"",matricula:"", especialidad:"",nombre_usuario:"",telefono:"",email:""},
+        doctor: { id: userId, dni: "", nombre_completo: "", matricula: "", especialidad: "", nombre_usuario: "", telefono: "", email: "" },
         paciente: {
           dni: selectedPersona,
         },
