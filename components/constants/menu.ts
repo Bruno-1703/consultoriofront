@@ -11,6 +11,7 @@ import {
   CoronavirusOutlined as CoronavirusOutlinedIcon,
   People as PeopleIcon,
   MenuBook as MenuBookIcon
+  
 } from '@mui/icons-material';
 
 export const MENU_LIST: IMenuItem[] = [
@@ -44,6 +45,12 @@ export const MENU_LIST: IMenuItem[] = [
     literal: 'Enfermedades',
     Icon: CoronavirusOutlinedIcon,
   },
+  {
+    route: ROUTES.internacion,
+    literal: 'Internacion',
+    Icon: LibraryBooksIcon,
+  },
+
   {
     route: ROUTES.admin,
     literal: 'Administracion',

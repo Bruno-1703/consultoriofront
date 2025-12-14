@@ -97,7 +97,7 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
 
       setShowSuccessAlert(true);
       resetForm();
-      onClose(); // ← esta línea cierra el formulario
+      onClose(); 
 
     } catch (error) {
       console.error("Error al enviar el formulario:", error);

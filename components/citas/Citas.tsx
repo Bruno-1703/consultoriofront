@@ -38,187 +38,232 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useSession } from "next-auth/react";
 
+// =====================================================
+//                 FILA DE CITA
+// =====================================================
+
 const CitaRow = ({ row }: { row: Cita }) => {
   const [open, setOpen] = React.useState(false);
   const [cancelarCita] = useCancelarCitaMutation();
-  const [openSnackbar, setOpenSnackbar] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbar, setSnackbar] = React.useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [openDialog, setOpenDialog] = React.useState(false);
 
   const handleCancelar = async () => {
     if (!row.id_cita) {
-      setSnackbarMessage("El ID de la cita no está disponible.");
-      setOpenSnackbar(true);
+      setSnackbar({
+        open: true,
+        message: "ID de cita inexistente.",
+        severity: "error",
+      });
       return;
     }
 
     try {
-      await cancelarCita({
-        variables: { id: row.id_cita },
+      await cancelarCita({ variables: { id: row.id_cita } });
+      setSnackbar({
+        open: true,
+        message: "Cita cancelada correctamente.",
+        severity: "success",
       });
-      setSnackbarMessage("Cita cancelada correctamente.");
-    } catch (err) {
-      console.error("Error cancelando cita", err);
-      setSnackbarMessage("No se pudo cancelar la cita.");
-    } finally {
-      setOpenSnackbar(true);
+    } catch {
+      setSnackbar({
+        open: true,
+        message: "No se pudo cancelar la cita.",
+        severity: "error",
+      });
     }
-  };
-
-  const handleConfirmarCancelar = () => {
-    setOpenDialog(false);
-    handleCancelar();
   };
 
   return (
     <>
+      {/* FILA PRINCIPAL */}
       <TableRow
         sx={{
-          borderBottom: "1px solid #ddd",
-          backgroundColor: "#fff",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          background: "linear-gradient(90deg, #1c1c2e 0%, #171722 100%)",
+          transition: "all 0.25s ease",
           "&:hover": {
-            backgroundColor: "#f9f9f9",
-            cursor: "pointer",
+            background: "linear-gradient(90deg, #24243a 0%, #1d1d2c 100%)",
+            transform: "scale(1.002)",
           },
         }}
       >
         <TableCell>
-          <IconButton size="small" onClick={() => setOpen(!open)}>
+          <IconButton
+            size="small"
+            onClick={() => setOpen(!open)}
+            sx={{
+              color: "#7cb7ff",
+              transition: "0.2s",
+              "&:hover": { color: "#a8d3ff", transform: "rotate(10deg)" },
+            }}
+          >
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
-        <TableCell colSpan={4} sx={{ padding: 0 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "12px 8px",
-              gap: 2,
-            }}
-          >
-            <Typography sx={{ flex: "2 1 150px", fontWeight: "600" }}>
-              {row.motivoConsulta}
-            </Typography>
-            <Typography>
-              {dayjs(Number(row.fechaProgramada)).format("DD MMM YYYY")}
-            </Typography>
 
-            <Box sx={{ flex: "1 1 110px", textAlign: "center" }}>
-              <Chip
-                label={row.cancelada ? "Cancelada" : "Pendiente"}
-                color={row.cancelada ? "error" : "warning"}
-                variant="outlined"
-                sx={{
-                  fontWeight: "bold",
-                  textTransform: "uppercase",
-                  fontSize: "0.75rem",
-                }}
-              />
-            </Box>
-            <Box sx={{ flex: "1 1 120px", textAlign: "center" }}>
-              {!row.cancelada && (
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  onClick={() => setOpenDialog(true)}
-                  sx={{
-                    fontWeight: "600",
-                    textTransform: "none",
-                    fontSize: "0.75rem",
-                    borderRadius: 2,
-                    px: 2,
-                  }}
-                >
-                  Cancelar
-                </Button>
-              )}
-            </Box>
-          </Box>
+        <TableCell sx={{ color: "#e0e0e0", fontWeight: 600 }}>
+          {row.motivoConsulta}
+        </TableCell>
+
+        <TableCell align="center" sx={{ color: "#b0b3c6" }}>
+          {dayjs(Number(row.fechaProgramada)).format("DD MMM YYYY")}
+        </TableCell>
+
+        <TableCell align="center">
+          <Chip
+            label={row.cancelada ? "Cancelada" : "Pendiente"}
+            color={row.cancelada ? "error" : "warning"}
+            variant="filled"
+            sx={{
+              fontWeight: "bold",
+              fontSize: "0.7rem",
+              borderRadius: "6px",
+              padding: "2px 4px",
+              backgroundColor: row.cancelada
+                ? "rgba(255, 82, 82, 0.2)"
+                : "rgba(255, 193, 7, 0.2)",
+              color: row.cancelada ? "#ff5252" : "#ffc107",
+            }}
+          />
+        </TableCell>
+
+        <TableCell align="center">
+          {!row.cancelada && (
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => setOpenDialog(true)}
+              sx={{
+                fontWeight: 600,
+                textTransform: "none",
+                fontSize: "0.75rem",
+                borderRadius: 2,
+                boxShadow: "0 0 8px rgba(255,0,0,0.3)",
+                transition: "0.25s",
+                "&:hover": {
+                  boxShadow: "0 0 12px rgba(255,0,0,0.55)",
+                  transform: "scale(1.05)",
+                },
+              }}
+            >
+              Cancelar
+            </Button>
+          )}
         </TableCell>
       </TableRow>
+
+      {/* DETALLES EXPANDIBLES */}
       <TableRow>
-        <TableCell colSpan={5} sx={{ paddingBottom: 0, paddingTop: 0 }}>
+        <TableCell colSpan={5} sx={{ padding: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box
               sx={{
                 margin: 2,
                 padding: 3,
-                backgroundColor: "#f0f4ff",
-                borderRadius: 2,
-                boxShadow: 2,
-                borderLeft: "5px solid #3949ab",
+                background: "linear-gradient(160deg, #202033, #181825)",
+                borderRadius: 3,
+                boxShadow: "0 0 18px rgba(0,0,0,0.5)",
+                borderLeft: "5px solid #77aaff",
+                animation: "fadeIn 0.3s ease",
+                "@keyframes fadeIn": {
+                  from: { opacity: 0, transform: "translateY(-4px)" },
+                  to: { opacity: 1, transform: "translateY(0)" },
+                },
               }}
             >
               <Typography
                 variant="h6"
-                sx={{ fontWeight: "bold", color: "#303f9f", mb: 3 }}
+                sx={{
+                  fontWeight: "bold",
+                  color: "#a2c9ff",
+                  mb: 3,
+                  letterSpacing: "0.5px",
+                }}
               >
                 Detalles de la Cita
               </Typography>
+
               <Box
                 sx={{
                   display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    sm: "1fr 1fr",
+                    md: "1fr 1fr 1fr",
+                  },
                   gap: 3,
                 }}
               >
                 <Box>
-                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Observaciones:</Typography>
-                  <Typography sx={{ color: "#555" }}>{row.observaciones || "N/A"}</Typography>
-                </Box>
-
-                <Box>
-                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Paciente:</Typography>
-                  <Typography sx={{ color: "#555" }}>
-                    {row.paciente?.nombre_paciente || "N/A"} {row.paciente?.apellido_paciente || ""}
+                  <Typography
+                    sx={{ fontWeight: "bold", mb: 1, color: "#e5e8f0" }}
+                  >
+                    Observaciones:
+                  </Typography>
+                  <Typography sx={{ color: "#bfc3d9" }}>
+                    {row.observaciones || "N/A"}
                   </Typography>
                 </Box>
 
                 <Box>
-                  <Typography sx={{ fontWeight: "bold", mb: 1 }}>Médico Asignado:</Typography>
-                  <Typography sx={{ color: "#555" }}>
-                    <strong>DNI:</strong> {row.doctor?.dni || "N/A"} <br />
-                    <strong>Nombre:</strong> {row.doctor?.nombre_completo } <br />
-                    <strong>Especialidad:</strong> {row.doctor?.especialidad || "N/A"} <br />
-                    <strong>Email:</strong> {row.doctor?.email || "N/A"} <br />
-                    <strong>Teléfono:</strong> {row.doctor?.telefono || "N/A"}
+                  <Typography
+                    sx={{ fontWeight: "bold", mb: 1, color: "#e5e8f0" }}
+                  >
+                    Paciente:
+                  </Typography>
+                  <Typography sx={{ color: "#bfc3d9" }}>
+                    {row.paciente?.nombre_paciente}{" "}
+                    {row.paciente?.apellido_paciente}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    sx={{ fontWeight: "bold", mb: 1, color: "#e5e8f0" }}
+                  >
+                    Médico Asignado:
+                  </Typography>
+                  <Typography sx={{ color: "#bfc3d9" }}>
+                    <strong>DNI:</strong> {row.doctor?.dni} <br />
+                    <strong>Nombre:</strong> {row.doctor?.nombre_completo}{" "}
+                    <br />
+                    <strong>Especialidad:</strong> {row.doctor?.especialidad}{" "}
+                    <br />
+                    <strong>Email:</strong> {row.doctor?.email}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Collapse>
-
         </TableCell>
       </TableRow>
 
+      {/* SNACKBAR */}
       <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setOpenSnackbar(false)}
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert onClose={() => setOpenSnackbar(false)} severity="success">
-          {snackbarMessage}
+        <Alert severity={snackbar.severity as any}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
 
+      {/* DIÁLOGO */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>Confirmación</DialogTitle>
         <DialogContent>
-          <Typography>
-            ¿Estás seguro de que deseas cancelar esta cita?
-          </Typography>
+          <Typography>¿Deseas cancelar esta cita?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} variant="contained">
-            No
-          </Button>
-          <Button
-            onClick={handleConfirmarCancelar}
-            color="error"
-            variant="contained"
-          >
+          <Button onClick={() => setOpenDialog(false)}>No</Button>
+          <Button onClick={handleCancelar} color="error" variant="contained">
             Sí, Cancelar
           </Button>
         </DialogActions>
@@ -227,107 +272,138 @@ const CitaRow = ({ row }: { row: Cita }) => {
   );
 };
 
+// ===============================================================
+//                 TABLA PRINCIPAL (OPTIMIZADA)
+// ===============================================================
+
 interface CollapsibleTableProps {
   fecha: string;
 }
 
 const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
-  const { data: session, status } = useSession(); // <--- Aquí obtienes la sesión
+  const { data: session, status } = useSession();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  console.log(fecha)
+
+  // Evitar ejecutar la consulta antes de tener sesión
+  const shouldFetch = status === "authenticated";
+
+  const filtros = React.useMemo(
+    () => ({
+      motivoConsulta: searchTerm,
+      fechaProgramada: fecha,
+      registradoPorId: session?.user?.id ?? "",
+    }),
+    [searchTerm, fecha, session?.user?.id]
+  );
+
   const { data, loading, error, refetch } = useGetCitasByFechaQuery({
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
-      where: {
-        fechaProgramada: fecha,
-        registradoPorId: session?.user?.id || "", 
-      },
+      where: filtros,
     },
+    skip: !shouldFetch,
+    fetchPolicy: "network-only",
   });
-  console.log(data)
-  const citas = data?.getCitasByFecha.edges || [];
-  const totalCount = data?.getCitasByFecha.aggregate.count || 0;
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setPage(0);
-  };
+  const citas = data?.getCitasByFecha.edges ?? [];
+  const totalCount = data?.getCitasByFecha.aggregate.count ?? 0;
 
-  const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
-    newPage: number
-  ) => {
-    setPage(newPage);
-  };
+  const handleRefetch = () =>
+    refetch({ limit: rowsPerPage, skip: page * rowsPerPage, where: filtros });
 
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-  React.useEffect(() => {
-    refetch({
-      limit: rowsPerPage,
-      skip: page * rowsPerPage,
-      where: {
-        motivoConsulta: searchTerm,
-        fechaProgramada: fecha,
-
-      },
-    });
-  }, [searchTerm, page, rowsPerPage, fecha, refetch]);
+  if (!shouldFetch) return <TableSkeleton rows={3} columns={5} />;
   if (loading) return <TableSkeleton rows={3} columns={5} />;
-  if (error)
-    return <Typography color="error">Error: {error.message}</Typography>;
+  if (error) return <Typography color="error">Error: {error.message}</Typography>;
 
   return (
     <Box sx={{ width: "100%" }}>
+      {/* FILTROS */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-start",
           mb: 2,
-          gap: 1,
+          gap: 2,
+          background: "linear-gradient(90deg,#1d1d2c,#171722)",
+          p: 2,
+          borderRadius: 3,
+          boxShadow: "0 0 12px rgba(0,0,0,0.4)",
         }}
       >
         <TextField
           label="Buscar por Motivo"
           variant="outlined"
           value={searchTerm}
-          onChange={handleSearchChange}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(0);
+          }}
           size="small"
-          sx={{ width: 300 }}
+          sx={{
+            width: 300,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+              backgroundColor: "#fff",
+              transition: "0.25s",
+              "&:hover": { boxShadow: "0 0 6px rgba(0,0,0,0.25)" },
+            },
+          }}
           InputProps={{
             endAdornment: (
-              <IconButton>
+              <IconButton sx={{ color: "#1976d2" }}>
                 <SearchIcon />
               </IconButton>
             ),
-            sx: { borderRadius: 3, backgroundColor: "#fff" },
           }}
         />
+
         <Tooltip title="Refrescar">
-          <IconButton onClick={() => refetch()} sx={{ marginLeft: 1 }}>
+          <IconButton
+            onClick={handleRefetch}
+            sx={{
+              color: "#7cb7ff",
+              "&:hover": { color: "#b8d9ff", transform: "rotate(30deg)" },
+              transition: "0.3s",
+            }}
+          >
             <RefreshIcon />
           </IconButton>
         </Tooltip>
-        <Typography variant="body1" sx={{ marginLeft: 2 }}>
+
+        <Typography sx={{ ml: 2, color: "#e0e0e0" }}>
           Total de Citas:
         </Typography>
-        <Badge badgeContent={totalCount} color="primary" sx={{ marginLeft: 1 }}>
-          <ListIcon color="action" />
+
+        <Badge badgeContent={totalCount} color="primary">
+          <ListIcon sx={{ color: "#90caf9" }} />
         </Badge>
       </Box>
 
-      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+      {/* TABLA */}
+      <TableContainer
+        component={Paper}
+        sx={{
+          backgroundColor: "#161622",
+          borderRadius: 4,
+          boxShadow: "0 0 25px rgba(0,0,0,0.6)",
+        }}
+      >
         <Table stickyHeader>
-          <TableHead>
+          <TableHead
+            sx={{
+              "& th": {
+                backgroundColor: "#202033",
+                color: "#98c3ff",
+                fontWeight: "bold",
+                fontSize: "0.85rem",
+                letterSpacing: "0.5px",
+              },
+            }}
+          >
             <TableRow>
               <TableCell />
               <TableCell>Motivo Consulta</TableCell>
@@ -336,22 +412,38 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {citas.map((items) => (
-              <CitaRow key={items.node.id_cita} row={items.node as Cita} />
+            {citas.map((item) => (
+              <CitaRow key={item.node.id_cita} row={item.node as Cita} />
             ))}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* PAGINACIÓN */}
       <TablePagination
         component="div"
         count={totalCount}
         page={page}
-        onPageChange={handleChangePage}
+        onPageChange={(_, np) => setPage(np)}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{ mt: 2 }}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value));
+          setPage(0);
+        }}
+        sx={{
+          mt: 2,
+          backgroundColor: "#1c1c2b",
+          color: "#cfd3e0",
+          borderRadius: 2,
+          "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+            color: "#cfd3e0",
+          },
+          "& .MuiInputBase-root": {
+            color: "#fff",
+          },
+        }}
       />
     </Box>
   );

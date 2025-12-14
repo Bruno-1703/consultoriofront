@@ -23,6 +23,19 @@ export type AggregateCount = {
   count: Scalars['Float']['output'];
 };
 
+export type AltaInternacionInput = {
+  id_internacion: Scalars['String']['input'];
+  observaciones_alta?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Cama = {
+  __typename?: 'Cama';
+  disponible: Scalars['Boolean']['output'];
+  id_cama: Scalars['ID']['output'];
+  numero: Scalars['String']['output'];
+  pabellon?: Maybe<Pabellon>;
+};
+
 export type Cita = {
   __typename?: 'Cita';
   cancelada?: Maybe<Scalars['Boolean']['output']>;
@@ -77,6 +90,13 @@ export type CitaWhereInput = {
   observaciones?: InputMaybe<Scalars['String']['input']>;
   paciente?: InputMaybe<PacienteCitaInput>;
   registradoPorId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type CreateInternacionInput = {
+  camaId: Scalars['String']['input'];
+  diagnostico?: InputMaybe<Scalars['String']['input']>;
+  observaciones?: InputMaybe<Scalars['String']['input']>;
+  pacienteId: Scalars['String']['input'];
 };
 
 export type Enfermedad = {
@@ -156,6 +176,28 @@ export type EstudioWhereInput = {
   tipo_estudio?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type HistorialInternacion = {
+  __typename?: 'HistorialInternacion';
+  cama: Cama;
+  diagnostico: Scalars['String']['output'];
+  fecha_alta?: Maybe<Scalars['DateTime']['output']>;
+  fecha_ingreso: Scalars['DateTime']['output'];
+  id_internacion: Scalars['ID']['output'];
+  observaciones?: Maybe<Scalars['String']['output']>;
+};
+
+export type Internacion = {
+  __typename?: 'Internacion';
+  activa: Scalars['Boolean']['output'];
+  cama: Cama;
+  diagnostico: Scalars['String']['output'];
+  fecha_alta?: Maybe<Scalars['DateTime']['output']>;
+  fecha_ingreso: Scalars['DateTime']['output'];
+  id_internacion: Scalars['ID']['output'];
+  observaciones?: Maybe<Scalars['String']['output']>;
+  paciente: Paciente;
+};
+
 export type Medicamento = {
   __typename?: 'Medicamento';
   agente_principal?: Maybe<Scalars['String']['output']>;
@@ -231,17 +273,20 @@ export type Mutation = {
   createMedicamento: Scalars['String']['output'];
   createPaciente: Scalars['String']['output'];
   createUsuario: Scalars['String']['output'];
+  darAltaInternacion: Scalars['String']['output'];
   deleteEnfermedad: Scalars['String']['output'];
   deleteMedicamento: Scalars['String']['output'];
   deleteMedicamentoLog: Scalars['String']['output'];
   deleteUsuario: Scalars['String']['output'];
   finalizarCita: Scalars['String']['output'];
+  internarPaciente: Scalars['String']['output'];
   reducirStock: Scalars['String']['output'];
   resetearPassword: Scalars['String']['output'];
   solicitarRecuperacionPassword: Scalars['String']['output'];
   updateCita: Scalars['String']['output'];
   updateEnfermedad: Scalars['String']['output'];
   updateEstudio: Scalars['String']['output'];
+  updateInternacion: Scalars['String']['output'];
   updateMedicamento: Scalars['String']['output'];
   updatePaciente: Scalars['String']['output'];
   updateUsuario: Scalars['String']['output'];
@@ -319,6 +364,11 @@ export type MutationCreateUsuarioArgs = {
 };
 
 
+export type MutationDarAltaInternacionArgs = {
+  data: AltaInternacionInput;
+};
+
+
 export type MutationDeleteEnfermedadArgs = {
   id: Scalars['String']['input'];
 };
@@ -341,6 +391,11 @@ export type MutationDeleteUsuarioArgs = {
 
 export type MutationFinalizarCitaArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationInternarPacienteArgs = {
+  data: CreateInternacionInput;
 };
 
 
@@ -379,6 +434,11 @@ export type MutationUpdateEstudioArgs = {
 };
 
 
+export type MutationUpdateInternacionArgs = {
+  data: UpdateInternacionInput;
+};
+
+
 export type MutationUpdateMedicamentoArgs = {
   data: MedicamentoInput;
   medicamentoId: Scalars['String']['input'];
@@ -394,6 +454,13 @@ export type MutationUpdatePacienteArgs = {
 export type MutationUpdateUsuarioArgs = {
   data: UsuarioInput;
   usuarioId: Scalars['String']['input'];
+};
+
+export type Pabellon = {
+  __typename?: 'Pabellon';
+  descripcion?: Maybe<Scalars['String']['output']>;
+  id_pabellon: Scalars['String']['output'];
+  nombre: Scalars['String']['output'];
 };
 
 export type Paciente = {
@@ -473,6 +540,7 @@ export type PacientesResultadoBusqueda = {
 
 export type Query = {
   __typename?: 'Query';
+  camasDisponibles: Array<Cama>;
   getCita?: Maybe<Cita>;
   getCitas: CitaResultadoBusqueda;
   getCitasByFecha: CitaResultadoBusqueda;
@@ -488,6 +556,9 @@ export type Query = {
   getUsuario?: Maybe<Usuario>;
   getUsuarioById?: Maybe<Usuario>;
   getUsuarios: UsuarioResultadoBusqueda;
+  historialInternacionPaciente: Array<HistorialInternacion>;
+  internacionesActivas: Array<Internacion>;
+  testInternacion: Scalars['String']['output'];
 };
 
 
@@ -579,6 +650,17 @@ export type QueryGetUsuariosArgs = {
   where?: InputMaybe<UsuarioWhereInput>;
 };
 
+
+export type QueryHistorialInternacionPacienteArgs = {
+  pacienteId: Scalars['String']['input'];
+};
+
+export type UpdateInternacionInput = {
+  diagnostico?: InputMaybe<Scalars['String']['input']>;
+  id_internacion: Scalars['String']['input'];
+  observaciones?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type Usuario = {
   __typename?: 'Usuario';
   deletLogico?: Maybe<Scalars['Boolean']['output']>;
@@ -595,13 +677,13 @@ export type Usuario = {
 };
 
 export type UsuarioCitaInput = {
-  dni: Scalars['String']['input'];
+  dni?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   especialidad?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  matricula: Scalars['String']['input'];
-  nombre_completo: Scalars['String']['input'];
-  nombre_usuario: Scalars['String']['input'];
+  matricula?: InputMaybe<Scalars['String']['input']>;
+  nombre_completo?: InputMaybe<Scalars['String']['input']>;
+  nombre_usuario?: InputMaybe<Scalars['String']['input']>;
   password?: InputMaybe<Scalars['String']['input']>;
   rol_usuario?: InputMaybe<Scalars['String']['input']>;
   telefono?: InputMaybe<Scalars['String']['input']>;
@@ -1404,6 +1486,160 @@ export function useUpdateEstudioMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateEstudioMutationHookResult = ReturnType<typeof useUpdateEstudioMutation>;
 export type UpdateEstudioMutationResult = Apollo.MutationResult<UpdateEstudioMutation>;
 export type UpdateEstudioMutationOptions = Apollo.BaseMutationOptions<UpdateEstudioMutation, UpdateEstudioMutationVariables>;
+export const CamasDisponiblesDocument = gql`
+    query camasDisponibles {
+  camasDisponibles {
+    id_cama
+    numero
+    disponible
+    pabellon {
+      nombre
+    }
+  }
+}
+    `;
+
+/**
+ * __useCamasDisponiblesQuery__
+ *
+ * To run a query within a React component, call `useCamasDisponiblesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCamasDisponiblesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCamasDisponiblesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useCamasDisponiblesQuery(baseOptions?: Apollo.QueryHookOptions<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>(CamasDisponiblesDocument, options);
+      }
+export function useCamasDisponiblesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>(CamasDisponiblesDocument, options);
+        }
+export function useCamasDisponiblesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>(CamasDisponiblesDocument, options);
+        }
+export type CamasDisponiblesQueryHookResult = ReturnType<typeof useCamasDisponiblesQuery>;
+export type CamasDisponiblesLazyQueryHookResult = ReturnType<typeof useCamasDisponiblesLazyQuery>;
+export type CamasDisponiblesSuspenseQueryHookResult = ReturnType<typeof useCamasDisponiblesSuspenseQuery>;
+export type CamasDisponiblesQueryResult = Apollo.QueryResult<CamasDisponiblesQuery, CamasDisponiblesQueryVariables>;
+export const DarAltaInternacionDocument = gql`
+    mutation darAltaInternacion($data: AltaInternacionInput!) {
+  darAltaInternacion(data: $data)
+}
+    `;
+export type DarAltaInternacionMutationFn = Apollo.MutationFunction<DarAltaInternacionMutation, DarAltaInternacionMutationVariables>;
+
+/**
+ * __useDarAltaInternacionMutation__
+ *
+ * To run a mutation, you first call `useDarAltaInternacionMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDarAltaInternacionMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [darAltaInternacionMutation, { data, loading, error }] = useDarAltaInternacionMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useDarAltaInternacionMutation(baseOptions?: Apollo.MutationHookOptions<DarAltaInternacionMutation, DarAltaInternacionMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DarAltaInternacionMutation, DarAltaInternacionMutationVariables>(DarAltaInternacionDocument, options);
+      }
+export type DarAltaInternacionMutationHookResult = ReturnType<typeof useDarAltaInternacionMutation>;
+export type DarAltaInternacionMutationResult = Apollo.MutationResult<DarAltaInternacionMutation>;
+export type DarAltaInternacionMutationOptions = Apollo.BaseMutationOptions<DarAltaInternacionMutation, DarAltaInternacionMutationVariables>;
+export const InternacionesActivasDocument = gql`
+    query internacionesActivas {
+  internacionesActivas {
+    id_internacion
+    fecha_ingreso
+    diagnostico
+    paciente {
+      nombre_paciente
+      apellido_paciente
+    }
+    cama {
+      numero
+    }
+  }
+}
+    `;
+
+/**
+ * __useInternacionesActivasQuery__
+ *
+ * To run a query within a React component, call `useInternacionesActivasQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInternacionesActivasQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInternacionesActivasQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useInternacionesActivasQuery(baseOptions?: Apollo.QueryHookOptions<InternacionesActivasQuery, InternacionesActivasQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InternacionesActivasQuery, InternacionesActivasQueryVariables>(InternacionesActivasDocument, options);
+      }
+export function useInternacionesActivasLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InternacionesActivasQuery, InternacionesActivasQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InternacionesActivasQuery, InternacionesActivasQueryVariables>(InternacionesActivasDocument, options);
+        }
+export function useInternacionesActivasSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InternacionesActivasQuery, InternacionesActivasQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InternacionesActivasQuery, InternacionesActivasQueryVariables>(InternacionesActivasDocument, options);
+        }
+export type InternacionesActivasQueryHookResult = ReturnType<typeof useInternacionesActivasQuery>;
+export type InternacionesActivasLazyQueryHookResult = ReturnType<typeof useInternacionesActivasLazyQuery>;
+export type InternacionesActivasSuspenseQueryHookResult = ReturnType<typeof useInternacionesActivasSuspenseQuery>;
+export type InternacionesActivasQueryResult = Apollo.QueryResult<InternacionesActivasQuery, InternacionesActivasQueryVariables>;
+export const InternarPacienteDocument = gql`
+    mutation internarPaciente($data: CreateInternacionInput!) {
+  internarPaciente(data: $data)
+}
+    `;
+export type InternarPacienteMutationFn = Apollo.MutationFunction<InternarPacienteMutation, InternarPacienteMutationVariables>;
+
+/**
+ * __useInternarPacienteMutation__
+ *
+ * To run a mutation, you first call `useInternarPacienteMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useInternarPacienteMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [internarPacienteMutation, { data, loading, error }] = useInternarPacienteMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useInternarPacienteMutation(baseOptions?: Apollo.MutationHookOptions<InternarPacienteMutation, InternarPacienteMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<InternarPacienteMutation, InternarPacienteMutationVariables>(InternarPacienteDocument, options);
+      }
+export type InternarPacienteMutationHookResult = ReturnType<typeof useInternarPacienteMutation>;
+export type InternarPacienteMutationResult = Apollo.MutationResult<InternarPacienteMutation>;
+export type InternarPacienteMutationOptions = Apollo.BaseMutationOptions<InternarPacienteMutation, InternarPacienteMutationVariables>;
 export const CreateMedicamentoDocument = gql`
     mutation CreateMedicamento($data: MedicamentoInput!) {
   createMedicamento(data: $data)
@@ -2149,6 +2385,30 @@ export type UpdateEstudioMutationVariables = Exact<{
 
 
 export type UpdateEstudioMutation = { __typename?: 'Mutation', updateEstudio: string };
+
+export type CamasDisponiblesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CamasDisponiblesQuery = { __typename?: 'Query', camasDisponibles: Array<{ __typename?: 'Cama', id_cama: string, numero: string, disponible: boolean, pabellon?: { __typename?: 'Pabellon', nombre: string } | null }> };
+
+export type DarAltaInternacionMutationVariables = Exact<{
+  data: AltaInternacionInput;
+}>;
+
+
+export type DarAltaInternacionMutation = { __typename?: 'Mutation', darAltaInternacion: string };
+
+export type InternacionesActivasQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InternacionesActivasQuery = { __typename?: 'Query', internacionesActivas: Array<{ __typename?: 'Internacion', id_internacion: string, fecha_ingreso: any, diagnostico: string, paciente: { __typename?: 'Paciente', nombre_paciente?: string | null, apellido_paciente?: string | null }, cama: { __typename?: 'Cama', numero: string } }> };
+
+export type InternarPacienteMutationVariables = Exact<{
+  data: CreateInternacionInput;
+}>;
+
+
+export type InternarPacienteMutation = { __typename?: 'Mutation', internarPaciente: string };
 
 export type CreateMedicamentoMutationVariables = Exact<{
   data: MedicamentoInput;

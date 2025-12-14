@@ -8,8 +8,8 @@ export const ROUTES = {
   medicamentos: '/medicamentos',
   estudios: '/estudios',
   enfermedades: '/enfermedades',
+  internacion: '/internacion',
   admin: '/admin',
-  manual: '/manual',
-  pageIA: '/pageIA'
+
 
 };

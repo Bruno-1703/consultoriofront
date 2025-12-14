@@ -30,8 +30,7 @@ query getCitas($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
         medico_solicitante
         tipo_estudio
         resultado
-        }
-      
+        }      
   
       }      
     }
