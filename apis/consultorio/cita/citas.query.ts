@@ -11,6 +11,7 @@ query getCitas($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
         finalizada
         fechaProgramada
         motivoConsulta 
+        diagnostico
         enfermedades{
           nombre_enf
           id_enfermedad

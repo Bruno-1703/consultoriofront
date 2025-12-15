@@ -39,6 +39,7 @@ export type Cama = {
 export type Cita = {
   __typename?: 'Cita';
   cancelada?: Maybe<Scalars['Boolean']['output']>;
+  diagnostico?: Maybe<Scalars['String']['output']>;
   doctor?: Maybe<Usuario>;
   enfermedades?: Maybe<Array<Enfermedad>>;
   estudios?: Maybe<Array<Estudio>>;
@@ -51,6 +52,10 @@ export type Cita = {
   observaciones?: Maybe<Scalars['String']['output']>;
   paciente?: Maybe<Paciente>;
   registradoPorId?: Maybe<Scalars['ID']['output']>;
+};
+
+export type CitaDiagnosticoInput = {
+  diagnostico: Scalars['String']['input'];
 };
 
 export type CitaEdge = {
@@ -79,6 +84,7 @@ export type CitaResultadoBusqueda = {
 export type CitaWhereInput = {
   buscar?: InputMaybe<Scalars['String']['input']>;
   cancelada?: InputMaybe<Scalars['Boolean']['input']>;
+  diagnostico?: InputMaybe<Scalars['String']['input']>;
   doctor?: InputMaybe<UsuarioCitaInput>;
   enfermedades?: InputMaybe<Array<EnfermedadInput>>;
   estudios?: InputMaybe<Array<EstudioInput>>;
@@ -264,6 +270,7 @@ export type Mutation = {
   EliminarPaciente: Scalars['String']['output'];
   aumentarStock: Scalars['String']['output'];
   cancelarCita: Scalars['String']['output'];
+  cargarDiagnosticoCita: Scalars['String']['output'];
   createCita: Scalars['String']['output'];
   createCitaEnfermedad: Scalars['String']['output'];
   createCitaEstudio: Scalars['String']['output'];
@@ -311,6 +318,12 @@ export type MutationAumentarStockArgs = {
 
 export type MutationCancelarCitaArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type MutationCargarDiagnosticoCitaArgs = {
+  citaId: Scalars['String']['input'];
+  data: CitaDiagnosticoInput;
 };
 
 
@@ -459,7 +472,7 @@ export type MutationUpdateUsuarioArgs = {
 export type Pabellon = {
   __typename?: 'Pabellon';
   descripcion?: Maybe<Scalars['String']['output']>;
-  id_pabellon: Scalars['String']['output'];
+  id_pabellon: Scalars['ID']['output'];
   nombre: Scalars['String']['output'];
 };
 
@@ -846,6 +859,38 @@ export function useCancelarCitaMutation(baseOptions?: Apollo.MutationHookOptions
 export type CancelarCitaMutationHookResult = ReturnType<typeof useCancelarCitaMutation>;
 export type CancelarCitaMutationResult = Apollo.MutationResult<CancelarCitaMutation>;
 export type CancelarCitaMutationOptions = Apollo.BaseMutationOptions<CancelarCitaMutation, CancelarCitaMutationVariables>;
+export const CargarDiagnosticoCitaDocument = gql`
+    mutation CargarDiagnosticoCita($citaId: String!, $diagnostico: String!) {
+  cargarDiagnosticoCita(citaId: $citaId, data: {diagnostico: $diagnostico})
+}
+    `;
+export type CargarDiagnosticoCitaMutationFn = Apollo.MutationFunction<CargarDiagnosticoCitaMutation, CargarDiagnosticoCitaMutationVariables>;
+
+/**
+ * __useCargarDiagnosticoCitaMutation__
+ *
+ * To run a mutation, you first call `useCargarDiagnosticoCitaMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCargarDiagnosticoCitaMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [cargarDiagnosticoCitaMutation, { data, loading, error }] = useCargarDiagnosticoCitaMutation({
+ *   variables: {
+ *      citaId: // value for 'citaId'
+ *      diagnostico: // value for 'diagnostico'
+ *   },
+ * });
+ */
+export function useCargarDiagnosticoCitaMutation(baseOptions?: Apollo.MutationHookOptions<CargarDiagnosticoCitaMutation, CargarDiagnosticoCitaMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CargarDiagnosticoCitaMutation, CargarDiagnosticoCitaMutationVariables>(CargarDiagnosticoCitaDocument, options);
+      }
+export type CargarDiagnosticoCitaMutationHookResult = ReturnType<typeof useCargarDiagnosticoCitaMutation>;
+export type CargarDiagnosticoCitaMutationResult = Apollo.MutationResult<CargarDiagnosticoCitaMutation>;
+export type CargarDiagnosticoCitaMutationOptions = Apollo.BaseMutationOptions<CargarDiagnosticoCitaMutation, CargarDiagnosticoCitaMutationVariables>;
 export const GetCitaDocument = gql`
     query getCita($id: String!) {
   getCita(id: $id) {
@@ -897,6 +942,7 @@ export const GetCitasDocument = gql`
         finalizada
         fechaProgramada
         motivoConsulta
+        diagnostico
         enfermedades {
           nombre_enf
           id_enfermedad
@@ -2253,6 +2299,14 @@ export type CancelarCitaMutationVariables = Exact<{
 
 export type CancelarCitaMutation = { __typename?: 'Mutation', cancelarCita: string };
 
+export type CargarDiagnosticoCitaMutationVariables = Exact<{
+  citaId: Scalars['String']['input'];
+  diagnostico: Scalars['String']['input'];
+}>;
+
+
+export type CargarDiagnosticoCitaMutation = { __typename?: 'Mutation', cargarDiagnosticoCita: string };
+
 export type CitaFragment = { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: string | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null };
 
 export type GetCitaQueryVariables = Exact<{
@@ -2269,7 +2323,7 @@ export type GetCitasQueryVariables = Exact<{
 }>;
 
 
-export type GetCitasQuery = { __typename?: 'Query', getCitas: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, enfermedades?: Array<{ __typename?: 'Enfermedad', nombre_enf: string, id_enfermedad?: string | null }> | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null } | null, estudios?: Array<{ __typename?: 'Estudio', fecha_realizacion?: any | null, codigo_referencia?: string | null, medico_solicitante: string, tipo_estudio?: string | null, resultado?: string | null }> | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetCitasQuery = { __typename?: 'Query', getCitas: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: string | null, motivoConsulta: string, diagnostico?: string | null, enfermedades?: Array<{ __typename?: 'Enfermedad', nombre_enf: string, id_enfermedad?: string | null }> | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null } | null, estudios?: Array<{ __typename?: 'Estudio', fecha_realizacion?: any | null, codigo_referencia?: string | null, medico_solicitante: string, tipo_estudio?: string | null, resultado?: string | null }> | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type GetCitasByFechaQueryVariables = Exact<{
   limit: Scalars['Int']['input'];

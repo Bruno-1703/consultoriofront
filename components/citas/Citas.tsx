@@ -37,6 +37,9 @@ import TableSkeleton from "../../utils/TableSkeleton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import { useSession } from "next-auth/react";
+import EditCalendarIcon from "@mui/icons-material/EditCalendar";
+import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 // =====================================================
 //                 FILA DE CITA
@@ -51,6 +54,12 @@ const CitaRow = ({ row }: { row: Cita }) => {
     severity: "success",
   });
   const [openDialog, setOpenDialog] = React.useState(false);
+
+  const [openEditDate, setOpenEditDate] = React.useState(false);
+  const [newFecha, setNewFecha] = React.useState<dayjs.Dayjs | null>(
+    dayjs(Number(row.fechaProgramada))
+  );
+
 
   const handleCancelar = async () => {
     if (!row.id_cita) {
@@ -83,54 +92,85 @@ const CitaRow = ({ row }: { row: Cita }) => {
       {/* FILA PRINCIPAL */}
       <TableRow
         sx={{
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
-          background: "linear-gradient(90deg, #1c1c2e 0%, #171722 100%)",
-          transition: "all 0.25s ease",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          backgroundColor: "background.paper",
           "&:hover": {
-            background: "linear-gradient(90deg, #24243a 0%, #1d1d2c 100%)",
-            transform: "scale(1.002)",
+            backgroundColor: "action.hover",
           },
         }}
+
       >
         <TableCell>
           <IconButton
             size="small"
             onClick={() => setOpen(!open)}
             sx={{
-              color: "#7cb7ff",
-              transition: "0.2s",
-              "&:hover": { color: "#a8d3ff", transform: "rotate(10deg)" },
+              color: "text.secondary",
+              "&:hover": {
+                color: "text.primary",
+              },
             }}
           >
+
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
 
-        <TableCell sx={{ color: "#e0e0e0", fontWeight: 600 }}>
+        <TableCell sx={{ fontWeight: 500, color: "text.primary" }}>
           {row.motivoConsulta}
         </TableCell>
 
-        <TableCell align="center" sx={{ color: "#b0b3c6" }}>
-          {dayjs(Number(row.fechaProgramada)).format("DD MMM YYYY")}
+        <TableCell align="center" sx={{ color: "text.secondary" }}>
+          {dayjs(Number(row.fechaProgramada)).format("DD/MM/YYYY")}
         </TableCell>
 
         <TableCell align="center">
           <Chip
             label={row.cancelada ? "Cancelada" : "Pendiente"}
-            color={row.cancelada ? "error" : "warning"}
-            variant="filled"
+            size="small"
             sx={{
-              fontWeight: "bold",
+              fontWeight: 600,
               fontSize: "0.7rem",
-              borderRadius: "6px",
-              padding: "2px 4px",
+              height: 22,
+              borderRadius: 1.5,
+              px: 0.5,
               backgroundColor: row.cancelada
-                ? "rgba(255, 82, 82, 0.2)"
-                : "rgba(255, 193, 7, 0.2)",
-              color: row.cancelada ? "#ff5252" : "#ffc107",
+                ? "rgba(244, 67, 54, 0.12)"
+                : "rgba(255, 193, 7, 0.18)",
+              color: row.cancelada ? "error.main" : "#9c6f00",
             }}
           />
         </TableCell>
+
+        <TableCell align="center">
+          {!row.cancelada && (
+            <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+              {/* MODIFICAR FECHA */}
+              <Tooltip title="Modificar fecha">
+                <IconButton
+                  onClick={() => setOpenEditDate(true)}
+                  sx={{
+                    color: "#7cb7ff",
+                    background: "rgba(124,183,255,0.1)",
+                    "&:hover": {
+                      background: "rgba(124,183,255,0.25)",
+                      transform: "scale(1.1)",
+                    },
+                    transition: "0.25s",
+                  }}
+                >
+                  <EditCalendarIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              {/* CANCELAR */}
+
+
+            </Box>
+          )}
+        </TableCell>
+
 
         <TableCell align="center">
           {!row.cancelada && (
@@ -160,34 +200,23 @@ const CitaRow = ({ row }: { row: Cita }) => {
 
       {/* DETALLES EXPANDIBLES */}
       <TableRow>
-        <TableCell colSpan={5} sx={{ padding: 0 }}>
+        <TableCell colSpan={6} sx={{ padding: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box
               sx={{
-                margin: 2,
-                padding: 3,
-                background: "linear-gradient(160deg, #202033, #181825)",
-                borderRadius: 3,
-                boxShadow: "0 0 18px rgba(0,0,0,0.5)",
-                borderLeft: "5px solid #77aaff",
-                animation: "fadeIn 0.3s ease",
-                "@keyframes fadeIn": {
-                  from: { opacity: 0, transform: "translateY(-4px)" },
-                  to: { opacity: 1, transform: "translateY(0)" },
-                },
+                m: 2,
+                p: 3,
+                backgroundColor: "background.default",
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
               }}
+
             >
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: "bold",
-                  color: "#a2c9ff",
-                  mb: 3,
-                  letterSpacing: "0.5px",
-                }}
-              >
-                Detalles de la Cita
+              <Typography variant="subtitle1" fontWeight={600}>
+                Detalles de la cita
               </Typography>
+
 
               <Box
                 sx={{
@@ -268,6 +297,67 @@ const CitaRow = ({ row }: { row: Cita }) => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog
+        open={openEditDate}
+        onClose={() => setOpenEditDate(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: "linear-gradient(160deg,#202033,#181825)",
+            borderRadius: 3,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#a2c9ff", fontWeight: "bold" }}>
+          Modificar Fecha de la Cita
+        </DialogTitle>
+
+        <DialogContent sx={{ mt: 1 }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Nueva fecha y hora"
+              value={newFecha}
+              onChange={(value) => setNewFecha(value)}
+              sx={{
+                width: "100%",
+                "& .MuiInputBase-root": {
+                  backgroundColor: "#fff",
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setOpenEditDate(false)}
+            sx={{ color: "#cfd3e0" }}
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            variant="contained"
+            sx={{
+              background: "linear-gradient(90deg,#7cb7ff,#4aa3ff)",
+              fontWeight: 600,
+              "&:hover": {
+                boxShadow: "0 0 12px rgba(124,183,255,0.6)",
+              },
+            }}
+            onClick={() => {
+              // 👉 acá luego conectás la mutación
+              console.log("Nueva fecha:", newFecha?.valueOf());
+              setOpenEditDate(false);
+            }}
+          >
+            Guardar cambios
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </>
   );
 };
@@ -328,10 +418,8 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
           alignItems: "center",
           mb: 2,
           gap: 2,
-          background: "linear-gradient(90deg,#1d1d2c,#171722)",
           p: 2,
-          borderRadius: 3,
-          boxShadow: "0 0 12px rgba(0,0,0,0.4)",
+
         }}
       >
         <TextField
@@ -386,32 +474,54 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
       {/* TABLA */}
       <TableContainer
         component={Paper}
+        variant="outlined"
         sx={{
-          backgroundColor: "#161622",
-          borderRadius: 4,
-          boxShadow: "0 0 25px rgba(0,0,0,0.6)",
+          borderRadius: 3,
+          background:
+            "linear-gradient(180deg, rgba(33, 231, 182, 0.33) 0%, #d1d1e6ff 100%)",
+          border: "1px solid rgba(232, 241, 241, 0.15)",
+          boxShadow: "0 0 25px rgba(0,0,0,0.45)",
         }}
       >
+
         <Table stickyHeader>
           <TableHead
             sx={{
               "& th": {
-                backgroundColor: "#202033",
-                color: "#98c3ff",
-                fontWeight: "bold",
-                fontSize: "0.85rem",
-                letterSpacing: "0.5px",
+                background:
+                  "linear-gradient(180deg, #190849ff, #10106bff)",
+                color: "#e0e0e4ff",
+                fontWeight: 700,
+                fontSize: "0.75rem",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                borderBottom: "1px solid rgba(27, 49, 75, 0.25)",
               },
             }}
           >
-            <TableRow>
+
+            <TableRow
+              sx={{
+                backgroundColor: "rgba(255,255,255,0.02)",
+                transition: "0.25s",
+                "&:hover": {
+                  backgroundColor: "rgba(150, 120, 219, 0.06)",
+                },
+                "& td": {
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                },
+              }}
+            >
+
               <TableCell />
-              <TableCell>Motivo Consulta</TableCell>
-              <TableCell align="center">Fecha Solicitud</TableCell>
+              <TableCell>Motivo</TableCell>
+              <TableCell align="center">Fecha</TableCell>
               <TableCell align="center">Estado</TableCell>
               <TableCell align="center">Acciones</TableCell>
+              <TableCell align="center">Cancelar</TableCell>
             </TableRow>
           </TableHead>
+
 
           <TableBody>
             {citas.map((item) => (
@@ -433,16 +543,8 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
           setPage(0);
         }}
         sx={{
-          mt: 2,
-          backgroundColor: "#1c1c2b",
-          color: "#cfd3e0",
-          borderRadius: 2,
-          "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-            color: "#cfd3e0",
-          },
-          "& .MuiInputBase-root": {
-            color: "#fff",
-          },
+          borderTop: "1px solid",
+          borderColor: "divider",
         }}
       />
     </Box>

@@ -9,52 +9,56 @@ import {
   Box,
   Divider,
   Grid,
+  Chip,
 } from "@mui/material";
 import { styled } from "@mui/system";
+
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import LocalHospitalIcon from "@mui/icons-material/Healing";
 import EventIcon from "@mui/icons-material/EventNote";
 import PersonIcon from "@mui/icons-material/PersonOutline";
 import MedicationIcon from "@mui/icons-material/MedicalServices";
 import WarningIcon from "@mui/icons-material/ReportProblemOutlined";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 
-const FlatDialog = styled(Dialog)({
+const FlatDialog = styled(Dialog)(() => ({
   "& .MuiDialogPaper-root": {
-    borderRadius: 10,
-    backgroundColor: "#ffffff",
-    border: "1px solid #e0e0e0",
-    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "#fafafa",
+    padding: 16,
   },
-});
+}));
 
-const FlatButton = styled(Button)({
-  backgroundColor: "#424242",
+const HeaderBox = styled(Box)(() => ({
+  background: "linear-gradient(135deg, #1976d2, #0d47a1)",
   color: "#fff",
-  padding: "6px 16px",
-  borderRadius: 6,
-  fontWeight: 500,
+  padding: "16px 24px",
+  borderRadius: 10,
+  marginBottom: 20,
+}));
+
+const FlatButton = styled(Button)(() => ({
+  backgroundColor: "#1976d2",
+  color: "#fff",
+  padding: "6px 20px",
+  borderRadius: 8,
+  fontWeight: 600,
   textTransform: "none",
   "&:hover": {
-    backgroundColor: "#333",
+    backgroundColor: "#125aa0",
   },
-});
+}));
 
-const SectionBox = styled(Box)({
-  marginBottom: 16,
-  padding: "12px 16px",
-  borderRadius: 6,
-  backgroundColor: "#f7f7f7",
+const SectionBox = styled(Box)(() => ({
+  padding: "14px 16px",
+  borderRadius: 10,
+  backgroundColor: "#ffffff",
   border: "1px solid #e0e0e0",
-});
-
-const LightDivider = styled(Divider)({
-  margin: "12px 0",
-  borderColor: "#ccc",
-});
+  boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+}));
 
 interface Estudio {
   tipo_estudio: string;
-  codigo_referencia: string;
   fecha_realizacion: string;
   resultado?: string;
   medico_solicitante?: string;
@@ -71,6 +75,7 @@ const CitaModal: React.FC<{
   const {
     motivoConsulta,
     observaciones,
+    diagnostico,
     cancelada,
     fechaProgramada,
     enfermedades,
@@ -79,144 +84,182 @@ const CitaModal: React.FC<{
     estudios,
   } = cita;
 
+  const fechaValida =
+    fechaProgramada && !isNaN(Number(fechaProgramada))
+      ? new Date(Number(fechaProgramada))
+      : null;
+
   return (
     <FlatDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle
-        sx={{
-          textAlign: "center",
-          fontSize: "1.3rem",
-          fontWeight: 600,
-          color: "#333",
-        }}
-      >
-        Detalles de la Cita
-      </DialogTitle>
+      {/* HEADER */}
+      <HeaderBox>
+        <Typography variant="h6" fontWeight={700}>
+          Detalles de la Cita
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+          Historia clínica del paciente
+        </Typography>
+      </HeaderBox>
 
       <DialogContent>
         <Grid container spacing={2}>
-          {/* Paciente primero */}
+          {/* PACIENTE */}
           <Grid item xs={12} sm={6}>
             <SectionBox>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                <PersonIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
+              <Typography fontWeight={600} mb={1}>
+                <PersonIcon sx={{ fontSize: 18, mr: 1 }} />
                 Paciente
               </Typography>
-              <Typography sx={{ fontSize: 14, color: "#444" }}>
-                <strong>Nombre:</strong> {paciente?.nombre_paciente || "No disponible"}
+
+              <Typography fontSize={14}>
+                <strong>Nombre:</strong> {paciente?.nombre_paciente || "—"}
               </Typography>
-              <Typography sx={{ fontSize: 14, color: "#444" }}>
-                <strong>DNI:</strong> {paciente?.dni || "No disponible"}
+              <Typography fontSize={14}>
+                <strong>DNI:</strong> {paciente?.dni || "—"}
               </Typography>
             </SectionBox>
           </Grid>
 
-          {/* Fecha */}
+          {/* FECHA */}
           <Grid item xs={12} sm={6}>
             <SectionBox>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                <EventIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
+              <Typography fontWeight={600} mb={1}>
+                <EventIcon sx={{ fontSize: 18, mr: 1 }} />
                 Fecha
               </Typography>
-              <Typography sx={{ fontSize: 14, color: "#444" }}>
-                {new Date(fechaProgramada).toLocaleString("es-AR", {
-                  weekday: "short",
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+
+              <Typography fontSize={14}>
+                {fechaValida
+                  ? fechaValida.toLocaleString("es-AR", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Fecha no disponible"}
               </Typography>
             </SectionBox>
           </Grid>
 
-          {/* Motivo */}
-          <Grid item xs={12} sm={6}>
-            <SectionBox>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                <InfoIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
-                Motivo
+          {/* DIAGNÓSTICO (PRIORIDAD VISUAL) */}
+          <Grid item xs={12}>
+            <SectionBox
+              sx={{
+                border: "1px solid #90caf9",
+                backgroundColor: "#e3f2fd",
+              }}
+            >
+              <Typography
+                fontWeight={700}
+                color="#0d47a1"
+                mb={0.5}
+                display="flex"
+                alignItems="center"
+              >
+                <AssignmentTurnedInIcon sx={{ fontSize: 20, mr: 1 }} />
+                Diagnóstico Médico
               </Typography>
-              <Typography sx={{ fontSize: 14, color: "#444" }}>{motivoConsulta}</Typography>
+
+              <Typography
+                fontSize={14}
+                color="#0d47a1"
+                fontStyle={diagnostico ? "normal" : "italic"}
+              >
+                {diagnostico || "Diagnóstico aún no cargado por el médico."}
+              </Typography>
             </SectionBox>
           </Grid>
 
-          {/* Observaciones */}
+          {/* MOTIVO */}
           <Grid item xs={12} sm={6}>
             <SectionBox>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                <LocalHospitalIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
+              <Typography fontWeight={600} mb={1}>
+                <InfoIcon sx={{ fontSize: 18, mr: 1 }} />
+                Motivo de consulta
+              </Typography>
+              <Typography fontSize={14}>{motivoConsulta}</Typography>
+            </SectionBox>
+          </Grid>
+
+          {/* OBSERVACIONES */}
+          <Grid item xs={12} sm={6}>
+            <SectionBox>
+              <Typography fontWeight={600} mb={1}>
+                <LocalHospitalIcon sx={{ fontSize: 18, mr: 1 }} />
                 Observaciones
               </Typography>
-              <Typography sx={{ fontSize: 14, color: "#444" }}>
-                {observaciones || "No se ingresaron observaciones."}
+              <Typography fontSize={14}>
+                {observaciones || "Sin observaciones."}
               </Typography>
             </SectionBox>
           </Grid>
 
-          {/* Enfermedades y Medicamentos */}
+          {/* ENFERMEDADES / MEDICAMENTOS */}
           {(enfermedades?.length > 0 || medicamentos?.length > 0) && (
             <Grid item xs={12}>
               <SectionBox>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  <MedicationIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
-                  Detalles Médicos
+                <Typography fontWeight={600} mb={1}>
+                  <MedicationIcon sx={{ fontSize: 18, mr: 1 }} />
+                  Tratamiento
                 </Typography>
-                {enfermedades?.length > 0 && (
-                  <Typography sx={{ fontSize: 14, color: "#444", mb: 1 }}>
-                    <strong>Enfermedades:</strong>{" "}
-                    {enfermedades.map((e: any) => e?.nombre_enf).join(", ")}
-                  </Typography>
-                )}
-                {medicamentos?.length > 0 && (
-                  <Typography sx={{ fontSize: 14, color: "#444" }}>
-                    <strong>Medicamentos:</strong>{" "}
-                    {medicamentos.map((m: any) => m?.nombre_med).join(", ")}
-                  </Typography>
-                )}
+
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {enfermedades?.map((e: any, i: number) => (
+                    <Chip key={i} label={e.nombre_enf} color="warning" />
+                  ))}
+                  {medicamentos?.map((m: any, i: number) => (
+                    <Chip key={i} label={m.nombre_med} color="success" />
+                  ))}
+                </Box>
               </SectionBox>
             </Grid>
           )}
 
-          {/* Estudios */}
+          {/* ESTUDIOS */}
           {estudios?.length > 0 && (
             <Grid item xs={12}>
               <SectionBox>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                  <LocalHospitalIcon sx={{ fontSize: 18, verticalAlign: "middle", mr: 1 }} />
-                  Estudios
+                <Typography fontWeight={600} mb={1}>
+                  <LocalHospitalIcon sx={{ fontSize: 18, mr: 1 }} />
+                  Estudios solicitados
                 </Typography>
+
                 <Grid container spacing={2}>
-                  {estudios.map((estudio: Estudio, index: number) => (
-                    <Grid item xs={12} sm={6} key={index}>
+                  {estudios.map((estudio: Estudio, i: number) => (
+                    <Grid item xs={12} sm={6} key={i}>
                       <Box
                         sx={{
-                          border: "1px solid #ddd",
-                          borderRadius: 6,
-                          padding: 2,
-                          backgroundColor: "#fafafa",
+                          border: "1px dashed #bbb",
+                          borderRadius: 8,
+                          p: 2,
                         }}
                       >
-                        <Typography sx={{ fontSize: 14, color: "#444" }}>
-                          <strong>Tipo:</strong> {estudio.tipo_estudio}
+                        <Typography fontSize={14}>
+                          <strong>{estudio.tipo_estudio}</strong>
                         </Typography>
-                        <Typography sx={{ fontSize: 14, color: "#444" }}>
-                          <strong>Fecha:</strong>{" "}
-                          {new Date(estudio.fecha_realizacion).toLocaleDateString("es-AR")}
+                        <Typography fontSize={13}>
+                          Fecha:{" "}
+                          {new Date(
+                            estudio.fecha_realizacion
+                          ).toLocaleDateString("es-AR")}
                         </Typography>
+
                         {estudio.resultado && (
-                          <Typography sx={{ fontSize: 14, color: "#444" }}>
-                            <strong>Resultado:</strong> {estudio.resultado}
+                          <Typography fontSize={13}>
+                            Resultado: {estudio.resultado}
                           </Typography>
                         )}
-                        {estudio.medico_solicitante && (
-                          <Typography sx={{ fontSize: 14, color: "#444" }}>
-                            <strong>Médico:</strong> {estudio.medico_solicitante}
-                          </Typography>
+
+                        {estudio.urgente && (
+                          <Chip
+                            label="Urgente"
+                            color="error"
+                            size="small"
+                            sx={{ mt: 1 }}
+                          />
                         )}
-                        <Typography sx={{ fontSize: 14, color: "#444" }}>
-                          <strong>Urgente:</strong> {estudio.urgente ? "Sí" : "No"}
-                        </Typography>
                       </Box>
                     </Grid>
                   ))}
@@ -225,18 +268,11 @@ const CitaModal: React.FC<{
             </Grid>
           )}
 
-          {/* Cita cancelada */}
+          {/* CANCELADA */}
           {cancelada && (
             <Grid item xs={12}>
               <SectionBox sx={{ backgroundColor: "#ffebee" }}>
-                <Typography
-                  sx={{
-                    color: "#c62828",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
+                <Typography color="error" fontWeight={700}>
                   <WarningIcon sx={{ fontSize: 18, mr: 1 }} />
                   Cita cancelada
                 </Typography>
@@ -244,12 +280,11 @@ const CitaModal: React.FC<{
             </Grid>
           )}
         </Grid>
-
-        {/* Botón cerrar */}
-        <DialogActions sx={{ justifyContent: "center", padding: "16px" }}>
-          <FlatButton onClick={onClose}>Cerrar</FlatButton>
-        </DialogActions>
       </DialogContent>
+
+      <DialogActions sx={{ justifyContent: "center", mt: 2 }}>
+        <FlatButton onClick={onClose}>Cerrar</FlatButton>
+      </DialogActions>
     </FlatDialog>
   );
 };

@@ -29,7 +29,7 @@ import MedicationIcon from "@mui/icons-material/MedicalServices";
 import AddchartIcon from "@mui/icons-material/Addchart";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-import { useFinalizarCitaMutation, useGetCitasQuery } from "../graphql/types";
+import { useCargarDiagnosticoCitaMutation, useFinalizarCitaMutation, useGetCitasQuery } from "../graphql/types";
 import PersonaSelector from "../utils/SelectorUsuarios";
 import CitaModal from "../components/citas/citaModal";
 import AgregarEstudio from "../components/selectores/AgregarEstudios";
@@ -47,6 +47,15 @@ const HistoriasPaciente: React.FC = () => {
   const [selectedPersona, setSelectedPersona] = React.useState<string | null>(
     null
   );
+
+  const [openDiagnosticoModal, setOpenDiagnosticoModal] = React.useState(false);
+  const [diagnostico, setDiagnostico] = React.useState("");
+  const [citaDiagnostico, setCitaDiagnostico] = React.useState<any | null>(null);
+  const [
+    cargarDiagnosticoCitaMutation,
+    { loading: loadingDiagnostico, error: errorDiagnostico },
+  ] = useCargarDiagnosticoCitaMutation();
+
 
   const [openModal, setOpenModal] = React.useState(false);
   const [selectedCita, setSelectedCita] = React.useState<any | null>(null);
@@ -104,6 +113,35 @@ const HistoriasPaciente: React.FC = () => {
         console.error("Error al finalizar cita:", e);
         handleCloseConfirmDialog();
       }
+    }
+  };
+  const handleOpenDiagnosticoModal = (cita: any) => {
+    setCitaDiagnostico(cita);
+    setDiagnostico("");
+    setOpenDiagnosticoModal(true);
+  };
+
+  const handleCloseDiagnosticoModal = () => {
+    setOpenDiagnosticoModal(false);
+    setCitaDiagnostico(null);
+    setDiagnostico("");
+  };
+
+  const handleGuardarDiagnostico = async () => {
+    if (!citaDiagnostico?.id_cita || !diagnostico.trim()) return;
+
+    try {
+      await cargarDiagnosticoCitaMutation({
+        variables: {
+          citaId: citaDiagnostico.id_cita,
+          diagnostico,
+        },
+      });
+
+      refetch();
+      handleCloseDiagnosticoModal();
+    } catch (e) {
+      console.error("Error al cargar diagnóstico", e);
     }
   };
 
@@ -279,6 +317,16 @@ const HistoriasPaciente: React.FC = () => {
                         <MedicationIcon />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Agregar Diagnóstico">
+                      <IconButton
+                        color="warning"
+                        onClick={() => handleOpenDiagnosticoModal(historia.node)}
+                        disabled={!!historia.node.finalizada}
+                      >
+                        <CheckCircleIcon />
+                      </IconButton>
+                    </Tooltip>
+
 
                     <Tooltip
                       title={
@@ -337,6 +385,61 @@ const HistoriasPaciente: React.FC = () => {
         onClose={handleCloseAllModals}
         cita={selectedCita}
       />
+<Dialog
+  open={openDiagnosticoModal}
+  onClose={handleCloseDiagnosticoModal}
+  fullWidth
+  maxWidth="sm"
+>
+  <DialogTitle>Agregar Diagnóstico</DialogTitle>
+
+  <DialogContent>
+    <DialogContentText sx={{ mb: 2 }}>
+      Ingrese el diagnóstico médico de la cita.  
+      Al guardar, la cita quedará finalizada.
+    </DialogContentText>
+
+    <Box
+      component="textarea"
+      value={diagnostico}
+      onChange={(e) => setDiagnostico(e.target.value)}
+      placeholder="Ej: Gastritis aguda, se indica tratamiento..."
+      style={{
+        width: "100%",
+        minHeight: "120px",
+        padding: "12px",
+        fontSize: "14px",
+        borderRadius: "8px",
+        border: "1px solid #ccc",
+        resize: "vertical",
+      }}
+    />
+
+    {errorDiagnostico && (
+      <Alert severity="error" sx={{ mt: 2 }}>
+        Error al guardar diagnóstico
+      </Alert>
+    )}
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={handleCloseDiagnosticoModal}>
+      Cancelar
+    </Button>
+    <Button
+      onClick={handleGuardarDiagnostico}
+      color="primary"
+      variant="contained"
+      disabled={loadingDiagnostico || !diagnostico.trim()}
+    >
+      {loadingDiagnostico ? (
+        <CircularProgress size={24} />
+      ) : (
+        "Guardar Diagnóstico"
+      )}
+    </Button>
+  </DialogActions>
+</Dialog>
 
       {/* Diálogo de Confirmación */}
       <Dialog
