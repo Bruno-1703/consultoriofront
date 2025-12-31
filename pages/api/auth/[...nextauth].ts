@@ -48,6 +48,7 @@ export default NextAuth({
             role: user.rol_usuario,
             matricula: user.matricula,
             dni: user.dni,
+            centroSaludId: user.centroSaludId?.toString() || null,
             // especialidad: user.especialidad,
             // nombre_usuario: user.nombre_usuario,
             // telefono: user.telefono,
@@ -76,6 +77,7 @@ export default NextAuth({
         token.dni = u.dni;
         token.especialidad = u.especialidad;
         token.nombre_usuario = u.nombre_usuario;
+        token.centroSaludId = u.centroSaludId; // <--- AGREGADO AL TOKEN
         token.telefono = u.telefono;
       }
       return token;
@@ -86,6 +88,7 @@ export default NextAuth({
 
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
+        (session.user as any).centroSaludId = token.centroSaludId as string;
 
       }
       console.log({

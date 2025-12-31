@@ -46,12 +46,6 @@ export const MENU_LIST: IMenuItem[] = [
     Icon: CoronavirusOutlinedIcon,
   },
   {
-    route: ROUTES.internacion,
-    literal: 'Internacion',
-    Icon: LibraryBooksIcon,
-  },
-
-  {
     route: ROUTES.admin,
     literal: 'Administracion',
     Icon: PeopleIcon,

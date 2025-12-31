@@ -32,22 +32,26 @@ import {
   useGetCitasByFechaQuery,
   Cita,
   useCancelarCitaMutation,
+  // 💡 SE IMPORTA LA MUTACIÓN DE REPROGRAMACIÓN
+  useReprogramarCitaMutation, 
 } from "../../graphql/types";
 import TableSkeleton from "../../utils/TableSkeleton";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react"; // 💡 NECESARIO PARA OBTENER EL userId
 import EditCalendarIcon from "@mui/icons-material/EditCalendar";
 import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 // =====================================================
-//                 FILA DE CITA
+//                 FILA DE CITA
 // =====================================================
 
 const CitaRow = ({ row }: { row: Cita }) => {
+  const { data: session } = useSession(); // OBTENER LA SESIÓN
   const [open, setOpen] = React.useState(false);
-  const [cancelarCita] = useCancelarCitaMutation();
+  const [cancelarCita] = useCancelarCitaMutation();  
+ 
   const [snackbar, setSnackbar] = React.useState({
     open: false,
     message: "",
@@ -60,6 +64,54 @@ const CitaRow = ({ row }: { row: Cita }) => {
     dayjs(Number(row.fechaProgramada))
   );
 
+  const [
+    reprogramarCitaMutation, 
+    { loading: reprogramming }
+  ] = useReprogramarCitaMutation({
+    refetchQueries: [
+      'GetCitasByFecha', // Recarga la tabla
+    ],
+  });
+  
+  // 4. NUEVA FUNCIÓN PARA REPROGRAMAR (con la variable declarada correctamente)
+  const handleReprogramar = async () => {
+    if (!row.id_cita || !newFecha) {
+      setSnackbar({
+        open: true,
+        message: "Datos incompletos para reprogramar.",
+        severity: "error",
+      });
+      return;
+    } 
+
+    const fechaTimestamp = newFecha.valueOf(); 
+    const userId = session?.user?.id;
+    
+    try {
+      await reprogramarCitaMutation({
+        variables: {
+          citaId: row.id_cita,
+          fechaProgramada: fechaTimestamp, // USAMOS LA VARIABLE DECLARADA
+          registradoPorId: userId || 'Desconocido', 
+        },
+      });
+      
+      setSnackbar({
+        open: true,
+        message: "Cita reprogramada correctamente.",
+        severity: "success",
+      });
+      setOpenEditDate(false); 
+
+    } catch (e: any) {
+      console.error("Error al reprogramar cita:", e);
+      setSnackbar({
+        open: true,
+        message: "Error al reprogramar la cita: " + (e.message || "Verifique la consola."),
+        severity: "error",
+      });
+    }
+  };
 
   const handleCancelar = async () => {
     if (!row.id_cita) {
@@ -122,7 +174,8 @@ const CitaRow = ({ row }: { row: Cita }) => {
         </TableCell>
 
         <TableCell align="center" sx={{ color: "text.secondary" }}>
-          {dayjs(Number(row.fechaProgramada)).format("DD/MM/YYYY")}
+          {/* Muestra la nueva fecha si se actualiza */}
+          {dayjs(Number(row.fechaProgramada)).format("DD/MM/YYYY hh:mm A")}
         </TableCell>
 
         <TableCell align="center">
@@ -149,7 +202,11 @@ const CitaRow = ({ row }: { row: Cita }) => {
               {/* MODIFICAR FECHA */}
               <Tooltip title="Modificar fecha">
                 <IconButton
-                  onClick={() => setOpenEditDate(true)}
+                  onClick={() => {
+                    // 💡 Al abrir, resetear el estado de la nueva fecha a la actual de la fila
+                    setNewFecha(dayjs(Number(row.fechaProgramada)));
+                    setOpenEditDate(true);
+                  }}
                   sx={{
                     color: "#7cb7ff",
                     background: "rgba(124,183,255,0.1)",
@@ -198,7 +255,7 @@ const CitaRow = ({ row }: { row: Cita }) => {
         </TableCell>
       </TableRow>
 
-      {/* DETALLES EXPANDIBLES */}
+      {/* DETALLES EXPANDIBLES (sin cambios) */}
       <TableRow>
         <TableCell colSpan={6} sx={{ padding: 0 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
@@ -273,7 +330,7 @@ const CitaRow = ({ row }: { row: Cita }) => {
         </TableCell>
       </TableRow>
 
-      {/* SNACKBAR */}
+      {/* SNACKBAR (sin cambios) */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={5000}
@@ -284,7 +341,7 @@ const CitaRow = ({ row }: { row: Cita }) => {
         </Alert>
       </Snackbar>
 
-      {/* DIÁLOGO */}
+      {/* DIÁLOGO CANCELAR (sin cambios) */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>Confirmación</DialogTitle>
         <DialogContent>
@@ -297,6 +354,8 @@ const CitaRow = ({ row }: { row: Cita }) => {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* DIÁLOGO MODIFICAR FECHA (Conexión de la mutación) */}
       <Dialog
         open={openEditDate}
         onClose={() => setOpenEditDate(false)}
@@ -340,6 +399,8 @@ const CitaRow = ({ row }: { row: Cita }) => {
 
           <Button
             variant="contained"
+            onClick={handleReprogramar} // 👈 CONEXIÓN A LA FUNCIÓN DE MUTACIÓN
+            disabled={reprogramming || !newFecha || dayjs(Number(row.fechaProgramada)).isSame(newFecha)} // 💡 Deshabilita si carga o si la fecha no ha cambiado
             sx={{
               background: "linear-gradient(90deg,#7cb7ff,#4aa3ff)",
               fontWeight: 600,
@@ -347,13 +408,8 @@ const CitaRow = ({ row }: { row: Cita }) => {
                 boxShadow: "0 0 12px rgba(124,183,255,0.6)",
               },
             }}
-            onClick={() => {
-              // 👉 acá luego conectás la mutación
-              console.log("Nueva fecha:", newFecha?.valueOf());
-              setOpenEditDate(false);
-            }}
           >
-            Guardar cambios
+            {reprogramming ? "Guardando..." : "Guardar cambios"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -363,14 +419,17 @@ const CitaRow = ({ row }: { row: Cita }) => {
 };
 
 // ===============================================================
-//                 TABLA PRINCIPAL (OPTIMIZADA)
+//                 TABLA PRINCIPAL (sin cambios)
 // ===============================================================
 
 interface CollapsibleTableProps {
   fecha: string;
+    centroSaludId: string; // Recibimos el ID del centro activo desde el padre
+
 }
 
-const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
+const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha, }) => {
+// ... (código de CollapsibleTable sin cambios)
   const { data: session, status } = useSession();
 
   const [searchTerm, setSearchTerm] = React.useState("");

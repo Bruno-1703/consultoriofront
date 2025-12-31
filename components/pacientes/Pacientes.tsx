@@ -1,31 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Alert,
-  Typography,
-  Box,
-  Button,
-  TextField,
-  TablePagination,
-  IconButton,
-  Stack,
-  Badge,
-  Tooltip,
-  Snackbar,
-  LinearProgress,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, Alert, Typography, Box, Button, TextField, TablePagination,
+  IconButton, Stack, Badge, Tooltip, Snackbar, LinearProgress,
+  Dialog, DialogTitle, DialogContent, Divider, InputAdornment
 } from "@mui/material";
 
+// Iconos
+import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
 
 import { NetworkStatus } from "@apollo/client";
 
@@ -43,24 +32,16 @@ import {
 const Pacientes: React.FC = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const [openDrawer, setOpenDrawer] = useState(false);
-
   const [errorSnackbar, setErrorSnackbar] = useState<string | null>(null);
   const [successSnackbar, setSuccessSnackbar] = useState<string | null>(null);
-
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPaciente, setSelectedPaciente] = useState<any>(null);
-
   const [eliminarPaciente, setEliminarPaciente] = useState<string | null | undefined>(null);
-
   const [pacienteIdEditar, setPacienteIdEditar] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-
-  const [debugMessage, setDebugMessage] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +51,6 @@ const Pacientes: React.FC = () => {
       setSearchTerm(searchInput);
       setPage(0);
     }, 500);
-
     return () => clearTimeout(delayDebounce);
   }, [searchInput]);
 
@@ -78,252 +58,223 @@ const Pacientes: React.FC = () => {
     variables: {
       limit: rowsPerPage,
       skip: page * rowsPerPage,
-      where: {
-        nombre_paciente: searchTerm || "",
-      },
+      where: { nombre_paciente: searchTerm || "" },
     },
     notifyOnNetworkStatusChange: true,
   });
 
   const [eliminarPacienteLogMutation] = useElimiarPacienteLogMutation();
 
-  const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
-    newPage: number
-  ) => setPage(newPage);
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleEditPaciente = (pacienteId: string | null | undefined) => {
-    setDebugMessage(`Editing patient ID: ${pacienteId}`);
-    if (pacienteId != null) {
-      setPacienteIdEditar(pacienteId);
+  const handleEditPaciente = (id: string | null | undefined) => {
+    if (id) {
+      setPacienteIdEditar(id);
       setIsEditing(true);
     }
-  };
-
-  const handleCloseEdit = () => {
-    setIsEditing(false);
-    setPacienteIdEditar(null);
   };
 
   const handleEliminarPaciente = async (pacienteId: string) => {
     try {
       await eliminarPacienteLogMutation({ variables: { pacienteId } });
       await refetch();
-      setSuccessSnackbar("Paciente eliminado con éxito.");
-    } catch (error) {
-      console.error("Error al eliminar el paciente:", error);
-      setErrorSnackbar("Error al eliminar el paciente.");
+      setSuccessSnackbar("Paciente eliminado correctamente.");
+    } catch (e) {
+      setErrorSnackbar("Error al intentar eliminar el paciente.");
     }
   };
-
-  const handleOpenModal = (paciente: any) => {
-    setSelectedPaciente(paciente);
-    setModalOpen(true);
+const handleOpenModal = (paciente: any) => {
+    setSelectedPaciente(paciente); // Guardamos los datos del paciente en el estado
+    setModalOpen(true);            // Abrimos el modal
   };
 
+  // 2. Asegúrate de que handleCloseModal esté así:
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedPaciente(null);
   };
 
-  const handleSnackbarClose = () => setErrorSnackbar(null);
-  const handleSuccessSnackbarClose = () => setSuccessSnackbar(null);
-
   if (loading && networkStatus !== NetworkStatus.refetch)
-    return <TableSkeleton rows={3} columns={5} />;
+    return <TableSkeleton rows={8} columns={6} />;
 
-  if (error) {
-    setErrorSnackbar(error.message);
-    return null;
-  }
 
   return (
-    <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", borderRadius: 2, boxShadow: 3 }}>
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-          Gestión de Pacientes
-        </Typography>
-      </Stack>
-
-      <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: "center" }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setOpenDrawer(true)}
-        >
-          Registrar Paciente
-        </Button>
-
-        <TextField
-          inputRef={inputRef}
-          label="Buscar por nombre o apellido"
-          variant="outlined"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          sx={{ flexGrow: 1 }}
-        />
-
-        <Tooltip title="Refrescar">
-          <span>
-            <IconButton
-              onClick={() => refetch()}
-              color="secondary"
-              disabled={networkStatus === NetworkStatus.refetch}
-              sx={{
-                borderRadius: 1,
-                backgroundColor: "#f0f0f0",
-                "&:hover": { backgroundColor: "#e0e0e0" },
-              }}
-            >
-              <RefreshIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Pacientes">
-          <Badge badgeContent={data?.getPacientes.aggregate.count || 0} color="primary">
-            <PersonIcon sx={{ color: "#1976d2" }} />
+    <Box sx={{ p: { xs: 2, md: 4 }, backgroundColor: "#f0f2f5", minHeight: "100vh" }}>
+      
+      {/* TÍTULO Y ESTADÍSTICAS RÁPIDAS */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: "#1a237e", letterSpacing: "-0.5px" }}>
+            Directorio de Pacientes
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Administra la información y el historial de tus pacientes
+          </Typography>
+        </Box>
+        
+        <Tooltip title="Total de pacientes activos">
+          <Badge badgeContent={data?.getPacientes.aggregate.count || 0} color="primary" max={999}>
+            <Paper sx={{ p: 1.5, borderRadius: "50%", display: 'flex', boxShadow: 2 }}>
+              <PersonIcon sx={{ color: "#1a237e" }} />
+            </Paper>
           </Badge>
         </Tooltip>
       </Stack>
 
-      {networkStatus === NetworkStatus.refetch && <LinearProgress />}
+      {/* BARRA DE ACCIONES */}
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 3, boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenDrawer(true)}
+            sx={{ 
+              borderRadius: 2, 
+              px: 3, 
+              py: 1, 
+              textTransform: "none", 
+              fontWeight: "bold",
+              boxShadow: "0 4px 14px 0 rgba(25,118,210,0.39)"
+            }}
+          >
+            Nuevo Paciente
+          </Button>
 
-      {/* FORMULARIO - DRAWER */}
-      {/* FORMULARIO - MODAL */}
-      <PacienteForm
-        open={openDrawer}
-        onClose={() => {
-          setOpenDrawer(false);
-          refetch(); // refresca la tabla cuando se cierra el modal
-          setSuccessSnackbar("Paciente creado con éxito.");
-        }}
-      />
-      {/* FORM EDIT */}
-      {isEditing && pacienteIdEditar && (
-        <Box sx={{ mt: 2, p: 2, backgroundColor: "#e3f2fd", borderRadius: 2 }}>
-          <PacienteFormEdit pacienteId={pacienteIdEditar} onClose={handleCloseEdit} />
-        </Box>
-      )}
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Buscar por nombre o apellido..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              "& .MuiOutlinedInput-root": { borderRadius: 2, backgroundColor: "#fff" } 
+            }}
+          />
 
-      {/* TABLA */}
-      <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-        <Table sx={{ minWidth: 1110 }}>
+          <Tooltip title="Actualizar lista">
+            <IconButton 
+              onClick={() => refetch()} 
+              disabled={networkStatus === NetworkStatus.refetch}
+              sx={{ border: "1px solid #e0e0e0", borderRadius: 2 }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Paper>
+
+      {networkStatus === NetworkStatus.refetch && <LinearProgress sx={{ mb: 1, borderRadius: 1 }} />}
+
+      {/* TABLA DE DATOS */}
+      <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: "0 10px 30px rgba(0,0,0,0.03)", overflow: "hidden" }}>
+        <Table sx={{ minWidth: 800 }}>
           <TableHead>
-            <TableRow sx={{ backgroundColor: "#1976d2" }}>
+            <TableRow sx={{ backgroundColor: "#1a237e" }}>
               {["DNI", "Nombre", "Apellido", "Edad", "Teléfono", "Acciones"].map((header) => (
-                <TableCell
-                  key={header}
-                  sx={{ color: "white", fontWeight: "bold", padding: "6px 16px" }}
-                >
+                <TableCell key={header} sx={{ color: "white", fontWeight: 600, py: 2 }}>
                   {header}
                 </TableCell>
               ))}
             </TableRow>
           </TableHead>
-
           <TableBody>
             {data?.getPacientes?.edges.map((paciente, index) => (
-              <TableRow
+              <TableRow 
                 key={paciente.node.id_paciente}
-                sx={{
-                  backgroundColor: index % 2 === 0 ? "#fafafa" : "#f5f5f5",
-                  "&:hover": { backgroundColor: "#e0e0e0" },
-                  height: "48px",
-                }}
+                hover
+                sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                <TableCell>{paciente.node.dni}</TableCell>
+                <TableCell sx={{ fontWeight: 500 }}>{paciente.node.dni}</TableCell>
                 <TableCell>{paciente.node.nombre_paciente}</TableCell>
                 <TableCell>{paciente.node.apellido_paciente}</TableCell>
-                <TableCell>{paciente.node.edad}</TableCell>
-                <TableCell>{paciente.node.telefono}</TableCell>
-
-                <TableCell align="center">
-                  <Tooltip title="Visualizar">
-                    <IconButton color="primary" onClick={() => handleOpenModal(paciente.node)}>
-                      <VisibilityIcon />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Editar">
-                    <IconButton color="secondary" onClick={() => handleEditPaciente(paciente.node.id_paciente)}>
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Eliminar">
-                    <IconButton
-                      color="error"
-                      onClick={() => setEliminarPaciente(paciente.node.id_paciente)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
+                <TableCell>
+                   <Badge badgeContent={paciente.node.edad} color="info" showZero sx={{ "& .MuiBadge-badge": { position: 'static', transform: 'none' } }} />
                 </TableCell>
-
+                <TableCell>{paciente.node.telefono}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5}>
+                    <Tooltip title="Detalles">
+                      <IconButton size="small" color="primary" onClick={() => handleOpenModal(paciente.node)}>
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Editar">
+                      <IconButton size="small" color="secondary" onClick={() => handleEditPaciente(paciente.node.id_paciente)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar">
+                      <IconButton size="small" color="error" onClick={() => setEliminarPaciente(paciente.node.id_paciente)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={data?.getPacientes?.aggregate.count || 0}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+          sx={{ borderTop: "1px solid #eee" }}
+        />
       </TableContainer>
 
-      {/* PAGINACIÓN */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 15]}
-        component="div"
-        count={data?.getPacientes?.aggregate.count || 0}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+      {/* MODAL DE EDICIÓN */}
+      <Dialog 
+        open={isEditing} 
+        onClose={() => setIsEditing(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#f8f9fa' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "#1a237e" }}>Actualizar Expediente</Typography>
+          <IconButton onClick={() => setIsEditing(false)} size="small"><CloseIcon /></IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3 }}>
+          {pacienteIdEditar && (
+            <PacienteFormEdit 
+              pacienteId={pacienteIdEditar} 
+              onClose={() => { setIsEditing(false); refetch(); setSuccessSnackbar("Cambios guardados."); }} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-      {/* SNACKBARS */}
-      <Snackbar open={Boolean(errorSnackbar)} autoHideDuration={6000} onClose={handleSnackbarClose}>
-        <Alert onClose={handleSnackbarClose} severity="error" sx={{ width: "100%" }}>
-          {errorSnackbar}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar open={Boolean(successSnackbar)} autoHideDuration={6000} onClose={handleSuccessSnackbarClose}>
-        <Alert onClose={handleSuccessSnackbarClose} severity="success" sx={{ width: "100%" }}>
-          {successSnackbar}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar open={Boolean(debugMessage)} autoHideDuration={6000} onClose={() => setDebugMessage(null)}>
-        <Alert onClose={() => setDebugMessage(null)} severity="info" sx={{ width: "100%" }}>
-          {debugMessage}
-        </Alert>
-      </Snackbar>
-
-      {/* MODAL VER PACIENTE */}
-      <PacientesModal
-        modalOpen={modalOpen}
-        handleCloseModal={handleCloseModal}
-        selectedPaciente={selectedPaciente}
-      />
-
-      {/* CONFIRMAR ELIMINACIÓN */}
+      {/* OTROS MODALES Y ALERTAS */}
+      <PacienteForm open={openDrawer} onClose={() => { setOpenDrawer(false); refetch(); }} />
+<PacientesModal 
+  modalOpen={modalOpen} 
+  handleCloseModal={handleCloseModal} // <-- Cambia handleOpenModal por handleCloseModal
+  selectedPaciente={selectedPaciente} 
+/>      
       <ConfirmarEliminacion
         open={Boolean(eliminarPaciente)}
         onClose={() => setEliminarPaciente(null)}
-        onConfirmar={() => {
-          if (eliminarPaciente) handleEliminarPaciente(eliminarPaciente);
-          setEliminarPaciente(null);
-        }}
-        mensaje="¿Estás seguro de que deseas eliminar este paciente?"
-        titulo="Confirmar Eliminación"
-        disable={false}
-      />
+        onConfirmar={() => { if (eliminarPaciente) handleEliminarPaciente(eliminarPaciente); setEliminarPaciente(null); } }
+        titulo="Eliminar Paciente"
+        mensaje="Esta acción no se puede deshacer. ¿Deseas continuar?" disable={false}      />
+
+      <Snackbar open={Boolean(errorSnackbar)} autoHideDuration={5000} onClose={() => setErrorSnackbar(null)}>
+        <Alert severity="error" variant="filled" sx={{ borderRadius: 2 }}>{errorSnackbar}</Alert>
+      </Snackbar>
+
+      <Snackbar open={Boolean(successSnackbar)} autoHideDuration={5000} onClose={() => setSuccessSnackbar(null)}>
+        <Alert severity="success" variant="filled" sx={{ borderRadius: 2 }}>{successSnackbar}</Alert>
+      </Snackbar>
     </Box>
   );
 };

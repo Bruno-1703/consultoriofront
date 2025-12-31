@@ -10,7 +10,6 @@ query getCitasByFecha($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
         finalizada
         fechaProgramada
         motivoConsulta   
-        registradoPorId 
         paciente{
           dni
           id_paciente

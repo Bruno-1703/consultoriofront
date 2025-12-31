@@ -1,342 +1,226 @@
-import React from 'react';
+import React, { useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import {
-  TextField,
-  Button,
-  Grid,
-  Box,
-  Typography,
-  FormControlLabel,
-  Checkbox,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Paper,
-  Stack,
-  CircularProgress,
-  Snackbar,
+  TextField, Button, Grid, Box, Typography, FormControlLabel,
+  Checkbox, Select, MenuItem, InputLabel, FormControl,
+  Stack, CircularProgress, Snackbar, Alert, Divider
 } from '@mui/material';
-import MuiAlert, { AlertProps } from '@mui/material/Alert';
-
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
 
 import { useCreateMedicamentoMutation } from '../../graphql/types';
 
-const SnackbarAlert = React.forwardRef<HTMLDivElement, AlertProps>(function SnackbarAlert(props, ref) {
-  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
+const DOSIS_OPTIONS = ['Una vez al día', 'Dos veces al día', 'Tres veces al día', 'Cada 6 horas', 'Cada 8 horas', 'Cada 12 horas'];
+const CATEGORIA_OPTIONS = ['Antibiótico', 'Analgésico', 'Antiinflamatorio', 'Antipirético', 'Antihistamínico', 'Otros'];
 
-const dosisOptions = [
-  'Una vez al día',
-  'Dos veces al día',
-  'Tres veces al día',
-  'Cada 6 horas',
-  'Cada 8 horas',
-  'Cada 12 horas',
-];
-
-const categoriaOptions = [
-  'Antibiótico',
-  'Analgésico',
-  'Antiinflamatorio',
-  'Antipirético',
-  'Antihistamínico',
-  'Otros',
-];
-
-interface CrearMedicamentoFormularioProps {
+interface Props {
   onClose: () => void;
   onSuccess: () => void;
   onError: (msg: string) => void;
 }
 
-const CrearMedicamentoFormulario: React.FC<CrearMedicamentoFormularioProps> = ({
-  onClose,
-  onSuccess,
-  onError,
-}) => {
-  const [nombreMed, setNombreMed] = React.useState('');
-  const [marca, setMarca] = React.useState('');
-  const [fechaVencimiento, setFechaVencimiento] = React.useState<Dayjs | null>(null);
-  const [dosisHs, setDosisHs] = React.useState('');
-  const [agentePrincipal, setAgentePrincipal] = React.useState('');
-  const [efectosSecundarios, setEfectosSecundarios] = React.useState('');
-  const [listaNegra, setListaNegra] = React.useState(false);
-  const [categoria, setCategoria] = React.useState('');
-  const [contraindicaciones, setContraindicaciones] = React.useState('');
-  const [prescripcionRequerida, setPrescripcionRequerida] = React.useState(false);
-  const [stock, setStock] = React.useState<number | ''>('');
+const CrearMedicamentoFormulario: React.FC<Props> = ({ onClose, onSuccess, onError }) => {
+  // Estado consolidado para campos simples (opcional, pero aquí mantenemos tu estructura para claridad)
+  const [formData, setFormData] = useState({
+    nombreMed: '',
+    marca: '',
+    dosisHs: '',
+    agentePrincipal: '',
+    efectosSecundarios: '',
+    categoria: '',
+    contraindicaciones: '',
+    stock: '' as number | '',
+    listaNegra: false,
+    prescripcion: false,
+  });
 
-  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState<'success' | 'error' | 'warning' | 'info'>('info');
+  const [fechaVencimiento, setFechaVencimiento] = useState<Dayjs | null>(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' as any });
 
   const [createMedicamentoMutation, { loading }] = useCreateMedicamentoMutation();
 
-  const resetForm = () => {
-    setNombreMed('');
-    setMarca('');
-    setFechaVencimiento(null);
-    setDosisHs('');
-    setAgentePrincipal('');
-    setEfectosSecundarios('');
-    setListaNegra(false);
-    setCategoria('');
-    setContraindicaciones('');
-    setPrescripcionRequerida(false);
-    setStock('');
-  };
-
-  const handleCancel = () => {
-    resetForm();
-    onClose();
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Validación simple:
-    if (!nombreMed.trim() || !marca.trim() || !fechaVencimiento || !dosisHs.trim()) {
-      setSnackbarMessage('Por favor completa todos los campos requeridos.');
-      setSnackbarSeverity('warning');
-      setSnackbarOpen(true);
+    if (!formData.nombreMed || !formData.marca || !fechaVencimiento || !formData.dosisHs) {
+      setSnackbar({ open: true, message: 'Faltan campos obligatorios (*)', severity: 'warning' });
       return;
     }
 
-    const medicamentoData = {
-      nombre_med: nombreMed.trim(),
-      marca: marca.trim(),
-      fecha_vencimiento: fechaVencimiento.toISOString(),
-      dosis_hs: dosisHs,
-      agente_principal: agentePrincipal.trim() || null,
-      efectos_secundarios: efectosSecundarios.trim() || null,
-      lista_negra: listaNegra,
-      categoria: categoria || null,
-      contraindicaciones: contraindicaciones.trim() || null,
-      prescripcion_requerida: prescripcionRequerida,
-      stock: stock === '' ? 0 : Number(stock),
-    };
-
     try {
-      await createMedicamentoMutation({ variables: { data: medicamentoData } });
-      setSnackbarMessage('Medicamento creado con éxito.');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
-      resetForm();
+      await createMedicamentoMutation({
+        variables: {
+          data: {
+            nombre_med: formData.nombreMed.trim(),
+            marca: formData.marca.trim(),
+            fecha_vencimiento: fechaVencimiento.toISOString(),
+            dosis_hs: formData.dosisHs,
+            agente_principal: formData.agentePrincipal.trim() || null,
+            efectos_secundarios: formData.efectosSecundarios.trim() || null,
+            lista_negra: formData.listaNegra,
+            categoria: formData.categoria || null,
+            contraindicaciones: formData.contraindicaciones.trim() || null,
+            prescripcion_requerida: formData.prescripcion,
+            stock: formData.stock === '' ? 0 : Number(formData.stock),
+          }
+        }
+      });
       onSuccess();
     } catch (err: any) {
-      setSnackbarMessage(err.message || 'Error al crear el medicamento.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
       onError(err.message);
+      setSnackbar({ open: true, message: err.message, severity: 'error' });
     }
   };
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        backgroundColor: '#fff',
-        borderRadius: 2,
-        boxShadow: 3,
-        maxWidth: 700,
-        margin: 'auto',
-        mt: 4,
-        transition: 'all 0.3s ease',
-        '&:hover': { boxShadow: 6 },
-      }}
-    >
-      <Typography variant="h5" textAlign="center" fontWeight="bold" color="primary" mb={3}>
-        Registro de Medicamento
+    <Box sx={{ p: 4, bgcolor: 'background.paper' }}>
+      <Typography variant="h5" fontWeight="bold" color="primary.main" gutterBottom>
+        Nuevo Registro Médicamento
+      </Typography>
+      <Typography variant="body2" color="text.secondary" mb={3}>
+        Complete la información técnica y existencias del producto.
       </Typography>
 
-      <Box component="form" onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit}>
         <Grid container spacing={2}>
+          {/* SECCIÓN 1: Identificación */}
+          <Grid item xs={12}><Divider textAlign="left"><Typography variant="caption" color="text.secondary">IDENTIFICACIÓN</Typography></Divider></Grid>
+          
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Nombre Medicamento *"
-              value={nombreMed}
-              onChange={(e) => setNombreMed(e.target.value)}
-              fullWidth
-              size="small"
-              required
+              label="Nombre del Medicamento"
+              fullWidth required size="small"
+              value={formData.nombreMed}
+              onChange={(e) => handleInputChange('nombreMed', e.target.value)}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              label="Laboratorio / Marca"
+              fullWidth required size="small"
+              value={formData.marca}
+              onChange={(e) => handleInputChange('marca', e.target.value)}
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Marca *"
-              value={marca}
-              onChange={(e) => setMarca(e.target.value)}
-              fullWidth
-              size="small"
-              required
-            />
-          </Grid>
+          {/* SECCIÓN 2: Detalles Médicos */}
+          <Grid item xs={12}><Divider textAlign="left"><Typography variant="caption" color="text.secondary">DETALLES TÉCNICOS</Typography></Divider></Grid>
 
           <Grid item xs={12} sm={6}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="Fecha de Vencimiento *"
                 value={fechaVencimiento}
-                onChange={(newValue) => setFechaVencimiento(newValue)}
-                slotProps={{
-                  textField: { fullWidth: true, size: 'small', required: true },
-                }}
+                onChange={setFechaVencimiento}
+                slotProps={{ textField: { fullWidth: true, size: 'small', required: true } }}
               />
             </LocalizationProvider>
           </Grid>
-
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small" required>
-              <InputLabel id="dosis-label">Dosis *</InputLabel>
+              <InputLabel>Dosis Sugerida</InputLabel>
               <Select
-                labelId="dosis-label"
-                value={dosisHs}
-                label="Dosis *"
-                onChange={(e) => setDosisHs(e.target.value)}
+                value={formData.dosisHs}
+                label="Dosis Sugerida"
+                onChange={(e) => handleInputChange('dosisHs', e.target.value)}
               >
-                {dosisOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {DOSIS_OPTIONS.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
-
           <Grid item xs={12} sm={6}>
             <TextField
-              label="Agente Principal"
-              value={agentePrincipal}
-              onChange={(e) => setAgentePrincipal(e.target.value)}
-              fullWidth
-              size="small"
+              label="Componente Activo"
+              fullWidth size="small"
+              value={formData.agentePrincipal}
+              onChange={(e) => handleInputChange('agentePrincipal', e.target.value)}
             />
           </Grid>
-
           <Grid item xs={12} sm={6}>
             <FormControl fullWidth size="small">
-              <InputLabel id="categoria-label">Categoría</InputLabel>
+              <InputLabel>Categoría</InputLabel>
               <Select
-                labelId="categoria-label"
-                value={categoria}
+                value={formData.categoria}
                 label="Categoría"
-                onChange={(e) => setCategoria(e.target.value)}
+                onChange={(e) => handleInputChange('categoria', e.target.value)}
               >
-                <MenuItem value="">
-                  <em>Ninguna</em>
-                </MenuItem>
-                {categoriaOptions.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {CATEGORIA_OPTIONS.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          {/* SECCIÓN 3: Seguridad y Stock */}
+          <Grid item xs={12}><Divider textAlign="left"><Typography variant="caption" color="text.secondary">SEGURIDAD Y EXISTENCIAS</Typography></Divider></Grid>
+
+          <Grid item xs={12} sm={4}>
             <TextField
-              label="Efectos Secundarios"
-              value={efectosSecundarios}
-              onChange={(e) => setEfectosSecundarios(e.target.value)}
-              multiline
-              rows={2}
-              fullWidth
-              size="small"
+              label="Stock Inicial"
+              type="number" fullWidth size="small"
+              value={formData.stock}
+              onChange={(e) => handleInputChange('stock', e.target.value)}
             />
           </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Stock"
-              type="number"
-              value={stock}
-              onChange={(e) => setStock(e.target.value === '' ? '' : Number(e.target.value))}
-              fullWidth
-              size="small"
-              inputProps={{ min: 0 }}
+          <Grid item xs={12} sm={4}>
+            <FormControlLabel
+              control={<Checkbox size="small" checked={formData.listaNegra} onChange={(e) => handleInputChange('listaNegra', e.target.checked)} />}
+              label={<Typography variant="body2">Lista Negra</Typography>}
+            />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControlLabel
+              control={<Checkbox size="small" checked={formData.prescripcion} onChange={(e) => handleInputChange('prescripcion', e.target.checked)} />}
+              label={<Typography variant="body2">Receta Médica</Typography>}
             />
           </Grid>
 
           <Grid item xs={12}>
             <TextField
               label="Contraindicaciones"
-              value={contraindicaciones}
-              onChange={(e) => setContraindicaciones(e.target.value)}
-              multiline
-              rows={3}
-              fullWidth
-              size="small"
+              multiline rows={2} fullWidth size="small"
+              value={formData.contraindicaciones}
+              onChange={(e) => handleInputChange('contraindicaciones', e.target.value)}
             />
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={listaNegra}
-                  onChange={(e) => setListaNegra(e.target.checked)}
-                  size="small"
-                />
-              }
-              label="Lista Negra"
-            />
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={prescripcionRequerida}
-                  onChange={(e) => setPrescripcionRequerida(e.target.checked)}
-                  size="small"
-                />
-              }
-              label="Prescripción Requerida"
-            />
-          </Grid>
-
-          <Grid item xs={12}>
-            <Stack direction="row" spacing={2} justifyContent="flex-end" mt={1}>
-              <Button variant="outlined" onClick={handleCancel} disabled={loading} size="small">
-                Cancelar
+          {/* ACCIONES */}
+          <Grid item xs={12} sx={{ mt: 2 }}>
+            <Stack direction="row" spacing={2} justifyContent="flex-end">
+              <Button 
+                variant="text" 
+                color="inherit" 
+                onClick={onClose} 
+                startIcon={<CloseIcon />}
+              >
+                Cerrar
               </Button>
               <Button
                 type="submit"
                 variant="contained"
                 disabled={loading}
-                size="small"
-                sx={{
-                  backgroundColor: '#4caf50',
-                  '&:hover': { backgroundColor: '#388e3c' },
-                }}
-                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+                startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+                sx={{ px: 4 }}
               >
-                {loading ? 'Guardando...' : 'Guardar'}
+                {loading ? 'Guardando...' : 'Registrar'}
               </Button>
             </Stack>
           </Grid>
         </Grid>
-      </Box>
+      </form>
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <SnackbarAlert onClose={handleSnackbarClose} severity={snackbarSeverity}>
-          {snackbarMessage}
-        </SnackbarAlert>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </Box>
   );

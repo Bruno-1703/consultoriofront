@@ -5,10 +5,15 @@ import {
   IconButton, 
   Card, 
   CardContent, 
-  Modal 
+  Modal,
+  Grid, // ✅ Importamos Grid para layout de dos columnas
+  Divider, // ✅ Importamos Divider para separar secciones
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
+import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety'; // Icono para datos médicos
+import PersonIcon from '@mui/icons-material/Person'; // Icono para datos personales
+import ContactMailIcon from '@mui/icons-material/ContactMail'; // Icono para contacto
 
 // Definimos un tipo para selectedPaciente para mayor claridad
 interface PacienteDetails {
@@ -23,10 +28,10 @@ interface PacienteDetails {
   sexo?: string;
   grupo_sanguineo?: string;
   alergias?: string;
-  obra_social?: string; // Nuevo campo
-  email?: string;       // Nuevo campo
-  direccion?: string;   // Nuevo campo
-  nacionalidad?: string; // Nuevo campo
+  obra_social?: string;
+  email?: string;
+  direccion?: string;
+  nacionalidad?: string;
 }
 
 interface PacientesModalProps {
@@ -36,6 +41,47 @@ interface PacientesModalProps {
 }
 
 const PacientesModal: React.FC<PacientesModalProps> = ({ modalOpen, handleCloseModal, selectedPaciente }) => {
+  
+  // Componente para mostrar un campo de detalle
+  const DetailItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+    <Box sx={{ mb: 1.5 }}>
+      <Typography component="strong" variant="subtitle2" sx={{ fontWeight: 'bold', color: '#1976d2', display: 'block' }}> 
+        {label}:
+      </Typography>
+      <Typography variant="body1" sx={{ color: '#444444' }}>
+        {value || 'N/A'}
+      </Typography>
+    </Box>
+  );
+
+  // Agrupación de datos para la presentación
+  const personalData = selectedPaciente ? [
+    { label: 'DNI', value: selectedPaciente.dni },
+    { label: 'Nombre Completo', value: `${selectedPaciente.nombre_paciente || ''} ${selectedPaciente.apellido_paciente || ''}`.trim() },
+    { label: 'Sexo', value: selectedPaciente.sexo },
+    { label: 'Nacionalidad', value: selectedPaciente.nacionalidad },
+    { label: 'Fecha de Nacimiento', 
+      value: selectedPaciente.fecha_nacimiento 
+        ? dayjs(selectedPaciente.fecha_nacimiento).format('DD/MM/YYYY')
+        : 'N/A' 
+    },
+  ] : [];
+
+  const medicalData = selectedPaciente ? [
+    { label: 'Edad', value: selectedPaciente.edad },
+    { label: 'Altura', value: selectedPaciente.altura ? `${selectedPaciente.altura} cm` : 'N/A' },
+    { label: 'Grupo Sanguíneo', value: selectedPaciente.grupo_sanguineo },
+    { label: 'Alergias', value: selectedPaciente.alergias || 'Ninguna conocida' },
+    { label: 'Obra Social', value: selectedPaciente.obra_social || 'N/A' },
+  ] : [];
+  
+  const contactData = selectedPaciente ? [
+    { label: 'Teléfono', value: selectedPaciente.telefono },
+    { label: 'Email', value: selectedPaciente.email || 'N/A' },
+    { label: 'Dirección', value: selectedPaciente.direccion || 'N/A' },
+  ] : [];
+
+
   return (
     <Modal
       open={modalOpen}
@@ -49,47 +95,48 @@ const PacientesModal: React.FC<PacientesModalProps> = ({ modalOpen, handleCloseM
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 725,
-          backgroundColor: '#f5f5f5', // Fondo claro, similar al DialogContent del otro componente
-          color: '#333333', // Texto oscuro para contraste
+          width: 800, // ✅ Aumentamos el ancho para las columnas
+          maxWidth: '90%', // Máximo 90% del viewport
+          maxHeight: '90vh', // Para que sea scrollable
+          backgroundColor: '#f5f5f5',
+          color: '#333333',
           padding: 4,
-          borderRadius: '8px', // Bordes redondeados
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)', // Sombra más prominente
-          outline: 'none', // Quita el contorno al enfocar
+          borderRadius: '8px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.3)', // Sombra más prominente
+          outline: 'none',
+          overflowY: 'auto', // Permite desplazamiento si el contenido es largo
         }}
       >
-        {/* Título de la Modal similar al DialogTitle */}
+        {/* Título de la Modal */}
         <Box 
           sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            backgroundColor: '#1976d2', // Fondo azul del título
-            color: '#fff', // Texto blanco
-            py: 2, // Padding vertical
-            px: 3, // Padding horizontal
-            borderRadius: '8px 8px 0 0', // Bordes superiores redondeados
-            mt: -4, // Ajuste para que el título se solape ligeramente con el borde del Box
-            mx: -4, // Ajuste para que el título ocupe todo el ancho de la modal
-            mb: 2 // Margen inferior para separar del contenido
+            backgroundColor: '#1976d2',
+            color: '#fff',
+            py: 2,
+            px: 3,
+            borderRadius: '8px 8px 0 0',
+            mt: -4, 
+            mx: -4, 
+            mb: 2,
+            position: 'sticky', // Fija el título al hacer scroll
+            top: 0,
+            zIndex: 10,
           }}
         >
           <Typography 
             id="modal-title" 
-            variant="h6" // Hacemos el título h6 para que coincida con el tamaño del DialogTitle
-            component="h2" // Semánticamente correcto para título de modal
-            sx={{ 
-              fontWeight: 'bold', 
-            }}
+            variant="h6"
+            component="h2"
+            sx={{ fontWeight: 'bold' }}
           >
-            Detalles del Paciente
+            📋 Detalles Completos del Paciente
           </Typography>
           <IconButton 
             onClick={handleCloseModal} 
-            sx={{ 
-              color: '#fff', // Icono blanco
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' } // Ligero hover blanco
-            }}
+            sx={{ color: '#fff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' } }}
           >
             <CloseIcon />
           </IconButton>
@@ -98,50 +145,61 @@ const PacientesModal: React.FC<PacientesModalProps> = ({ modalOpen, handleCloseM
         {selectedPaciente && (
           <Card
             sx={{
-              backgroundColor: '#ffffff', // Fondo blanco para la tarjeta de detalles
-              color: '#333333', // Texto oscuro
-              borderRadius: '8px', // Bordes consistentes
-              padding: 2, // Reducimos un poco el padding interno de la Card
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)', // Sombra más suave para la Card
-              marginTop: 2,
+              backgroundColor: '#ffffff',
+              borderRadius: '8px',
+              padding: 2,
+              boxShadow: 'none', // Quitamos la sombra de la tarjeta interna
+              
             }}
           >
-            <CardContent sx={{ '&:last-child': { pb: 2 } }}> {/* Ajusta padding inferior */}
-              {[
-                { label: 'DNI', value: selectedPaciente.dni },
-                { label: 'Nombre', value: selectedPaciente.nombre_paciente },
-                { label: 'Apellido', value: selectedPaciente.apellido_paciente },
-                { label: 'Edad', value: selectedPaciente.edad },
-                { label: 'Altura', value: selectedPaciente.altura ? `${selectedPaciente.altura} cm` : 'N/A' },
-                { label: 'Teléfono', value: selectedPaciente.telefono },
-                { label: 'Fecha de Nacimiento', 
-                  value: selectedPaciente.fecha_nacimiento 
-                    ? dayjs(selectedPaciente.fecha_nacimiento).format('DD/MM/YYYY') // Formato de fecha consistente
-                    : 'N/A' 
-                },
-                { label: 'Sexo', value: selectedPaciente.sexo },
-                { label: 'Grupo Sanguíneo', value: selectedPaciente.grupo_sanguineo },
-                { label: 'Alergias', value: selectedPaciente.alergias },
-                { label: 'Obra Social', value: selectedPaciente.obra_social }, // Nuevo
-                { label: 'Email', value: selectedPaciente.email },             // Nuevo
-                { label: 'Dirección', value: selectedPaciente.direccion },     // Nuevo
-                { label: 'Nacionalidad', value: selectedPaciente.nacionalidad }, // Nuevo
-              ].map((field, index) => (
-                <Typography
-                  key={index}
-                  variant="body2" // Usamos body2 para un texto ligeramente más pequeño y consistente
-                  sx={{
-                    color: '#444444', // Color de texto ligeramente más oscuro para los valores
-                    mt: index > 0 ? 1 : 0, // Espaciado entre líneas
-                  }}
-                >
-                  <Typography component="strong" sx={{ fontWeight: 'bold', color: '#1976d2' }}> {/* Label en azul */}
-                    {field.label}:
-                  </Typography>
-                  {" "} {/* Espacio */}
-                  {field.value || 'N/A'}
+            <CardContent sx={{ '&:last-child': { pb: 2 } }}> 
+              
+              {/* SECCIÓN 1: DATOS PERSONALES */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" color="primary" sx={{ display: 'flex', alignItems: 'center', mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
+                  <PersonIcon sx={{ mr: 1 }} /> Datos Personales
                 </Typography>
-              ))}
+                <Grid container spacing={3}>
+                  {personalData.map((field, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <DetailItem label={field.label} value={field.value} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+
+              <Divider sx={{ my: 3 }} />
+
+              {/* SECCIÓN 2: DATOS MÉDICOS */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" color="primary" sx={{ display: 'flex', alignItems: 'center', mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
+                  <HealthAndSafetyIcon sx={{ mr: 1 }} /> Información Médica y Administrativa
+                </Typography>
+                <Grid container spacing={3}>
+                  {medicalData.map((field, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <DetailItem label={field.label} value={field.value} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+              
+              <Divider sx={{ my: 3 }} />
+
+              {/* SECCIÓN 3: CONTACTO Y UBICACIÓN */}
+              <Box>
+                <Typography variant="h6" color="primary" sx={{ display: 'flex', alignItems: 'center', mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
+                  <ContactMailIcon sx={{ mr: 1 }} /> Contacto y Ubicación
+                </Typography>
+                <Grid container spacing={3}>
+                  {contactData.map((field, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <DetailItem label={field.label} value={field.value} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+
             </CardContent>
           </Card>
         )}
