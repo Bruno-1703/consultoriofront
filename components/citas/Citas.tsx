@@ -424,7 +424,6 @@ const CitaRow = ({ row }: { row: Cita }) => {
 
 interface CollapsibleTableProps {
   fecha: string;
-    centroSaludId: string; // Recibimos el ID del centro activo desde el padre
 
 }
 
