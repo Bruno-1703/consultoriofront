@@ -1,161 +1,151 @@
 import * as React from "react";
 import {
-  Container,
-  Paper,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Box, // ✅ Solo Box es necesario para el layout
+  Box, Typography, Button, Dialog, DialogTitle, DialogContent,
+  CircularProgress, Avatar, Stack, MenuItem, Select, FormControl, 
+  Divider, GlobalStyles
 } from "@mui/material";
-
+import { LocationOn, LocalHospital, AddCircleOutline, CalendarMonth } from "@mui/icons-material";
 
 import dayjs, { Dayjs } from "dayjs";
-import weekOfYear from "dayjs/plugin/weekOfYear.js";
-import localeData from "dayjs/plugin/localeData.js";
 import "dayjs/locale/es";
-
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import { LocalizationProvider, DateCalendar } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
-// Suponiendo que estas son las rutas correctas a tus componentes locales
 import Citas from "../components/citas/Citas";
-import { FormularioCita } from "../components/citas/FormularioCita";
+import { FormularioCitaV2 } from "../components/citas/FormularioCita";
+import { useGetCentrosQuery } from "../graphql/types";
 
-// Configurar Dayjs
-dayjs.extend(weekOfYear);
-dayjs.extend(localeData);
 dayjs.locale("es");
 
 const IndexPage: React.FC = () => {
-  const [value, setValue] = React.useState<Dayjs>(dayjs());
+  const [selectedDate, setSelectedDate] = React.useState<Dayjs>(dayjs());
+  const [selectedCentroId, setSelectedCentroId] = React.useState<string>("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const handleDateChange = (newValue: Dayjs | null) => {
-    if (newValue) setValue(newValue);
-  };
+  const { data, loading, error } = useGetCentrosQuery({
+    variables: { skip: 0, limit: 10, where: {} },
+  });
 
-  const toggleDialog = (open: boolean) => () => setDialogOpen(open);
+  const centros = data?.getCentros?.edges || [];
+
+  React.useEffect(() => {
+    if (centros.length > 0 && !selectedCentroId) {
+      setSelectedCentroId(centros[0].node.id);
+    }
+  }, [centros]);
+
+  const centroActivo = centros.find(c => c.node.id === selectedCentroId)?.node;
+
+  if (loading && !data) return (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress thickness={2} />
+    </Box>
+  );
 
   return (
-    <Box sx={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Container maxWidth={false} sx={{ flex: 1, display: "flex", flexDirection: "column", py: 4, px: 2 }}>
-        
-        {/* Título y Banner */}
-        <Box
-          sx={{
-            textAlign: "center",
-            background: "linear-gradient(to right,rgb(67, 152, 236),rgb(76, 106, 175))",
-            borderRadius: 4,
-            p: 3,
-            color: "white",
-            mb: 4,
-            boxShadow: 3,
-          }}
-        >
-          <Typography variant="h3" sx={{ fontWeight: "bold", mb: 1 }}>
-            ¡BIENVENIDO AL CONSULTORIO MÉDICO!
-          </Typography>
-          <Typography variant="subtitle1" sx={{ fontStyle: "italic", opacity: 0.9 }}>
-            Cuidamos tu salud con dedicación y compromiso 👩‍⚕️👨‍⚕️
-          </Typography>
-        </Box>
-
-        {/* Layout principal (Anteriormente Grid) */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap', // Permite que los elementos se envuelvan en pantallas pequeñas
-            gap: 2, // Espacio entre elementos (similar a spacing={2})
-            // En pantallas medianas (md), ocupa el 50% cada uno
-            // En pantallas pequeñas (xs), ocupa el 100% cada uno
-          }}
-        >
-          
-          {/* Columna de Información del Consultorio (Anteriormente Grid item xs={12} md={6}) */}
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', md: 'calc(50% - 8px)' }, // Calcula el 50% menos el gap (2*4px)
-              flexGrow: 1,
-            }}
-          >
-            <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
-              <Typography variant="h6">Hora actual</Typography>
-              <Typography variant="body1" sx={{ mb: 2 }}>
-                {new Date().toLocaleString()}
-              </Typography>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6">Información del consultorio</Typography>
-              <List>
-                <ListItem>
-                  <ListItemText primary="Dirección" secondary="Calle AV Pancho Ramirez S/N, Ciudad Sauce De Luna" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Teléfono" secondary="+123 456 7890" />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Horario" secondary="Lunes a Sábado, 8:00 a 12:00 AM - 16:00 a 21:00 PM" />
-                </ListItem>
-              </List>
-            </Paper>
-          </Box>
-
-          {/* Columna de Calendario y Botón de Cita (Anteriormente Grid item xs={12} md={6}) */}
-          <Box
-            sx={{
-              flexBasis: { xs: '100%', md: 'calc(50% - 8px)' }, // Calcula el 50% menos el gap
-              flexGrow: 1,
-            }}
-          >
-            <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
-              <Typography variant="h6">Calendario de citas</Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 2 }}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DateCalendar value={value} onChange={handleDateChange} />
-                </LocalizationProvider>
-
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={toggleDialog(true)}
-                  sx={{ mt: 2, width: "100%", maxWidth: 300 }}
-                >
-                  Agregar Cita
-                </Button>
-                <Typography variant="body1" sx={{ mt: 2 }}>
-                  Citas para el día: **{value.format("DD/MM/YYYY")}**
-                </Typography>
-              </Box>
-            </Paper>
-          </Box>
-        </Box>
-
-        {/* Lista de Citas para el día seleccionado */}
-        <Paper sx={{ p: 3, mt: 2 }}>
-          <Typography variant="h6">Lista de Citas</Typography>
-          <Citas fecha={value.format("YYYY-MM-DD")} />
-        </Paper>
-
-      </Container>
+    <Box sx={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", bgcolor: "#fff" }}>
+      {/* Reset de márgenes globales para ocupar toda la pantalla */}
+      <GlobalStyles styles={{ body: { margin: 0, padding: 0, overflow: 'hidden' } }} />
       
-      {/* Dialogo para agregar cita */}
-      <Dialog open={dialogOpen} onClose={toggleDialog(false)}>
-        <DialogTitle>Agregar Cita</DialogTitle>
-        <DialogContent>
-          <FormularioCita onClose={toggleDialog(false)} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={toggleDialog(false)} color="primary">
-            Cancelar
+      {/* PANEL IZQUIERDO: CONFIGURACIÓN (ANCHO FIJO) */}
+      <Box sx={{ 
+        width: 380, 
+        borderRight: "1px solid #E5E7EB", 
+        display: "flex", 
+        flexDirection: "column",
+        bgcolor: "#F9FAFB" 
+      }}>
+        <Box sx={{ p: 3, bgcolor: "#fff", borderBottom: "1px solid #E5E7EB" }}>
+          <Typography variant="h6" fontWeight={900} sx={{ color: "#111827", mb: 2 }}>
+            Gestión de Turnos
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={selectedCentroId}
+              onChange={(e) => setSelectedCentroId(e.target.value)}
+              sx={{ borderRadius: "8px", bgcolor: "#fff", fontWeight: 600 }}
+            >
+              {centros.map((c) => (
+                <MenuItem key={c.node.id} value={c.node.id}>{c.node.nombre}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ p: 2, flex: 1, overflowY: "auto" }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, px: 1 }}>
+            <CalendarMonth fontSize="small" color="primary" />
+            <Typography variant="overline" fontWeight={700} color="text.secondary">Calendario</Typography>
+          </Stack>
+          
+          <Box sx={{ bgcolor: "#fff", borderRadius: "12px", border: "1px solid #E5E7EB", p: 1 }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateCalendar 
+                value={selectedDate} 
+                onChange={(v) => v && setSelectedDate(v)} 
+                sx={{ width: '100%' }}
+              />
+            </LocalizationProvider>
+          </Box>
+
+          <Box sx={{ mt: 3, p: 2, bgcolor: "#EEF2FF", borderRadius: "12px", border: "1px solid #E0E7FF" }}>
+            <Typography variant="subtitle2" fontWeight={800} color="#3730A3" gutterBottom>Información de Sede</Typography>
+            <Stack spacing={1.5}>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <LocationOn sx={{ color: '#4338CA', fontSize: 20 }} />
+                <Typography variant="body2" color="#4338CA">{centroActivo?.direccion}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1.5 }}>
+                <LocalHospital sx={{ color: '#4338CA', fontSize: 20 }} />
+                <Typography variant="body2" color="#4338CA">{centroActivo?.tipo}</Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* PANEL DERECHO: AGENDA (ANCHO FLUIDO) */}
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", bgcolor: "#fff" }}>
+        
+        {/* Header Superior Superior */}
+        <Box sx={{ 
+          px: 4, py: 3, 
+          borderBottom: "1px solid #E5E7EB",
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center" 
+        }}>
+          <Box>
+            <Typography variant="h4" fontWeight={900} letterSpacing="-1.5px">
+              {centroActivo?.nombre}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Turnos para el <span style={{ fontWeight: 800, color: '#000' }}>{selectedDate.format("dddd, D [de] MMMM")}</span>
+            </Typography>
+          </Box>
+          <Button
+            variant="contained"
+            disableElevation
+            startIcon={<AddCircleOutline />}
+            onClick={() => setDialogOpen(true)}
+            sx={{ borderRadius: "10px", px: 4, py: 1.5, fontWeight: 700, textTransform: 'none' }}
+          >
+            Nueva Cita
           </Button>
-        </DialogActions>
+        </Box>
+
+        {/* AREA DE CITAS (FULL WIDTH) */}
+        <Box sx={{ flex: 1, overflowY: "auto", p: 0 }}>
+          {/* Se pasa el ID del centro para que el componente Citas filtre */}
+          <Citas fecha={selectedDate.format("YYYY-MM-DD")} /* AcentroId={selectedCentroId}*/ />
+        </Box>
+      </Box>
+
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 800 }}>Registrar Turno</DialogTitle>
+        <DialogContent dividers>
+          <FormularioCitaV2 onClose={() => setDialogOpen(false)} />
+        </DialogContent>
       </Dialog>
     </Box>
   );

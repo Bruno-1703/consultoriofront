@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Button,
-  Collapse,
   TextField,
   Typography,
   Snackbar,
@@ -17,106 +16,93 @@ import {
   useGetPacientesQuery,
   useGetUsuariosQuery,
 } from "../../graphql/types";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { useSession } from "next-auth/react";
 
-interface FormularioCitaProps {
+interface Props {
   onClose: () => void;
 }
 
-export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
+export const FormularioCitaV2 = ({ onClose }: Props) => {
+  const { data: session } = useSession();
+
   const [motivoConsulta, setMotivoConsulta] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [fechaSolicitud, setFechaSolicitud] = useState<string | null>(null);
-  const [selectedPaciente, setSelectedPaciente] =
-    useState<PacienteCitaInput | null>(null);
-  const [selectedProfesional, setSelectedProfesional] = useState<any | null>(
-    null
-  );
+  const [fecha, setFecha] = useState<Dayjs | null>(null);
 
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [paciente, setPaciente] = useState<any | null>(null);
+  const [profesional, setProfesional] = useState<any | null>(null);
+
   const [loading, setLoading] = useState(false);
-
-  const { data: session } = useSession();
+  const [error, setError] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   /* ===================== QUERIES ===================== */
 
-  const { data: pacientesData, loading: pacientesLoading } =
-    useGetPacientesQuery({
-      variables: { limit: 50, skip: 0, where: {} },
-    });
+  const { data: pacientesData } = useGetPacientesQuery({
+    variables: { limit: 50, skip: 0, where: {} },
+  });
 
-  const { data: profesionalesData, loading: profesionalesLoading } =
-    useGetUsuariosQuery({
-      variables: {
-        limit: 50,
-        skip: 0,
-        where: { rol_usuario: "doctor" },
-      },
-    });
+  const { data: profesionalesData } = useGetUsuariosQuery({
+    variables: {
+      limit: 50,
+      skip: 0,
+      where: { rol_usuario: "doctor" },
+    },
+  });
 
-  const [createCitaMutation] = useCreateCitaMutation();
+  const [createCita] = useCreateCitaMutation();
 
   /* ===================== SUBMIT ===================== */
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (
-      !motivoConsulta.trim() ||
-      !fechaSolicitud ||
-      !selectedPaciente ||
-      !selectedProfesional
-    ) {
-      setShowErrorAlert(true);
+  const handleSubmit = async () => {
+    if (!motivoConsulta || !fecha || !paciente || !profesional) {
+      setError(true);
       return;
     }
 
     setLoading(true);
 
+    const citaInput: CitaInput = {
+      motivoConsulta,
+      observaciones,
+      fechaProgramada: fecha.toDate().toISOString(),
+      registradoPorId: session?.user?.id ?? "",
+      doctor: {
+        id_Usuario: profesional.id,
+        nombre_completo: profesional.nombre_completo,
+        email: profesional.email,
+        especialidad: profesional.especialidad,
+        matricula: profesional.matricula,
+        nombre_usuario: profesional.nombre_usuario,
+        dni: profesional.dni,
+        telefono: profesional.telefono,
+      },
+    };
+
+    const pacienteInput: PacienteCitaInput = {
+      id_paciente: paciente.id_paciente,
+      dni: paciente.dni,
+      nombre_paciente: paciente.nombre_paciente,
+      apellido_paciente: paciente.apellido_paciente,
+    };
+
     try {
-      const citaForm: CitaInput = {
-        motivoConsulta,
-        observaciones,
-        fechaProgramada: fechaSolicitud,
-        registradoPorId: session?.user?.id ?? "",
-        doctor: {
-          id: selectedProfesional.id_Usuario,
-          nombre_completo: selectedProfesional.nombre_completo,
-          email: selectedProfesional.email,
-          especialidad: selectedProfesional.especialidad,
-          matricula: selectedProfesional.matricula,
-          nombre_usuario: selectedProfesional.nombre_usuario,
-          dni: selectedProfesional.dni,
-          telefono: selectedProfesional.telefono,
-          rol_usuario: selectedProfesional.rol_usuario,
-        },
-      };
-
-
-      const pacienteForm: PacienteCitaInput = {
-        id_paciente: selectedPaciente.id_paciente,
-        dni: selectedPaciente.dni,
-        nombre_paciente: selectedPaciente.nombre_paciente,
-        apellido_paciente: selectedPaciente.apellido_paciente,
-      };
-
-      await createCitaMutation({
+      await createCita({
         variables: {
-          data: citaForm,
-          paciente: pacienteForm,
+          data: citaInput,
+          paciente: pacienteInput,
         },
       });
 
-      setShowSuccessAlert(true);
+      setSuccess(true);
       onClose();
-    } catch (error) {
-      console.error(error);
-      setShowErrorAlert(true);
+    } catch (e) {
+      console.error(e);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -125,108 +111,86 @@ export const FormularioCita = ({ onClose }: FormularioCitaProps) => {
   /* ===================== RENDER ===================== */
 
   return (
-    <Collapse in>
-      <form onSubmit={handleSubmit}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Registrar nueva cita
-        </Typography>
+    <>
+      <Typography variant="h6" mb={2}>
+        Nueva cita médica
+      </Typography>
 
-        <TextField
-          label="Motivo de Consulta"
-          fullWidth
-          required
-          value={motivoConsulta}
-          onChange={(e) => setMotivoConsulta(e.target.value)}
-          sx={{ mb: 2 }}
+      <TextField
+        label="Motivo de consulta"
+        fullWidth
+        required
+        value={motivoConsulta}
+        onChange={(e) => setMotivoConsulta(e.target.value)}
+        sx={{ mb: 2 }}
+      />
+
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DateTimePicker
+          label="Fecha y hora"
+          value={fecha}
+          onChange={setFecha}
+          slotProps={{
+            textField: { fullWidth: true, required: true, sx: { mb: 2 } },
+          }}
         />
+      </LocalizationProvider>
 
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
-            label="Fecha y Hora"
-            value={fechaSolicitud ? dayjs(fechaSolicitud) : null}
-            onChange={(value) =>
-              setFechaSolicitud(value ? value.toISOString() : null)
-            }
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                required: true,
-                sx: { mb: 2 },
-              },
-            }}
-          />
-        </LocalizationProvider>
+      <TextField
+        label="Observaciones"
+        multiline
+        rows={3}
+        fullWidth
+        value={observaciones}
+        onChange={(e) => setObservaciones(e.target.value)}
+        sx={{ mb: 2 }}
+      />
 
-        <TextField
-          label="Observaciones"
-          multiline
-          rows={3}
-          fullWidth
-          value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
-          sx={{ mb: 2 }}
-        />
+      {/* PACIENTE */}
+      <Autocomplete
+        options={pacientesData?.getPacientes.edges.map(e => e.node) ?? []}
+        value={paciente}
+        onChange={(_, v) => setPaciente(v)}
+        getOptionLabel={(o) =>
+          `${o.nombre_paciente} ${o.apellido_paciente}`
+        }
+        isOptionEqualToValue={(o, v) => o.id_paciente === v.id_paciente}
+        renderInput={(params) => (
+          <TextField {...params} label="Paciente" required sx={{ mb: 2 }} />
+        )}
+      />
 
-        {/* PACIENTE */}
-        <Autocomplete
-          options={pacientesData?.getPacientes.edges.map(e => e.node) ?? []}
-          getOptionLabel={(o) =>
-            `${o.nombre_paciente} ${o.apellido_paciente}`
-          }
-          isOptionEqualToValue={(option, value) =>
-            option.id_paciente === value.id_paciente
-          }
-          value={selectedPaciente}
-          onChange={(_, v) => setSelectedPaciente(v)}
-          loading={pacientesLoading}
-          renderInput={(params) => (
-            <TextField {...params} label="Paciente" required sx={{ mb: 2 }} />
-          )}
-        />
+      {/* PROFESIONAL */}
+      <Autocomplete
+        options={profesionalesData?.getUsuarios.edges.map(e => e.node) ?? []}
+        value={profesional}
+        onChange={(_, v) => setProfesional(v)}
+        getOptionLabel={(o) =>
+          `${o.nombre_completo} (${o.especialidad || "General"})`
+        }
+        isOptionEqualToValue={(o, v) => o.id === v.id}
+        renderInput={(params) => (
+          <TextField {...params} label="Profesional" required sx={{ mb: 2 }} />
+        )}
+      />
 
-        {/* PROFESIONAL */}
-        <Autocomplete
-          options={profesionalesData?.getUsuarios.edges.map(e => e.node) ?? []}
-          getOptionLabel={(o) =>
-            `${o.nombre_completo} (${o.especialidad || "General"})`
-          }
-          isOptionEqualToValue={(option, value) =>
-            option.id_Usuario === value.id_Usuario
-          }
-          value={selectedProfesional}
-          onChange={(_, v) => setSelectedProfesional(v)}
-          loading={profesionalesLoading}
-          renderInput={(params) => (
-            <TextField {...params} label="Profesional" required sx={{ mb: 2 }} />
-          )}
-        />
+      {loading && <CircularProgress size={22} sx={{ mb: 2 }} />}
 
-        {loading && <CircularProgress size={24} sx={{ mb: 2 }} />}
+      <Box display="flex" justifyContent="flex-end">
+        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+          Guardar cita
+        </Button>
+      </Box>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button type="submit" variant="contained" disabled={loading}>
-            {loading ? "Guardando..." : "Guardar Cita"}
-          </Button>
-        </Box>
-      </form>
-
-      <Snackbar
-        open={showSuccessAlert}
-        autoHideDuration={4000}
-        onClose={() => setShowSuccessAlert(false)}
-      >
-        <Alert severity="success">¡Cita creada con éxito!</Alert>
+      <Snackbar open={success} autoHideDuration={3000}>
+        <Alert severity="success">Cita creada correctamente</Alert>
       </Snackbar>
 
-      <Snackbar
-        open={showErrorAlert}
-        autoHideDuration={4000}
-        onClose={() => setShowErrorAlert(false)}
-      >
+      <Snackbar open={error} autoHideDuration={3000}>
         <Alert severity="error">
           Completá todos los campos obligatorios
         </Alert>
       </Snackbar>
-    </Collapse>
+    </>
   );
 };

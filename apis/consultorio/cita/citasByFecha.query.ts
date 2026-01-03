@@ -18,7 +18,6 @@ query getCitasByFecha($limit: Int!, $skip: Int!, $where: CitaWhereInput) {
         }  
        doctor
         {
-        id_Usuario
         nombre_usuario
         email
         especialidad

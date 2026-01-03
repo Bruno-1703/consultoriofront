@@ -21,7 +21,6 @@ export default gql`
           dni          
         }
       doctor{
-        id_Usuario
         nombre_usuario
         nombre_completo
         email

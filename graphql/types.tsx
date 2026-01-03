@@ -55,6 +55,7 @@ export type CentroSaludResultadoBusqueda = {
 };
 
 export type CentroSaludWhereInput = {
+  direccion?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   nombre?: InputMaybe<Scalars['String']['input']>;
   tipo?: InputMaybe<Scalars['String']['input']>;
@@ -683,7 +684,7 @@ export type Usuario = {
   dni?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   especialidad?: Maybe<Scalars['String']['output']>;
-  id_Usuario: Scalars['String']['output'];
+  id_Usuario?: Maybe<Scalars['String']['output']>;
   matricula?: Maybe<Scalars['String']['output']>;
   nombre_completo?: Maybe<Scalars['String']['output']>;
   nombre_usuario?: Maybe<Scalars['String']['output']>;
@@ -697,7 +698,7 @@ export type UsuarioCitaInput = {
   dni?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   especialidad?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id_Usuario?: InputMaybe<Scalars['String']['input']>;
   matricula?: InputMaybe<Scalars['String']['input']>;
   nombre_completo?: InputMaybe<Scalars['String']['input']>;
   nombre_usuario?: InputMaybe<Scalars['String']['input']>;
@@ -717,7 +718,7 @@ export type UsuarioInput = {
   dni: Scalars['String']['input'];
   email?: InputMaybe<Scalars['String']['input']>;
   especialidad: Scalars['String']['input'];
-  id?: InputMaybe<Scalars['ID']['input']>;
+  id_Usuario?: InputMaybe<Scalars['String']['input']>;
   matricula: Scalars['String']['input'];
   nombre_completo: Scalars['String']['input'];
   nombre_usuario: Scalars['String']['input'];
@@ -738,7 +739,6 @@ export type UsuarioWhereInput = {
   dni?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   especialidad?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
   matricula?: InputMaybe<Scalars['String']['input']>;
   nombre_completo?: InputMaybe<Scalars['String']['input']>;
   nombre_usuario?: InputMaybe<Scalars['String']['input']>;
@@ -775,7 +775,6 @@ export const CitaFragmentDoc = gql`
     dni
   }
   doctor {
-    id_Usuario
     nombre_usuario
     nombre_completo
     email
@@ -845,6 +844,9 @@ export const PacienteFragmentDoc = gql`
 export const GetCentrosDocument = gql`
     query getCentros($skip: Int, $limit: Int, $where: CentroSaludWhereInput) {
   getCentros(skip: $skip, limit: $limit, where: $where) {
+    aggregate {
+      count
+    }
     edges {
       node {
         id
@@ -1168,7 +1170,6 @@ export const GetCitasByFechaDocument = gql`
           apellido_paciente
         }
         doctor {
-          id_Usuario
           nombre_usuario
           email
           especialidad
@@ -2376,7 +2377,7 @@ export type GetCentrosQueryVariables = Exact<{
 }>;
 
 
-export type GetCentrosQuery = { __typename?: 'Query', getCentros: { __typename?: 'CentroSaludResultadoBusqueda', edges: Array<{ __typename?: 'CentroSaludEdge', node: { __typename?: 'CentroSalud', id: string, nombre: string, tipo: string, direccion?: string | null } }> } };
+export type GetCentrosQuery = { __typename?: 'Query', getCentros: { __typename?: 'CentroSaludResultadoBusqueda', aggregate: { __typename?: 'AggregateCentroCount', count: number }, edges: Array<{ __typename?: 'CentroSaludEdge', node: { __typename?: 'CentroSalud', id: string, nombre: string, tipo: string, direccion?: string | null } }> } };
 
 export type CreateCentroMutationVariables = Exact<{
   data: CentroSaludInput;
@@ -2400,14 +2401,14 @@ export type CargarDiagnosticoCitaMutationVariables = Exact<{
 
 export type CargarDiagnosticoCitaMutation = { __typename?: 'Mutation', cargarDiagnosticoCita: string };
 
-export type CitaFragment = { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: any | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null };
+export type CitaFragment = { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: any | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null };
 
 export type GetCitaQueryVariables = Exact<{
   id: Scalars['String']['input'];
 }>;
 
 
-export type GetCitaQuery = { __typename?: 'Query', getCita?: { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: any | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null } | null };
+export type GetCitaQuery = { __typename?: 'Query', getCita?: { __typename?: 'Cita', id_cita?: string | null, motivoConsulta: string, fechaProgramada?: any | null, observaciones?: string | null, cancelada?: boolean | null, medicamentos?: Array<{ __typename?: 'Medicamento', id_medicamento?: string | null, nombre_med?: string | null }> | null, enfermedades?: Array<{ __typename?: 'Enfermedad', id_enfermedad?: string | null, nombre_enf: string }> | null, paciente?: { __typename?: 'Paciente', id_paciente?: string | null, nombre_paciente?: string | null, dni?: string | null } | null, doctor?: { __typename?: 'Usuario', nombre_usuario?: string | null, nombre_completo?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null } | null } | null };
 
 export type ReprogramarCitaMutationVariables = Exact<{
   citaId: Scalars['String']['input'];
@@ -2434,7 +2435,7 @@ export type GetCitasByFechaQueryVariables = Exact<{
 }>;
 
 
-export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: any | null, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null, nombre_completo?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetCitasByFechaQuery = { __typename?: 'Query', getCitasByFecha: { __typename?: 'CitaResultadoBusqueda', edges: Array<{ __typename?: 'CitaEdge', node: { __typename?: 'Cita', id_cita?: string | null, observaciones?: string | null, cancelada?: boolean | null, finalizada?: boolean | null, fechaProgramada?: any | null, motivoConsulta: string, paciente?: { __typename?: 'Paciente', dni?: string | null, id_paciente?: string | null, nombre_paciente?: string | null, apellido_paciente?: string | null } | null, doctor?: { __typename?: 'Usuario', nombre_usuario?: string | null, email?: string | null, especialidad?: string | null, matricula?: string | null, dni?: string | null, telefono?: string | null, nombre_completo?: string | null } | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
 
 export type CreateCitaMutationVariables = Exact<{
   data: CitaInput;
@@ -2655,7 +2656,7 @@ export type GetUsuarioByIdQueryVariables = Exact<{
 }>;
 
 
-export type GetUsuarioByIdQuery = { __typename?: 'Query', getUsuarioById?: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, nombre_completo?: string | null, especialidad?: string | null, matricula?: string | null, telefono?: string | null, dni?: string | null, rol_usuario?: string | null } | null };
+export type GetUsuarioByIdQuery = { __typename?: 'Query', getUsuarioById?: { __typename?: 'Usuario', id_Usuario?: string | null, nombre_usuario?: string | null, email?: string | null, nombre_completo?: string | null, especialidad?: string | null, matricula?: string | null, telefono?: string | null, dni?: string | null, rol_usuario?: string | null } | null };
 
 export type UpdateUsuarioMutationVariables = Exact<{
   usuarioId: Scalars['String']['input'];
@@ -2672,4 +2673,4 @@ export type GetUsuariosQueryVariables = Exact<{
 }>;
 
 
-export type GetUsuariosQuery = { __typename?: 'Query', getUsuarios: { __typename?: 'UsuarioResultadoBusqueda', edges: Array<{ __typename?: 'UsuarioEdge', node: { __typename?: 'Usuario', id_Usuario: string, nombre_usuario?: string | null, email?: string | null, rol_usuario?: string | null, nombre_completo?: string | null, dni?: string | null, telefono?: string | null, especialidad?: string | null, matricula?: string | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
+export type GetUsuariosQuery = { __typename?: 'Query', getUsuarios: { __typename?: 'UsuarioResultadoBusqueda', edges: Array<{ __typename?: 'UsuarioEdge', node: { __typename?: 'Usuario', id_Usuario?: string | null, nombre_usuario?: string | null, email?: string | null, rol_usuario?: string | null, nombre_completo?: string | null, dni?: string | null, telefono?: string | null, especialidad?: string | null, matricula?: string | null } }>, aggregate: { __typename?: 'AggregateCount', count: number } } };
