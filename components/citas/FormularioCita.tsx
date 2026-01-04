@@ -112,9 +112,6 @@ export const FormularioCitaV2 = ({ onClose }: Props) => {
 
   return (
     <>
-      <Typography variant="h6" mb={2}>
-        Nueva cita médica
-      </Typography>
 
       <TextField
         label="Motivo de consulta"

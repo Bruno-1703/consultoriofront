@@ -54,7 +54,7 @@ const CitaRow = ({ row }: { row: Cita }) => {
   const [open, setOpen] = React.useState(false);
   const [cancelarCita] = useCancelarCitaMutation();
 
-  
+
   const [snackbar, setSnackbar] = React.useState({
     open: false,
     message: "",
@@ -62,41 +62,43 @@ const CitaRow = ({ row }: { row: Cita }) => {
   });
   const [openDialog, setOpenDialog] = React.useState(false);
   const [openEditDate, setOpenEditDate] = React.useState(false);
-  
+
   const [newFecha, setNewFecha] = React.useState<dayjs.Dayjs | null>(
     dayjs(Number(row.fechaProgramada))
   );
-
-// Hook de Apollo
   const [
-    reprogramarCitaMutation, // Usaremos este nombre exacto
+    reprogramarCita,
     { loading: reprogramming }
-  ] = useReprogramarCitaMutation({
-    refetchQueries: ['GetCitasByFecha'],
-  });
-  
+  ] = useReprogramarCitaMutation();
 
 const handleReprogramar = async () => {
-    if (!row.id_cita || !newFecha) return;
+  if (!row.id_cita || !newFecha) return;
 
-    try {
-      // 💡 CORRECCIÓN: Usar el nombre del hook y la estructura 'data'
-      await reprogramarCitaMutation({
-        variables: {
-          citaId: row.id_cita, 
-              fechaProgramada: String(newFecha.valueOf()), 
-            registradoPorId: session?.user?.id || "sistema",
-       
-        },
-      });
+  try {
+    await reprogramarCita({
+      variables: {
+        citaId: row.id_cita,
+          fechaProgramada: newFecha.toISOString(),
+          registradoPorId: session?.user?.id,
+        
+      },
+    });
 
-      setSnackbar({ open: true, message: "¡Cita reprogramada!", severity: "success" });
-      setOpenEditDate(false);
-    } catch (e: any) {
-      console.error("Error de Apollo:", e);
-      setSnackbar({ open: true, message: "Error al reprogramar", severity: "error" });
-    }
-  };
+    setSnackbar({
+      open: true,
+      message: "¡Cita reprogramada!",
+      severity: "success",
+    });
+
+    setOpenEditDate(false);
+  } catch (error) {
+    setSnackbar({
+      open: true,
+      message: "Error al reprogramar la cita",
+      severity: "error",
+    });
+  }
+};
 
   const handleCancelar = async () => {
     if (!row.id_cita) {
@@ -123,7 +125,7 @@ const handleReprogramar = async () => {
       });
     }
   };
-// Verificación para deshabilitar el botón si la fecha es la misma
+  // Verificación para deshabilitar el botón si la fecha es la misma
   const isSameDate = dayjs(Number(row.fechaProgramada)).isSame(newFecha);
   return (
     <>
@@ -243,54 +245,54 @@ const handleReprogramar = async () => {
 
       {/* DETALLES EXPANDIBLES (sin cambios) */}
 
-<TableRow>
-  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-    <Collapse in={open} timeout="auto" unmountOnExit>
-      <Box sx={{ margin: 2, padding: 2, backgroundColor: "#f8f9fa", borderRadius: 2, border: "1px solid #e0e0e0" }}>
-        
-        <Box sx={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(3, 1fr)", // Divide en 3 columnas iguales
-          gap: 3 
-        }}>
-          
-          {/* COLUMNA 1: PACIENTE */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-              PACIENTE
-            </Typography>
-            <Typography variant="body2"><strong>Nombre:</strong> {row.paciente?.nombre_paciente} {row.paciente?.apellido_paciente}</Typography>
-            {/* <Typography variant="body2"><strong>Edad:</strong> {row.paciente?.edad || "N/A"}</Typography> */}
-            {/* <Typography variant="body2"><strong>Obra Social:</strong> {row.paciente?.obra_social || "N/A"}</Typography> */}
-            <Typography variant="body2"><strong>DNI:</strong> {row.paciente?.dni || "N/A"}</Typography>
-          </Box>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 2, padding: 2, backgroundColor: "#f8f9fa", borderRadius: 2, border: "1px solid #e0e0e0" }}>
 
-          {/* COLUMNA 2: MÉDICO */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-              MÉDICO
-            </Typography>
-            <Typography variant="body2"><strong>Profesional:</strong> {row.doctor?.nombre_completo}</Typography>
-            <Typography variant="body2"><strong>Especialidad:</strong> {row.doctor?.especialidad}</Typography>
-            <Typography variant="body2"><strong>DNI:</strong> {row.doctor?.dni}</Typography>
-            <Typography variant="body2"><strong>Email:</strong> {row.doctor?.email}</Typography>
-          </Box>
+              <Box sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)", // Divide en 3 columnas iguales
+                gap: 3
+              }}>
 
-          {/* COLUMNA 3: OBSERVACIONES */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-              OBSERVACIONES
-            </Typography>
-            <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary" }}>
-              {row.observaciones || "Sin comentarios adicionales."}
-            </Typography>
-          </Box>
+                {/* COLUMNA 1: PACIENTE */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
+                    PACIENTE
+                  </Typography>
+                  <Typography variant="body2"><strong>Nombre:</strong> {row.paciente?.nombre_paciente} {row.paciente?.apellido_paciente}</Typography>
+                  {/* <Typography variant="body2"><strong>Edad:</strong> {row.paciente?.edad || "N/A"}</Typography> */}
+                  {/* <Typography variant="body2"><strong>Obra Social:</strong> {row.paciente?.obra_social || "N/A"}</Typography> */}
+                  <Typography variant="body2"><strong>DNI:</strong> {row.paciente?.dni || "N/A"}</Typography>
+                </Box>
 
-        </Box>
-      </Box>
-    </Collapse>
-  </TableCell>
-</TableRow>
+                {/* COLUMNA 2: MÉDICO */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
+                    MÉDICO
+                  </Typography>
+                  <Typography variant="body2"><strong>Profesional:</strong> {row.doctor?.nombre_completo}</Typography>
+                  <Typography variant="body2"><strong>Especialidad:</strong> {row.doctor?.especialidad}</Typography>
+                  <Typography variant="body2"><strong>DNI:</strong> {row.doctor?.dni}</Typography>
+                  <Typography variant="body2"><strong>Email:</strong> {row.doctor?.email}</Typography>
+                </Box>
+
+                {/* COLUMNA 3: OBSERVACIONES */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
+                    OBSERVACIONES
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary" }}>
+                    {row.observaciones || "Sin comentarios adicionales."}
+                  </Typography>
+                </Box>
+
+              </Box>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
 
       {/* SNACKBAR (sin cambios) */}
       <Snackbar
@@ -333,29 +335,29 @@ const handleReprogramar = async () => {
         <DialogTitle sx={{ color: "#a2c9ff", fontWeight: "bold" }}>
           Modificar Fecha de la Cita
         </DialogTitle>
-<Dialog open={openEditDate} onClose={() => setOpenEditDate(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Reprogramar Cita</DialogTitle>
-        <DialogContent dividers>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateTimePicker
-              label="Nueva fecha y hora"
-              value={newFecha}
-              onChange={(val) => setNewFecha(val)}
-              slotProps={{ textField: { fullWidth: true, sx: { mt: 1 } } }}
-            />
-          </LocalizationProvider>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditDate(false)}>Cancelar</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleReprogramar} 
-            disabled={reprogramming || isSameDate}
-          >
-            {reprogramming ? "Guardando..." : "Confirmar"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog open={openEditDate} onClose={() => setOpenEditDate(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Reprogramar Cita</DialogTitle>
+          <DialogContent dividers>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                label="Nueva fecha y hora"
+                value={newFecha}
+                onChange={(val) => setNewFecha(val)}
+                slotProps={{ textField: { fullWidth: true, sx: { mt: 1 } } }}
+              />
+            </LocalizationProvider>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditDate(false)}>Cancelar</Button>
+            <Button
+              variant="contained"
+              onClick={handleReprogramar}
+              disabled={reprogramming || isSameDate}
+            >
+              {reprogramming ? "Guardando..." : "Confirmar"}
+            </Button>
+          </DialogActions>
+        </Dialog>
         <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={() => setOpenEditDate(false)}
