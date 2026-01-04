@@ -5,9 +5,7 @@ query getPacientes($limit: Int, $skip: Int, $where: PacienteWhereInput) {
   getPacientes(limit: $limit, skip: $skip,  where: $where) {
     edges {
       node { 
-      ...Paciente     
-     
-  
+      ...Paciente 
       }
     }
     aggregate {

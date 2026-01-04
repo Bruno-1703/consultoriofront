@@ -23,92 +23,64 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  Stack,
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ListIcon from "@mui/icons-material/List";
 import SearchIcon from "@mui/icons-material/Search";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import EditCalendarIcon from "@mui/icons-material/EditCalendar";
+
 import dayjs from "dayjs";
+import { useSession } from "next-auth/react";
 import {
   useGetCitasByFechaQuery,
   Cita,
   useCancelarCitaMutation,
-  // 💡 SE IMPORTA LA MUTACIÓN DE REPROGRAMACIÓN
   useReprogramarCitaMutation,
 } from "../../graphql/types";
 import TableSkeleton from "../../utils/TableSkeleton";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import { useSession } from "next-auth/react"; // 💡 NECESARIO PARA OBTENER EL userId
-import EditCalendarIcon from "@mui/icons-material/EditCalendar";
-import { DateTimePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import {
+  DateTimePicker,
+  LocalizationProvider,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 // =====================================================
-//                 FILA DE CITA
+// FILA DE CITA
 // =====================================================
 
-const CitaRow = ({ row }: { row: Cita }) => {
-  const { data: session } = useSession(); // OBTENER LA SESIÓN
+interface CitaRowProps {
+  row: Cita;
+  userId?: string;
+}
+
+const CitaRow: React.FC<CitaRowProps> = ({ row, userId }) => {
   const [open, setOpen] = React.useState(false);
-  const [cancelarCita] = useCancelarCitaMutation();
-
-
-  const [snackbar, setSnackbar] = React.useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
   const [openDialog, setOpenDialog] = React.useState(false);
   const [openEditDate, setOpenEditDate] = React.useState(false);
 
   const [newFecha, setNewFecha] = React.useState<dayjs.Dayjs | null>(
     dayjs(Number(row.fechaProgramada))
   );
-  const [
-    reprogramarCita,
-    { loading: reprogramming }
-  ] = useReprogramarCitaMutation();
 
-const handleReprogramar = async () => {
-  if (!row.id_cita || !newFecha) return;
+  const [snackbar, setSnackbar] = React.useState({
+    open: false,
+    message: "",
+    severity: "success" as "success" | "error",
+  });
 
-  try {
-    await reprogramarCita({
-      variables: {
-        citaId: row.id_cita,
-          fechaProgramada: newFecha.toISOString(),
-          registradoPorId: session?.user?.id,
-        
-      },
-    });
+  const [cancelarCita] = useCancelarCitaMutation();
+  const [reprogramarCita, { loading: reprogramming }] =
+    useReprogramarCitaMutation();
 
-    setSnackbar({
-      open: true,
-      message: "¡Cita reprogramada!",
-      severity: "success",
-    });
-
-    setOpenEditDate(false);
-  } catch (error) {
-    setSnackbar({
-      open: true,
-      message: "Error al reprogramar la cita",
-      severity: "error",
-    });
-  }
-};
+  const isSameDate = dayjs(Number(row.fechaProgramada)).isSame(
+    newFecha,
+    "minute"
+  );
 
   const handleCancelar = async () => {
-    if (!row.id_cita) {
-      setSnackbar({
-        open: true,
-        message: "ID de cita inexistente.",
-        severity: "error",
-      });
-      return;
-    }
+    if (!row.id_cita) return;
 
     try {
       await cancelarCita({ variables: { id: row.id_cita } });
@@ -117,6 +89,7 @@ const handleReprogramar = async () => {
         message: "Cita cancelada correctamente.",
         severity: "success",
       });
+      setOpenDialog(false);
     } catch {
       setSnackbar({
         open: true,
@@ -125,117 +98,81 @@ const handleReprogramar = async () => {
       });
     }
   };
-  // Verificación para deshabilitar el botón si la fecha es la misma
-  const isSameDate = dayjs(Number(row.fechaProgramada)).isSame(newFecha);
+
+  const handleReprogramar = async () => {
+    if (!row.id_cita || !newFecha) return;
+
+    try {
+      await reprogramarCita({
+        variables: {
+          citaId: row.id_cita,
+          fechaProgramada: newFecha.toISOString(),
+          registradoPorId: userId,
+        },
+      });
+
+      setSnackbar({
+        open: true,
+        message: "¡Cita reprogramada!",
+        severity: "success",
+      });
+
+      setOpenEditDate(false);
+    } catch {
+      setSnackbar({
+        open: true,
+        message: "Error al reprogramar la cita",
+        severity: "error",
+      });
+    }
+  };
+
   return (
     <>
       {/* FILA PRINCIPAL */}
-      <TableRow
-        sx={{
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          backgroundColor: "background.paper",
-          "&:hover": {
-            backgroundColor: "action.hover",
-          },
-        }}
-
-      >
+      <TableRow>
         <TableCell>
-          <IconButton
-            size="small"
-            onClick={() => setOpen(!open)}
-            sx={{
-              color: "text.secondary",
-              "&:hover": {
-                color: "text.primary",
-              },
-            }}
-          >
-
+          <IconButton size="small" onClick={() => setOpen(!open)}>
             {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
         </TableCell>
 
-        <TableCell sx={{ fontWeight: 500, color: "text.primary" }}>
-          {row.motivoConsulta}
-        </TableCell>
+        <TableCell>{row.motivoConsulta}</TableCell>
 
-        <TableCell align="center" sx={{ color: "text.secondary" }}>
-          {/* Muestra la nueva fecha si se actualiza */}
-          {dayjs(Number(row.fechaProgramada)).format("DD/MM/YYYY hh:mm A")}
+        <TableCell align="center">
+          {dayjs(Number(row.fechaProgramada)).format("DD/MM/YYYY HH:mm")}
         </TableCell>
 
         <TableCell align="center">
           <Chip
             label={row.cancelada ? "Cancelada" : "Pendiente"}
             size="small"
-            sx={{
-              fontWeight: 600,
-              fontSize: "0.7rem",
-              height: 22,
-              borderRadius: 1.5,
-              px: 0.5,
-              backgroundColor: row.cancelada
-                ? "rgba(244, 67, 54, 0.12)"
-                : "rgba(255, 193, 7, 0.18)",
-              color: row.cancelada ? "error.main" : "#9c6f00",
-            }}
+            color={row.cancelada ? "error" : "warning"}
           />
         </TableCell>
 
         <TableCell align="center">
           {!row.cancelada && (
-            <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-              {/* MODIFICAR FECHA */}
-              <Tooltip title="Modificar fecha">
-                <IconButton
-                  onClick={() => {
-                    // 💡 Al abrir, resetear el estado de la nueva fecha a la actual de la fila
-                    setNewFecha(dayjs(Number(row.fechaProgramada)));
-                    setOpenEditDate(true);
-                  }}
-                  sx={{
-                    color: "#7cb7ff",
-                    background: "rgba(124,183,255,0.1)",
-                    "&:hover": {
-                      background: "rgba(124,183,255,0.25)",
-                      transform: "scale(1.1)",
-                    },
-                    transition: "0.25s",
-                  }}
-                >
-                  <EditCalendarIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              {/* CANCELAR */}
-
-
-            </Box>
+            <Tooltip title="Modificar fecha">
+              <IconButton
+                onClick={() => {
+                  setNewFecha(dayjs(Number(row.fechaProgramada)));
+                  setOpenEditDate(true);
+                }}
+              >
+                <EditCalendarIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           )}
         </TableCell>
-
 
         <TableCell align="center">
           {!row.cancelada && (
             <Button
-              variant="contained"
               color="error"
               size="small"
+              variant="contained"
               onClick={() => setOpenDialog(true)}
-              sx={{
-                fontWeight: 600,
-                textTransform: "none",
-                fontSize: "0.75rem",
-                borderRadius: 2,
-                boxShadow: "0 0 8px rgba(255,0,0,0.3)",
-                transition: "0.25s",
-                "&:hover": {
-                  boxShadow: "0 0 12px rgba(255,0,0,0.55)",
-                  transform: "scale(1.05)",
-                },
-              }}
             >
               Cancelar
             </Button>
@@ -243,69 +180,59 @@ const handleReprogramar = async () => {
         </TableCell>
       </TableRow>
 
-      {/* DETALLES EXPANDIBLES (sin cambios) */}
-
+      {/* DETALLES */}
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 2, padding: 2, backgroundColor: "#f8f9fa", borderRadius: 2, border: "1px solid #e0e0e0" }}>
-
-              <Box sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)", // Divide en 3 columnas iguales
-                gap: 3
-              }}>
-
-                {/* COLUMNA 1: PACIENTE */}
-                <Box>
-                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-                    PACIENTE
-                  </Typography>
-                  <Typography variant="body2"><strong>Nombre:</strong> {row.paciente?.nombre_paciente} {row.paciente?.apellido_paciente}</Typography>
-                  {/* <Typography variant="body2"><strong>Edad:</strong> {row.paciente?.edad || "N/A"}</Typography> */}
-                  {/* <Typography variant="body2"><strong>Obra Social:</strong> {row.paciente?.obra_social || "N/A"}</Typography> */}
-                  <Typography variant="body2"><strong>DNI:</strong> {row.paciente?.dni || "N/A"}</Typography>
-                </Box>
-
-                {/* COLUMNA 2: MÉDICO */}
-                <Box>
-                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-                    MÉDICO
-                  </Typography>
-                  <Typography variant="body2"><strong>Profesional:</strong> {row.doctor?.nombre_completo}</Typography>
-                  <Typography variant="body2"><strong>Especialidad:</strong> {row.doctor?.especialidad}</Typography>
-                  <Typography variant="body2"><strong>DNI:</strong> {row.doctor?.dni}</Typography>
-                  <Typography variant="body2"><strong>Email:</strong> {row.doctor?.email}</Typography>
-                </Box>
-
-                {/* COLUMNA 3: OBSERVACIONES */}
-                <Box>
-                  <Typography variant="subtitle2" sx={{ color: "#1976d2", fontWeight: "bold", mb: 1 }}>
-                    OBSERVACIONES
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontStyle: "italic", color: "text.secondary" }}>
-                    {row.observaciones || "Sin comentarios adicionales."}
-                  </Typography>
-                </Box>
-
-              </Box>
+        <TableCell colSpan={6} sx={{ p: 0 }}>
+          <Collapse in={open} unmountOnExit>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="body2">
+                <strong>Paciente:</strong>{" "}
+                {row.paciente?.nombre_paciente}{" "}
+                {row.paciente?.apellido_paciente}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Médico:</strong> {row.doctor?.nombre_completo}
+              </Typography>
+              <Typography variant="body2">
+                <strong>Observaciones:</strong>{" "}
+                {row.observaciones || "Sin observaciones"}
+              </Typography>
             </Box>
           </Collapse>
         </TableCell>
       </TableRow>
 
-      {/* SNACKBAR (sin cambios) */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={5000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      {/* DIALOGO REPROGRAMAR */}
+      <Dialog
+        open={openEditDate}
+        onClose={() => setOpenEditDate(false)}
+        maxWidth="xs"
+        fullWidth
       >
-        <Alert severity={snackbar.severity as any}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        <DialogTitle>Reprogramar cita</DialogTitle>
+        <DialogContent dividers>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Nueva fecha y hora"
+              value={newFecha}
+              onChange={setNewFecha}
+              slotProps={{ textField: { fullWidth: true } }}
+            />
+          </LocalizationProvider>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDate(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            onClick={handleReprogramar}
+            disabled={reprogramming || isSameDate}
+          >
+            {reprogramming ? "Guardando..." : "Confirmar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* DIÁLOGO CANCELAR (sin cambios) */}
+      {/* DIALOGO CANCELAR */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>Confirmación</DialogTitle>
         <DialogContent>
@@ -313,108 +240,64 @@ const handleReprogramar = async () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>No</Button>
-          <Button onClick={handleCancelar} color="error" variant="contained">
-            Sí, Cancelar
+          <Button color="error" variant="contained" onClick={handleCancelar}>
+            Sí, cancelar
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* DIÁLOGO MODIFICAR FECHA (Conexión de la mutación) */}
-      <Dialog
-        open={openEditDate}
-        onClose={() => setOpenEditDate(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: "linear-gradient(160deg,#202033,#181825)",
-            borderRadius: 3,
-          },
-        }}
+      {/* SNACKBAR */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <DialogTitle sx={{ color: "#a2c9ff", fontWeight: "bold" }}>
-          Modificar Fecha de la Cita
-        </DialogTitle>
-        <Dialog open={openEditDate} onClose={() => setOpenEditDate(false)} maxWidth="xs" fullWidth>
-          <DialogTitle>Reprogramar Cita</DialogTitle>
-          <DialogContent dividers>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateTimePicker
-                label="Nueva fecha y hora"
-                value={newFecha}
-                onChange={(val) => setNewFecha(val)}
-                slotProps={{ textField: { fullWidth: true, sx: { mt: 1 } } }}
-              />
-            </LocalizationProvider>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenEditDate(false)}>Cancelar</Button>
-            <Button
-              variant="contained"
-              onClick={handleReprogramar}
-              disabled={reprogramming || isSameDate}
-            >
-              {reprogramming ? "Guardando..." : "Confirmar"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            onClick={() => setOpenEditDate(false)}
-            sx={{ color: "#cfd3e0" }}
-          >
-            Cancelar
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={handleReprogramar} // 👈 CONEXIÓN A LA FUNCIÓN DE MUTACIÓN
-            disabled={reprogramming || !newFecha || dayjs(Number(row.fechaProgramada)).isSame(newFecha)} // 💡 Deshabilita si carga o si la fecha no ha cambiado
-            sx={{
-              background: "linear-gradient(90deg,#7cb7ff,#4aa3ff)",
-              fontWeight: 600,
-              "&:hover": {
-                boxShadow: "0 0 12px rgba(124,183,255,0.6)",
-              },
-            }}
-          >
-            {reprogramming ? "Guardando..." : "Guardar cambios"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
+        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </>
   );
 };
 
-// ===============================================================
-//                 TABLA PRINCIPAL (sin cambios)
-// ===============================================================
+// =====================================================
+// TABLA PRINCIPAL
+// =====================================================
 
 interface CollapsibleTableProps {
   fecha: string;
-
 }
 
-const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha, }) => {
-  // ... (código de CollapsibleTable sin cambios)
+const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
   const { data: session, status } = useSession();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-  // Evitar ejecutar la consulta antes de tener sesión
-  const shouldFetch = status === "authenticated";
+const shouldFetch = status === "authenticated";
 
-  const filtros = React.useMemo(
-    () => ({
-      motivoConsulta: searchTerm,
-      fechaProgramada: fecha,
-      registradoPorId: session?.user?.id ?? "",
-    }),
-    [searchTerm, fecha, session?.user?.id]
-  );
+  // 🛠️ MEMO CORREGIDO
+  const filtros = React.useMemo(() => {
+    // Definimos el tipo como 'any' o crea una interface que coincida con CitaWhereInput
+    const where: any = {};
+
+    // 📅 Filtro por rango de fecha (Día completo)
+    if (fecha) {
+      where.fechaProgramada = {
+        gte: dayjs(fecha).startOf("day").toISOString(),
+        lte: dayjs(fecha).endOf("day").toISOString(),
+      };
+    }
+
+    // 🔍 Filtro por motivo (Enviamos solo el string como espera tu backend)
+    if (searchTerm.trim()) {
+      where.motivoConsulta = searchTerm.trim();
+    }
+
+    // Por defecto, solo citas no finalizadas (opcional, según tu lógica)
+    where.finalizada = false;
+
+    return where;
+  }, [searchTerm, fecha]);
 
   const { data, loading, error, refetch } = useGetCitasByFechaQuery({
     variables: {
@@ -423,53 +306,32 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha, }) => {
       where: filtros,
     },
     skip: !shouldFetch,
-    fetchPolicy: "network-only",
+    fetchPolicy: "cache-and-network", // Recomendado para ver cambios tras reprogramar
   });
+
+  if (!shouldFetch || loading)
+    return <TableSkeleton rows={3} columns={6} />;
+  if (error)
+    return <Typography color="error">{error.message}</Typography>;
 
   const citas = data?.getCitasByFecha.edges ?? [];
   const totalCount = data?.getCitasByFecha.aggregate.count ?? 0;
 
-  const handleRefetch = () =>
-    refetch({ limit: rowsPerPage, skip: page * rowsPerPage, where: filtros });
-
-  if (!shouldFetch) return <TableSkeleton rows={3} columns={5} />;
-  if (loading) return <TableSkeleton rows={3} columns={5} />;
-  if (error) return <Typography color="error">Error: {error.message}</Typography>;
-
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box>
       {/* FILTROS */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          mb: 2,
-          gap: 2,
-          p: 2,
-
-        }}
-      >
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <TextField
-          label="Buscar por Motivo"
-          variant="outlined"
+          label="Buscar motivo"
+          size="small"
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
             setPage(0);
           }}
-          size="small"
-          sx={{
-            width: 300,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: "#fff",
-              transition: "0.25s",
-              "&:hover": { boxShadow: "0 0 6px rgba(0,0,0,0.25)" },
-            },
-          }}
           InputProps={{
             endAdornment: (
-              <IconButton sx={{ color: "#1976d2" }}>
+              <IconButton>
                 <SearchIcon />
               </IconButton>
             ),
@@ -477,82 +339,62 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha, }) => {
         />
 
         <Tooltip title="Refrescar">
-          <IconButton
-            onClick={handleRefetch}
-            sx={{
-              color: "#7cb7ff",
-              "&:hover": { color: "#b8d9ff", transform: "rotate(30deg)" },
-              transition: "0.3s",
-            }}
-          >
+          <IconButton onClick={() => refetch()}>
             <RefreshIcon />
           </IconButton>
         </Tooltip>
 
-        <Typography sx={{ ml: 2, color: "#e0e0e0" }}>
-          Total de Citas:
-        </Typography>
-
         <Badge badgeContent={totalCount} color="primary">
-          <ListIcon sx={{ color: "#90caf9" }} />
+          <ListIcon />
         </Badge>
       </Box>
 
       {/* TABLA */}
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{
-          borderRadius: 3,
-          background:
-            "linear-gradient(180deg, rgba(33, 231, 182, 0.33) 0%, #d1d1e6ff 100%)",
-          border: "1px solid rgba(232, 241, 241, 0.15)",
-          boxShadow: "0 0 25px rgba(0,0,0,0.45)",
-        }}
-      >
-
-        <Table stickyHeader>
-          <TableHead
-            sx={{
-              "& th": {
-                background:
-                  "linear-gradient(180deg, #190849ff, #10106bff)",
-                color: "#e0e0e4ff",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                borderBottom: "1px solid rgba(27, 49, 75, 0.25)",
-              },
-            }}
-          >
-
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
             <TableRow
               sx={{
-                backgroundColor: "rgba(255,255,255,0.02)",
-                transition: "0.25s",
-                "&:hover": {
-                  backgroundColor: "rgba(150, 120, 219, 0.06)",
-                },
-                "& td": {
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
-                },
+                backgroundColor: "primary.main",
               }}
             >
-
-              <TableCell />
-              <TableCell>Motivo</TableCell>
-              <TableCell align="center">Fecha</TableCell>
-              <TableCell align="center">Estado</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-              <TableCell align="center">Cancelar</TableCell>
+              <TableCell sx={{ color: "primary.contrastText" }} />
+              <TableCell sx={{ color: "primary.contrastText", fontWeight: 600 }}>
+                Motivo
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ color: "primary.contrastText", fontWeight: 600 }}
+              >
+                Fecha
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ color: "primary.contrastText", fontWeight: 600 }}
+              >
+                Estado
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ color: "primary.contrastText", fontWeight: 600 }}
+              >
+                Acciones
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ color: "primary.contrastText", fontWeight: 600 }}
+              >
+                Cancelar
+              </TableCell>
             </TableRow>
           </TableHead>
-
-
           <TableBody>
             {citas.map((item) => (
-              <CitaRow key={item.node.id_cita} row={item.node as Cita} />
+              <CitaRow
+                key={item.node.id_cita}
+                row={item.node as Cita}
+                userId={session?.user?.id}
+              />
             ))}
           </TableBody>
         </Table>
@@ -566,12 +408,8 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha, }) => {
         onPageChange={(_, np) => setPage(np)}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={(e) => {
-          setRowsPerPage(parseInt(e.target.value));
+          setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
-        }}
-        sx={{
-          borderTop: "1px solid",
-          borderColor: "divider",
         }}
       />
     </Box>
