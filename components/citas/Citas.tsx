@@ -37,7 +37,6 @@ import {
   useGetCitasByFechaQuery,
   Cita,
   useCancelarCitaMutation,
-  useReprogramarCitaMutation,
 } from "../../graphql/types";
 import TableSkeleton from "../../utils/TableSkeleton";
 import {
@@ -71,13 +70,6 @@ const CitaRow: React.FC<CitaRowProps> = ({ row, userId }) => {
   });
 
   const [cancelarCita] = useCancelarCitaMutation();
-  const [reprogramarCita, { loading: reprogramming }] =
-    useReprogramarCitaMutation();
-
-  const isSameDate = dayjs(Number(row.fechaProgramada)).isSame(
-    newFecha,
-    "minute"
-  );
 
   const handleCancelar = async () => {
     if (!row.id_cita) return;
@@ -103,13 +95,13 @@ const CitaRow: React.FC<CitaRowProps> = ({ row, userId }) => {
     if (!row.id_cita || !newFecha) return;
 
     try {
-      await reprogramarCita({
-        variables: {
-          citaId: row.id_cita,
-          fechaProgramada: newFecha.toISOString(),
-          registradoPorId: userId,
-        },
-      });
+      // await reprogramarCita({
+      //   variables: {
+      //     citaId: row.id_cita,
+      //     fechaProgramada: newFecha.toISOString(),
+      //     registradoPorId: userId,
+      //   },
+      // });
 
       setSnackbar({
         open: true,
@@ -220,7 +212,7 @@ const CitaRow: React.FC<CitaRowProps> = ({ row, userId }) => {
             />
           </LocalizationProvider>
         </DialogContent>
-        <DialogActions>
+        {/* <DialogActions>
           <Button onClick={() => setOpenEditDate(false)}>Cancelar</Button>
           <Button
             variant="contained"
@@ -229,7 +221,7 @@ const CitaRow: React.FC<CitaRowProps> = ({ row, userId }) => {
           >
             {reprogramming ? "Guardando..." : "Confirmar"}
           </Button>
-        </DialogActions>
+        </DialogActions> */}
       </Dialog>
 
       {/* DIALOGO CANCELAR */}

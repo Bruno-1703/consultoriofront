@@ -152,7 +152,7 @@ const HistoriasPaciente: React.FC = () => {
       skip: page * rowsPerPage,
       where: {
         buscar: searchTerm,
-        doctor: { id_Usuario: userId, dni: "", nombre_completo: "", matricula: "", especialidad: "", nombre_usuario: "", telefono: "", email: "" },
+        doctor: { id_Usuario: userId, dni: "", nombre_completo: "" },
         paciente: {
           dni: selectedPersona,
         },
