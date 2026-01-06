@@ -54,14 +54,25 @@ const Pacientes: React.FC = () => {
     return () => clearTimeout(delayDebounce);
   }, [searchInput]);
 
-  const { data, loading, error, refetch, networkStatus } = useGetPacientesQuery({
-    variables: {
-      limit: rowsPerPage,
-      skip: page * rowsPerPage,
-      where: { nombre_paciente: searchTerm || "" },
-    },
-    notifyOnNetworkStatusChange: true,
-  });
+const pacienteWhere = React.useMemo(() => {
+  const where: any = {};
+
+  if (searchTerm.trim() !== "") {
+    where.nombre_paciente = { contains: searchTerm.trim(), mode: "insensitive" };
+  }
+
+  return where;
+}, [searchTerm]);
+
+const { data, loading, error, refetch, networkStatus } = useGetPacientesQuery({
+  variables: {
+    limit: rowsPerPage,
+    skip: page * rowsPerPage,
+    where: pacienteWhere, // ✅ solo filtros válidos
+  },
+  notifyOnNetworkStatusChange: true,
+});
+
 
   const [eliminarPacienteLogMutation] = useElimiarPacienteLogMutation();
 

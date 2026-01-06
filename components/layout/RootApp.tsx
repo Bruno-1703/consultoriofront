@@ -84,10 +84,11 @@ const fetchAuthToken = async () => {
 function inicializarApollo(token: string) {
   const authLink = setContext((_, { headers }) => {
     return {
-      headers: {
-        ...headers,
-        authorization: token ? `Bearer ${token}` : "",
-      }
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : "",
+
+    },
     };
   });
 

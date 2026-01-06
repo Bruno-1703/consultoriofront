@@ -1,185 +1,198 @@
 import * as React from "react";
 import {
   Paper, Typography, Button, Dialog, DialogTitle,
-  DialogContent, Box, CircularProgress, Chip, Avatar, Stack, Divider
+  DialogContent, Box, Chip, Avatar, Stack, Divider
 } from "@mui/material";
 import {
-  LocationOn, Phone, AccessTime, AddCircleOutline, 
-  MapOutlined, CalendarMonth, ChevronRight
+  Phone, AccessTime, AddCircleOutline, 
+  CalendarMonth, Dashboard, EventNote
 } from "@mui/icons-material";
 
 import dayjs, { Dayjs } from "dayjs";
-import "dayjs/locale/es";
+import "dayjs/locale/es"; // Importante para el idioma
 import { LocalizationProvider, DateCalendar } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 import Citas from "../components/citas/Citas";
 import { FormularioCitaV2 } from "../components/citas/FormularioCita";
-import { useGetCentrosQuery } from "../graphql/types";
 
+// Forzamos el locale a español
 dayjs.locale("es");
+
+const THEME = {
+  header: "#1e293b",
+  accent: "#6366f1",
+  bg: "#f8fafc",
+  sidebar: "#ffffff",
+  cardBorder: "#e2e8f0",
+  calendarHeader: "#f1f5f9"
+};
 
 const IndexPage: React.FC = () => {
   const [value, setValue] = React.useState<Dayjs>(dayjs());
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const { data, loading } = useGetCentrosQuery({
-    variables: { skip: 0, limit: 10, where: {} },
-  });
-
-  const centro = data?.getCentros.edges?.[0]?.node;
-
-  if (loading) return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', bgcolor: '#fff' }}>
-      <CircularProgress thickness={2} size={40} color="primary" />
-    </Box>
-  );
-
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#fff" }}>
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: THEME.bg }}>
       
-      {/* BARRA SUPERIOR (HEADER) DE BORDE A BORDE */}
+      {/* HEADER */}
       <Box sx={{ 
-        borderBottom: "1px solid #E5E7EB", 
-        px: { xs: 2, md: 4 }, 
-        py: 2, 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center",
-        position: "sticky",
-        top: 0,
-        bgcolor: "rgba(255,255,255,0.8)",
-        backdropFilter: "blur(8px)",
-        zIndex: 10
+        bgcolor: THEME.header, px: { xs: 2, md: 4 }, py: 1.5, 
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 10
       }}>
-        
         <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar sx={{ bgcolor: "primary.main", width: 40, height: 40, borderRadius: "10px" }}>
-            <CalendarMonth />
+          <Avatar sx={{ bgcolor: THEME.accent, width: 40, height: 40, borderRadius: "10px" }}>
+            <EventNote sx={{ fontSize: 24 }} />
           </Avatar>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: "#111827", lineHeight: 1.2 }}>
-              {centro?.nombre || "Panel Médico"}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
-              {centro?.tipo} • Sauce De Luna
-            </Typography>
-          </Box>
-          
+          <Typography variant="h6" sx={{ fontWeight: 700, color: "#fff" }}>
+            Med<Box component="span" sx={{ color: THEME.accent }}>Calendar</Box>
+          </Typography>
         </Stack>
-            <Button
+
+        <Button
           variant="contained"
           disableElevation
           startIcon={<AddCircleOutline />}
           onClick={() => setDialogOpen(true)}
-          sx={{ borderRadius: "8px", textTransform: "none", fontWeight: 600, px: 3 }}
+          sx={{ borderRadius: "8px", textTransform: "none", fontWeight: 600, bgcolor: THEME.accent }}
         >
-          Nueva Cita
+          Agendar Turno
         </Button>
-
-    
       </Box>
 
-      {/* CUERPO PRINCIPAL - OCUPA TODO EL ANCHO RESTANTE */}
-      <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column", md: "row" } }}>
+      <Box sx={{ display: "flex", flex: 1, flexDirection: { xs: "column-reverse", md: "row" } }}>
         
-        {/* PANEL IZQUIERDO: CALENDARIO E INFO (ESTÁTICO EN MD) */}
-        <Box sx={{ 
-          width: { xs: "100%", md: "380px" }, 
-          borderRight: { md: "1px solid #E5E7EB" },
-          p: 3,
-          bgcolor: "#F9FAFB"
-        }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: "#374151" }}>
-            Calendario de Turnos
-          </Typography>
-          
-          <Paper elevation={0} sx={{ borderRadius: "16px", border: "1px solid #E5E7EB", p: 1, mb: 4, bgcolor: "#fff" }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DateCalendar 
-                value={value} 
-                onChange={(v) => v && setValue(v)} 
-                sx={{
-                  width: '100%',
-                  '& .MuiPickersDay-root.Mui-selected': { bgcolor: 'primary.main' },
-                }}
-              />
-            </LocalizationProvider>
-          </Paper>
-
-          <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, color: "#374151" }}>
-            Detalles del Centro
-          </Typography>
-          
-          <Stack spacing={2}>
-            <InfoItem icon={<LocationOn fontSize="small" />} label="Dirección" value={centro?.direccion} color="#3B82F6" />
-            <InfoItem icon={<AccessTime fontSize="small" />} label="Horarios" value="08:00 - 21:00 (Lunes a Sábado)" color="#F59E0B" />
-            <InfoItem icon={<Phone fontSize="small" />} label="Contacto" value="+54 343 123-4567" color="#10B981" />
-          </Stack>
-        </Box>
-
-        {/* PANEL DERECHO: LISTA DE CITAS (SCROLL INDEPENDIENTE) */}
+        {/* AGENDA (IZQUIERDA) */}
         <Box sx={{ flex: 1, p: { xs: 2, md: 4 } }}>
-          <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: "#111827" }}>
-                Agenda del Día
-              </Typography>
-              <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                Viendo citas para el <strong>{value.format("D [de] MMMM, YYYY")}</strong>
-              </Typography>
-            </Box>
-            <Chip 
-              label={`${dayjs().format("YYYY")}`} 
-              variant="outlined" 
-              sx={{ fontWeight: 600, borderRadius: "6px" }} 
-            />
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 900, color: "#0f172a", letterSpacing: "-1px" }}>
+              Próximos Turnos
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 500 }}>
+              Agenda para el <Box component="span" sx={{ color: THEME.accent, fontWeight: 700 }}>
+                {value.format("dddd D [de] MMMM")}
+              </Box>
+            </Typography>
           </Box>
 
           <Paper elevation={0} sx={{ 
-            borderRadius: "16px", 
-            border: "1px solid #E5E7EB", 
-            minHeight: "60vh",
-            bgcolor: "#fff",
-            overflow: "hidden"
+            borderRadius: "20px", border: `1px solid ${THEME.cardBorder}`,
+            minHeight: "65vh", bgcolor: "#fff", overflow: "hidden",
+            boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)"
           }}>
-            {/* Aquí se renderiza tu componente de Citas */}
             <Citas fecha={value.format("YYYY-MM-DD")} />
           </Paper>
         </Box>
+
+        {/* PANEL DEL CALENDARIO (DERECHA) - LA ESTRELLA */}
+        <Box sx={{ 
+          width: { xs: "100%", md: "420px" }, 
+          bgcolor: THEME.sidebar, borderLeft: `1px solid ${THEME.cardBorder}`,
+          p: 3, display: 'flex', flexDirection: 'column', gap: 3
+        }}>
+          
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 800, color: "#1e293b", textTransform: 'uppercase', letterSpacing: 1, fontSize: '0.7rem' }}>
+              Navegación Temporal
+            </Typography>
+
+            {/* CONTENEDOR ESPECIAL PARA EL CALENDARIO */}
+            <Paper elevation={0} sx={{ 
+              borderRadius: "24px", 
+              border: `2px solid ${THEME.accent}20`, // Borde sutil del color acento
+              bgcolor: "#fff",
+              p: 1,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)"
+            }}>
+              <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                <DateCalendar 
+                  value={value} 
+                  onChange={(v) => v && setValue(v)} 
+                  sx={{
+                    width: '100%',
+                    '& .MuiPickersCalendarHeader-root': {
+                      paddingLeft: '16px',
+                      paddingRight: '8px',
+                      mb: 1
+                    },
+                    '& .MuiPickersCalendarHeader-label': {
+                      fontWeight: 800,
+                      color: "#1e293b",
+                      textTransform: 'capitalize'
+                    },
+                    '& .MuiDayCalendar-header': {
+                      bgcolor: THEME.calendarHeader,
+                      borderRadius: "12px",
+                      margin: "0 10px",
+                      padding: "5px 0"
+                    },
+                    '& .MuiDayCalendar-weekDayLabel': {
+                      fontWeight: 700,
+                      color: THEME.accent,
+                    },
+                    '& .MuiPickersDay-root': {
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      borderRadius: "12px",
+                      '&.Mui-selected': {
+                        bgcolor: THEME.accent,
+                        boxShadow: `0 4px 10px ${THEME.accent}60`,
+                        '&:hover': { bgcolor: THEME.accent }
+                      },
+                      '&:hover': { bgcolor: `${THEME.accent}15` },
+                      '&.MuiPickersDay-today': {
+                        borderColor: THEME.accent,
+                        borderWidth: '2px'
+                      }
+                    }
+                  }}
+                />
+              </LocalizationProvider>
+            </Paper>
+          </Box>
+
+          <Divider sx={{ borderStyle: 'dashed' }} />
+
+          {/* INFO EXTRA */}
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 800, color: "#1e293b" }}>
+              Centro de Atención
+            </Typography>
+            <Stack spacing={2}>
+              <InfoItem icon={<AccessTime />} label="Horario comercial" value="Lun a Vie - 08:00 a 20:00" color={THEME.accent} />
+              <InfoItem icon={<Phone />} label="Guardia 24hs" value="+54 9 343 456-7890" color="#ef4444" />
+            </Stack>
+          </Box>
+        </Box>
       </Box>
 
-      {/* DIALOG MODERNO */}
+      {/* DIALOG */}
       <Dialog 
         open={dialogOpen} 
         onClose={() => setDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-        PaperProps={{ sx: { borderRadius: '16px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)' } }}
+        fullWidth maxWidth="sm"
+        PaperProps={{ sx: { borderRadius: '20px', p: 1 } }}
       >
-        <Box sx={{ p: 1 }}>
-          <DialogTitle sx={{ fontWeight: 800 }}>Registrar Nueva Cita</DialogTitle>
-          <DialogContent>
-            <FormularioCitaV2 onClose={() => setDialogOpen(false)} />
-          </DialogContent>
-        </Box>
+        <DialogTitle sx={{ fontWeight: 900, color: "#0f172a" }}>Registrar Paciente</DialogTitle>
+        <DialogContent>
+          <FormularioCitaV2 onClose={() => setDialogOpen(false)} />
+        </DialogContent>
       </Dialog>
     </Box>
   );
 };
 
-// Componente auxiliar para la información del centro
-const InfoItem = ({ icon, label, value, color }: { icon: any, label: string, value: any, color: string }) => (
+const InfoItem = ({ icon, label, value, color }: { icon: any, label: string, value: string, color?: string }) => (
   <Stack direction="row" spacing={2} alignItems="center">
-    <Avatar sx={{ bgcolor: `${color}15`, color: color, width: 32, height: 32, borderRadius: "8px" }}>
-      {icon}
+    <Avatar sx={{ bgcolor: `${color || '#64748b'}15`, color: color || '#64748b', width: 36, height: 36, borderRadius: "10px" }}>
+      {React.cloneElement(icon, { sx: { fontSize: 18 } })}
     </Avatar>
     <Box>
-      <Typography variant="caption" sx={{ color: "text.secondary", display: 'block', lineHeight: 1 }}>{label}</Typography>
-      <Typography variant="body2" sx={{ fontWeight: 600, color: "#1F2937" }}>{value}</Typography>
+      <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 600, display: 'block', lineHeight: 1.2 }}>{label}</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>{value}</Typography>
     </Box>
   </Stack>
 );
 
 export default IndexPage;
-

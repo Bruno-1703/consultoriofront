@@ -42,44 +42,18 @@ export const FormularioCitaV2 = ({ onClose }: Props) => {
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const pacienteWhere = React.useMemo(() => {
-    const where: any = {};
 
-    if (pacienteSearch.trim()) {
-      where.OR = [
-        {
-          nombre_paciente: {
-            contains: pacienteSearch,
-            mode: "insensitive",
-          },
-        },
-        {
-          apellido_paciente: {
-            contains: pacienteSearch,
-            mode: "insensitive",
-          },
-        },
-        {
-          dni: {
-            contains: pacienteSearch,
-          },
-        },
-      ];
-    }
-
-    return where;
-  }, [pacienteSearch]);
 
   /* ===================== QUERIES ===================== */
 
-  const { data: pacientesData, loading: loadingPacientes } =
-    useGetPacientesQuery({
-      variables: {
-        limit: 50,
-        skip: 0,
-        where: pacienteWhere,
-      },
-    });
+const { data: pacientesData, loading: loadingPacientes } =
+  useGetPacientesQuery({
+    variables: {
+      limit: 50,
+      skip: 0,
+      where:{}
+    },
+  });
 
 
   const { data: profesionalesData } = useGetUsuariosQuery({

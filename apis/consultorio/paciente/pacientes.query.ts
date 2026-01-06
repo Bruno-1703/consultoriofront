@@ -10,26 +10,25 @@ const pacientesQuery = gql`
           apellido_paciente
           dni
           telefono
-         edad
-    altura
-    telefono
-    fecha_nacimiento
-    sexo
-    grupo_sanguineo
-    alergias
-    obra_social
-    email
-    direccion
-    nacionalidad
-    eliminadoLog
+          edad
+          altura
+          telefono
+          fecha_nacimiento
+          sexo
+          grupo_sanguineo
+          alergias
+          obra_social
+          email
+          direccion
+          nacionalidad
+          eliminadoLog
         }
-        cursor
       }
       aggregate {
         count
       }
     }
-  } # 
+  }
 `;
 
 export default pacientesQuery;
