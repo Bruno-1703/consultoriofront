@@ -606,7 +606,6 @@ export type QueryGetUsuariosArgs = {
 
 export type Usuario = {
   __typename?: 'Usuario';
-  centroSaludId?: Maybe<Scalars['String']['output']>;
   deletLogico?: Maybe<Scalars['Boolean']['output']>;
   dni?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
@@ -661,7 +660,6 @@ export type UsuarioResultadoBusqueda = {
 };
 
 export type UsuarioWhereInput = {
-  centroSaludId?: InputMaybe<Scalars['String']['input']>;
   deletLogico?: InputMaybe<Scalars['Boolean']['input']>;
   dni?: InputMaybe<Scalars['String']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;

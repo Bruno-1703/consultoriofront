@@ -29,32 +29,23 @@ interface Props {
 export const FormularioCitaV2 = ({ onClose }: Props) => {
   const { data: session } = useSession();
 
-  const [pacienteSearch, setPacienteSearch] = useState("");
-
   const [motivoConsulta, setMotivoConsulta] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [fecha, setFecha] = useState<Dayjs | null>(null);
+  const [fecha, setFecha] = useState<Dayjs | null>(dayjs());
 
   const [paciente, setPaciente] = useState<any | null>(null);
   const [profesional, setProfesional] = useState<any | null>(null);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  /* ===================== DATA ===================== */
 
-
-  /* ===================== QUERIES ===================== */
-
-const { data: pacientesData, loading: loadingPacientes } =
-  useGetPacientesQuery({
-    variables: {
-      limit: 50,
-      skip: 0,
-      where:{}
-    },
-  });
-
+  const { data: pacientesData, loading: loadingPacientes } =
+    useGetPacientesQuery({
+      variables: { limit: 50, skip: 0, where: {} },
+    });
 
   const { data: profesionalesData } = useGetUsuariosQuery({
     variables: {
@@ -69,9 +60,22 @@ const { data: pacientesData, loading: loadingPacientes } =
   /* ===================== SUBMIT ===================== */
 
   const handleSubmit = async () => {
-    if (!motivoConsulta || !fecha || !paciente || !profesional) {
-      setError(true);
-      return;
+    setError(null);
+
+    if (!motivoConsulta.trim()) {
+      return setError("Ingresá el motivo de consulta");
+    }
+
+    if (!fecha || !fecha.isValid()) {
+      return setError("Seleccioná una fecha válida");
+    }
+
+    if (!paciente?.id_paciente) {
+      return setError("Seleccioná un paciente");
+    }
+
+    if (!profesional?.id_Usuario) {
+      return setError("Seleccioná un profesional");
     }
 
     setLoading(true);
@@ -79,10 +83,10 @@ const { data: pacientesData, loading: loadingPacientes } =
     const citaInput: CitaInput = {
       motivoConsulta,
       observaciones,
-      fechaProgramada: fecha.toDate().toISOString(),
-      registradoPorId: session?.user?.id ?? "",
+      fechaProgramada: fecha.toISOString(),     
+      registradoPorId: session?.user?.id || "",
       doctor: {
-        id_Usuario: profesional.id,
+        id_Usuario: profesional.id_Usuario,
         nombre_completo: profesional.nombre_completo,
         email: profesional.email,
         especialidad: profesional.especialidad,
@@ -112,7 +116,7 @@ const { data: pacientesData, loading: loadingPacientes } =
       onClose();
     } catch (e) {
       console.error(e);
-      setError(true);
+      setError("Error al crear la cita");
     } finally {
       setLoading(false);
     }
@@ -122,7 +126,6 @@ const { data: pacientesData, loading: loadingPacientes } =
 
   return (
     <>
-
       <TextField
         label="Motivo de consulta"
         fullWidth
@@ -136,7 +139,7 @@ const { data: pacientesData, loading: loadingPacientes } =
         <DateTimePicker
           label="Fecha y hora"
           value={fecha}
-          onChange={setFecha}
+          onChange={(v) => setFecha(v && v.isValid() ? v : null)}
           slotProps={{
             textField: { fullWidth: true, required: true, sx: { mb: 2 } },
           }}
@@ -155,68 +158,57 @@ const { data: pacientesData, loading: loadingPacientes } =
 
       {/* PACIENTE */}
       <Autocomplete
+        clearOnBlur={false}
         options={pacientesData?.getPacientes.edges.map(e => e.node) ?? []}
         value={paciente}
         onChange={(_, v) => setPaciente(v)}
-        onInputChange={(_, value) => setPacienteSearch(value)}
         loading={loadingPacientes}
-        filterOptions={(x) => x} // 🔑 el backend filtra
         getOptionLabel={(o) =>
           `${o.nombre_paciente} ${o.apellido_paciente}`
         }
-        isOptionEqualToValue={(o, v) => o.id_paciente === v.id_paciente}
+        isOptionEqualToValue={(o, v) =>
+          o.id_paciente === v.id_paciente
+        }
         renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Paciente"
-            required
-            sx={{ mb: 2 }}
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {loadingPacientes && (
-                    <CircularProgress size={18} />
-                  )}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
+          <TextField {...params} label="Paciente" required sx={{ mb: 2 }} />
         )}
       />
 
-
       {/* PROFESIONAL */}
       <Autocomplete
+        clearOnBlur={false}
         options={profesionalesData?.getUsuarios.edges.map(e => e.node) ?? []}
         value={profesional}
         onChange={(_, v) => setProfesional(v)}
         getOptionLabel={(o) =>
           `${o.nombre_completo} (${o.especialidad || "General"})`
         }
-        isOptionEqualToValue={(o, v) => o.id === v.id}
+        isOptionEqualToValue={(o, v) =>
+          o.id_Usuario === v.id_Usuario
+        }
         renderInput={(params) => (
           <TextField {...params} label="Profesional" required sx={{ mb: 2 }} />
         )}
       />
 
-      {loading && <CircularProgress size={22} sx={{ mb: 2 }} />}
-
       <Box display="flex" justifyContent="flex-end">
-        <Button variant="contained" onClick={handleSubmit} disabled={loading}>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading}
+        >
           Guardar cita
         </Button>
       </Box>
 
-      <Snackbar open={success} autoHideDuration={3000}>
-        <Alert severity="success">Cita creada correctamente</Alert>
+      {loading && <CircularProgress size={22} sx={{ mt: 2 }} />}
+
+      <Snackbar open={!!error} autoHideDuration={3000}>
+        <Alert severity="error">{error}</Alert>
       </Snackbar>
 
-      <Snackbar open={error} autoHideDuration={3000}>
-        <Alert severity="error">
-          Completá todos los campos obligatorios
-        </Alert>
+      <Snackbar open={success} autoHideDuration={3000}>
+        <Alert severity="success">Cita creada correctamente</Alert>
       </Snackbar>
     </>
   );

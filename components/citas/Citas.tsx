@@ -282,6 +282,7 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
       where: {
         fechaProgramada: fecha, // "2026-01-04"
         buscar: searchTerm || undefined,
+        registradoPorId: session?.user?.id,
       },
     },
     fetchPolicy: "cache-and-network",
@@ -297,83 +298,83 @@ const CollapsibleTable: React.FC<CollapsibleTableProps> = ({ fecha }) => {
   return (
     <Box>
       {/* FILTROS */}
-<Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    mb: 3,
-    p: 2,
-    borderRadius: 3,
-    background: "linear-gradient(to right, #141414, hsla(236, 20%, 15%, 1.00))",
-    boxShadow: "0 0 15px rgba(0, 150, 255, 0.15)",
-  }}
->
-  {/* BUSCADOR */}
-  <TextField
-    label="Buscar motivo"
-    size="small"
-    value={searchTerm}
-    onChange={(e) => {
-      setSearchTerm(e.target.value);
-      setPage(0);
-    }}
-    sx={{
-      width: 260,
-      "& label": { color: "#9bbbd4" },
-      "& .MuiOutlinedInput-root": {
-        color: "white",
-        "& fieldset": { borderColor: "#3d4d63" },
-        "&:hover fieldset": { borderColor: "#64b5f6" },
-        "&.Mui-focused fieldset": { borderColor: "#2196f3" },
-      },
-    }}
-    InputProps={{
-      endAdornment: (
-        <IconButton>
-          <SearchIcon sx={{ color: "#64b5f6" }} />
-        </IconButton>
-      ),
-    }}
-  />
-
-  {/* ACCIONES */}
-  <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-    {/* REFRESH */}
-    <Tooltip title="Refrescar">
-      <IconButton
-        onClick={() => refetch()}
+      <Box
         sx={{
-          color: "#64b5f6",
-          transition: "0.2s",
-          "&:hover": {
-            transform: "rotate(90deg)",
-            color: "#90caf9",
-          },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 3,
+          p: 2,
+          borderRadius: 3,
+          background: "linear-gradient(to right, #141414, hsla(236, 20%, 15%, 1.00))",
+          boxShadow: "0 0 15px rgba(0, 150, 255, 0.15)",
         }}
       >
-        <RefreshIcon />
-      </IconButton>
-    </Tooltip>
+        {/* BUSCADOR */}
+        <TextField
+          label="Buscar motivo"
+          size="small"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(0);
+          }}
+          sx={{
+            width: 260,
+            "& label": { color: "#9bbbd4" },
+            "& .MuiOutlinedInput-root": {
+              color: "white",
+              "& fieldset": { borderColor: "#3d4d63" },
+              "&:hover fieldset": { borderColor: "#64b5f6" },
+              "&.Mui-focused fieldset": { borderColor: "#2196f3" },
+            },
+          }}
+          InputProps={{
+            endAdornment: (
+              <IconButton>
+                <SearchIcon sx={{ color: "#64b5f6" }} />
+              </IconButton>
+            ),
+          }}
+        />
 
-    {/* CONTADOR REAL */}
-    <Badge
-      badgeContent={citas.length}
-      color="primary"
-      sx={{
-        "& .MuiBadge-badge": {
-          backgroundColor: "#29b6f6",
-          color: "64b5f6",
-          fontWeight: "bold",
-          fontSize: "0.9rem",
-          boxShadow: "0 0 10px #29b6f6",
-        },
-      }}
-    >
-      <ListIcon sx={{ color: "white" }} />
-    </Badge>
-  </Box>
-</Box>
+        {/* ACCIONES */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+          {/* REFRESH */}
+          <Tooltip title="Refrescar">
+            <IconButton
+              onClick={() => refetch()}
+              sx={{
+                color: "#64b5f6",
+                transition: "0.2s",
+                "&:hover": {
+                  transform: "rotate(90deg)",
+                  color: "#90caf9",
+                },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* CONTADOR REAL */}
+          <Badge
+            badgeContent={citas.length}
+            color="primary"
+            sx={{
+              "& .MuiBadge-badge": {
+                backgroundColor: "#29b6f6",
+                color: "64b5f6",
+                fontWeight: "bold",
+                fontSize: "0.9rem",
+                boxShadow: "0 0 10px #29b6f6",
+              },
+            }}
+          >
+            <ListIcon sx={{ color: "white" }} />
+          </Badge>
+        </Box>
+      </Box>
 
       {/* TABLA */}
       <TableContainer component={Paper}>
